@@ -3,7 +3,7 @@ import re
 import sys
 import logging
 
-from django.utils import simplejson
+import simplejson
 
 from google.appengine.api import urlfetch
 
@@ -35,20 +35,19 @@ class MainPage(webapp.RequestHandler):
                      url = "https://www.dopplr.com/api/traveller_info.js",
                      headers = {'Authorization': 'AuthSub token="'+permanent+'"'},
                    )
-        traveller_info = response.content
+        traveller_info = simplejson.loads(response.content)
 
         # get trip info
         response = urlfetch.fetch(
                      url = "http://www.dopplr.com/api/trips_info.js",
                     headers = {'Authorization': 'AuthSub token="'+permanent+'"'},
                    )
-        trips_info = response.content
+        trips_info = simplejson.loads(response.content)
     
     template_values = {
       'url': url,
       'token': token,
       'permanent': permanent,
-      'path': sys.path,
       'traveller': traveller_info,
       'trips': trips_info,
     }
