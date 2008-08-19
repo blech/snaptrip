@@ -6,12 +6,20 @@
 	<title>TripSnap - Log In</title>
 </head>
 <body>
-  <h1><a href="https://www.dopplr.com/api/AuthSubRequest?scope=http://www.dopplr.com&next={{ url }}&session=1">Log in to Dopplr</a></h1>
+  {% if not permanent %}<h1><a href="https://www.dopplr.com/api/AuthSubRequest?scope=http://www.dopplr.com&next={{ url }}&session=1">Log in to Dopplr</a></h1>{% endif %}
   
-  <p>Got token {{token}} and hence permanent token {{permanent}}</p>
+  <!-- Got token {{token}} and hence permanent token {{permanent}} associated with session id {{id}} -->
   
-  <p>{{traveller|escape}}</p>
-  <p>{{trips|escape}}</p>
+  <h2>Hello, {{traveller.traveller.name}}.</h2>
+  
+  <p>You've been on trips to:</p><!-- {{traveller}} -->
+
+  <ul>
+  {% for trip in trips.trip reversed %}
+    <li style="color:#fffff; background:#{{trip.city.rgb}}">{{ trip.city.name }} (from {{trip.start}} to {{trip.finish}})</li>
+  {% endfor %}
+  </ul>
+  <!-- {{trips}} -->
 
 </body>
 </html>
