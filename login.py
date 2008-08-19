@@ -4,6 +4,7 @@ import sys
 import logging
 
 import simplejson
+from utilities import sessions
 
 from google.appengine.api import urlfetch
 
@@ -15,12 +16,18 @@ class MainPage(webapp.RequestHandler):
   def get(self):
     url = "http://localhost:8080/" # TODO dynamic
     token = self.request.get('token')
+    
+    session = sessions.Session()
+    
     permanent = ""
+    if 'dopplr' in session:
+        permanent = session['dopplr']
+
     content = ""
     traveller_info = ""
     trips_info = ""
     
-    if (token):
+    if token and not permanent:
       response = urlfetch.fetch(
                    url = "https://www.dopplr.com/api/AuthSubSessionToken",
                    headers = {'Authorization': 'AuthSub token="'+token+'"'},
@@ -28,21 +35,22 @@ class MainPage(webapp.RequestHandler):
       match = re.search('Token=(.*)\n', response.content)
       if (match):
         permanent = match.group(1)
+        session['dopplr'] = permanent
 
-      if (permanent):
-        # get traveller info
-        response = urlfetch.fetch(
-                     url = "https://www.dopplr.com/api/traveller_info.js",
-                     headers = {'Authorization': 'AuthSub token="'+permanent+'"'},
-                   )
-        traveller_info = simplejson.loads(response.content)
+    if permanent:
+      # get traveller info
+      response = urlfetch.fetch(
+                   url = "https://www.dopplr.com/api/traveller_info.js",
+                   headers = {'Authorization': 'AuthSub token="'+permanent+'"'},
+                 )
+      traveller_info = simplejson.loads(response.content)
 
-        # get trip info
-        response = urlfetch.fetch(
-                     url = "http://www.dopplr.com/api/trips_info.js",
-                    headers = {'Authorization': 'AuthSub token="'+permanent+'"'},
-                   )
-        trips_info = simplejson.loads(response.content)
+      # get trip info
+      response = urlfetch.fetch(
+                   url = "http://www.dopplr.com/api/trips_info.js",
+                  headers = {'Authorization': 'AuthSub token="'+permanent+'"'},
+                 )
+      trips_info = simplejson.loads(response.content)
     
     template_values = {
       'url': url,
@@ -50,10 +58,13 @@ class MainPage(webapp.RequestHandler):
       'permanent': permanent,
       'traveller': traveller_info,
       'trips': trips_info,
+      'id': session.sid,
     }
 
     path = os.path.join(os.path.dirname(__file__), 'index.html')
     self.response.out.write(template.render(path, template_values))
+
+# ==
 
 application = webapp.WSGIApplication(
                   [('/', MainPage)],
@@ -64,6 +75,7 @@ def main():
 
 if __name__ == "__main__":
   main()
+
 
 # Class Dopplr():
 #   def get(url, args):
