@@ -21,49 +21,26 @@ class MainPage(webapp.RequestHandler):
     
     permanent = ""
     if 'dopplr' in session:
-        permanent = session['dopplr']
+        self.redirect("/")
+    else:
+      if token:
+        response = urlfetch.fetch(
+                     url = "https://www.dopplr.com/api/AuthSubSessionToken",
+                     headers = {'Authorization': 'AuthSub token="'+token+'"'},
+                   )
+        match = re.search('Token=(.*)\n', response.content)
+        if (match):
+          permanent = match.group(1)
+          session['dopplr'] = permanent
+          self.redirect("/")
 
-    content = ""
-    traveller_info = ""
-    trips_info = ""
-    
-    if token and not permanent:
-      response = urlfetch.fetch(
-                   url = "https://www.dopplr.com/api/AuthSubSessionToken",
-                   headers = {'Authorization': 'AuthSub token="'+token+'"'},
-                 )
-      match = re.search('Token=(.*)\n', response.content)
-      if (match):
-        permanent = match.group(1)
-        session['dopplr'] = permanent
-
-    if permanent:
-      # get traveller info
-      response = urlfetch.fetch(
-                   url = "https://www.dopplr.com/api/traveller_info.js",
-                   headers = {'Authorization': 'AuthSub token="'+permanent+'"'},
-                 )
-      traveller_info = simplejson.loads(response.content)
-
-      # get trip info
-      response = urlfetch.fetch(
-                   url = "http://www.dopplr.com/api/trips_info.js",
-                  headers = {'Authorization': 'AuthSub token="'+permanent+'"'},
-                 )
-      trips_info = simplejson.loads(response.content)
-    
     template_values = {
       'url': url,
-      'token': token,
-      'permanent': permanent,
-      'traveller': traveller_info,
-      'trips': trips_info,
-      'id': session.sid,
     }
-
-    path = os.path.join(os.path.dirname(__file__), 'index.html')
+    
+    path = os.path.join(os.path.dirname(__file__), 'login.html')
     self.response.out.write(template.render(path, template_values))
-
+    
 # ==
 
 application = webapp.WSGIApplication(
@@ -75,7 +52,6 @@ def main():
 
 if __name__ == "__main__":
   main()
-
 
 # Class Dopplr():
 #   def get(url, args):
