@@ -3,20 +3,23 @@
 <html lang="en">
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8">
-	<title>TripSnap - Log In</title>
+	<title>TripSnap - Your Trips</title>
+  <link rel="stylesheet" href="/style/core.css" title="core" type="text/css" media="all"> 
 </head>
 <body>
-  {% if not permanent %}<h1><a href="https://www.dopplr.com/api/AuthSubRequest?scope=http://www.dopplr.com&next={{ url }}&session=1">Log in to Dopplr</a></h1>{% endif %}
-  
-  <!-- Got token {{token}} and hence permanent token {{permanent}} associated with session id {{id}} -->
-  
   <h2>Hello, {{traveller.traveller.name}}.</h2>
-  
+
+  <!-- Have permanent Dopplr token '{{permanent}}' associated with session id {{session.sid}} (session {{session}}) -->
+    
   <p>You've been on trips to:</p><!-- {{traveller}} -->
 
   <ul>
   {% for trip in trips.trip reversed %}
-    <li style="color:#fffff; background:#{{trip.city.rgb}}">{{ trip.city.name }} (from {{trip.start}} to {{trip.finish}})</li>
+    <li style="background:#{{trip.city.rgb}}">{{ trip.city.name }} <span style="color:#eee">{{trip.duration}}</span>
+      <span class="internal"><a href="/trip/{{ trip.id }}">Edit this trip here</a></span>
+      <span class="external"><a href="http://www.dopplr.com/trip/{{ traveller.traveller.nick }}/{{ trip.id }}">View this trip at Dopplr</a></span>
+    
+    </li>
   {% endfor %}
   </ul>
   <!-- {{trips}} -->
