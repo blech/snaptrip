@@ -7,15 +7,12 @@
   <link rel="stylesheet" href="/style/core.css" title="core" type="text/css" media="all"> 
 </head>
 <body>
-  <h1><a href="{{ dopplr_url }}">Log in to Dopplr</a></h1>
+  <h1 style="color:#ccc;">{% if not session.dopplr %}<a href="{{ dopplr_url }}">{% endif %}Log in to Dopplr{% if not session.dopplr %}</a>{% endif %}</h1>
 
-  <h1><a href="{{ flickr_url }}">Log in to Flickr</a></h1>
+  <h1 style="color:#ccc;">{% if not session.flickr %}<a href="{{ flickr_url }}">{% endif %}Log in to Flickr{% if not session.flickr %}</a>{% endif %}</h1>
   
-  <p>Got token {{token}}, frob {{frob}}</p>
+  <!-- Got token {{token}}, frob {{frob}} -->
   
-  <p>Session has Dopplr token '{{ session.dopplr }}' and Flickr token '{{ session.flickr }}'</p>
-  
-  {% if error %}Meanwhile, there was an error {{error}}{% endif %}
-  
+  <!-- Session has Dopplr token '{{ session.dopplr }}' and Flickr token '{{ session.flickr }}' -->  
 </body>
 </html>

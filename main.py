@@ -102,12 +102,10 @@ class LoginPage(webapp.RequestHandler):
 
     
     if frob:
-      try:
-        permanent = flickr.get_token(frob)
+      permanent = flickr.get_token(frob)
+      if permanent:
         session['flickr'] = permanent
         self.redirect("/")
-      except error:
-        logging.warn("error getting frob: "+error)
 
     template_values = {
       'dopplr_url': dopplr_url,
