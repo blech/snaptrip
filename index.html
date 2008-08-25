@@ -4,7 +4,8 @@
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8">
 	<title>TripSnap - Your Trips</title>
-  <link rel="stylesheet" href="/style/core.css" title="core" type="text/css" media="all"> 
+  <link rel="stylesheet" href="/style/reset.css" title="Reset browser styles" type="text/css" media="all"> 
+  <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
 </head>
 <body>
   <h2>Hello, {{traveller.traveller.name}}.</h2>
@@ -13,9 +14,37 @@
     
   <p>You've been on trips to:</p><!-- {{traveller}} -->
 
+<!--
+    if start.month == finish.month and start.year == finish.year:
+      trip["duration"] = start.strftime("in %B %Y");
+
+    if start.year != finish.year:
+      trip["duration"] = start.strftime("from %B %Y")+finish.strftime(" to %B %Y");
+
+    if start.month != finish.month and start.year == finish.year:
+      trip["duration"] = start.strftime("from %B ")+finish.strftime("to %B %Y");
+      
+-->  
+
+
   <ul>
   {% for trip in trips.trip reversed %}
-    <li style="background:#{{trip.city.rgb}}">{{ trip.city.name }} <span style="color:#eee">{{trip.duration}}</span>
+    <li><span class="block" style="background:#{{trip.city.rgb}}">&nbsp</span>
+      <a href="{{ trip.city.url }}">{{ trip.city.name }}</a>
+
+      {# reusable block? #}
+      {% ifequal trip.startdate.year trip.finishdate.year %}
+        {% ifequal trip.startdate.month trip.finishdate.month %}
+          in <abbr style="color:#333;">{{ trip.startdate|date:"F Y" }}</abbr>
+        {% else %}
+          from <abbr style="color:#333;">{{ trip.startdate|date:"F" }}</abbr>
+            to <abbr style="color:#333;">{{ trip.finishdate|date:"F Y" }}</abbr>
+        {% endifequal %}
+      {% else %}
+        from <abbr style="color:#333;">{{ trip.startdate|date:"F Y" }}</abbr>
+          to <abbr style="color:#333;">{{ trip.finishdate|date:"F Y" }}</abbr>
+      {% endifequal %}    
+
       <span class="internal"><a href="/trip/{{ trip.id }}">Edit this trip here</a></span>
       <span class="external"><a href="http://www.dopplr.com/trip/{{ traveller.traveller.nick }}/{{ trip.id }}">View this trip at Dopplr</a></span>
     

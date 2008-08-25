@@ -101,23 +101,8 @@ def prettify_trips(trips_info):
   logging.info(trips_info)
   
   for trip in trips_info["trip"]:
-    start  = datetime.strptime(trip["start"],  "%Y-%m-%d")
-    finish = datetime.strptime(trip["finish"], "%Y-%m-%d")
-
-    if start.month == finish.month and start.year == finish.year:
-      trip["duration"] = start.strftime("in %B %Y");
-
-    if start.year != finish.year:
-      trip["duration"] = start.strftime("from %B %Y")+finish.strftime(" to %B %Y");
-
-    if start.month != finish.month and start.year == finish.year:
-      trip["duration"] = start.strftime("from %B ")+finish.strftime("to %B %Y");
-      
-    try:
-      logging.info("Got pretty trip duration '"+trip["duration"]+"'")
-    except KeyError:
-      logging.warn("No trip duration found")
-  
+    trip["startdate"]  = datetime.strptime(trip["start"],  "%Y-%m-%d")
+    trip["finishdate"] = datetime.strptime(trip["finish"], "%Y-%m-%d")
   return trips_info
 
 # ==

@@ -1,8 +1,22 @@
+ul {
+  margin: 30px;
+  padding: 0px;
+}
+
 ul li {
-  color: #fff;
   list-style-type: none;
-  padding: 5px 5px 5px 10px;
-  margin-right: 40px;
+  padding: 5px 0px 5px 0px;
+  margin-right: 0px;
+  border-bottom: 1px dotted rgb(204, 204, 204);
+  color: #666;
+}
+
+ul li span.block {
+  display:block;
+  float: left;
+  height:18px;
+  width:18px;
+  margin-right:5px;
 }
 
 ul li span.external {
@@ -17,7 +31,24 @@ ul li span.internal {
   right: 200px;
 }
 
-ul li a {
+a {
+  color: #69c;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #47a;
+  background: #def;
+}
+
+ul li.external a {
+  background: #fff;
+  color: #69c;
+  text-decoration: none;
+  padding: 5px 10px 5px 15px;
+}
+
+ul li.internal a {
   background: #fff;
   color: #69c;
   text-decoration: none;
