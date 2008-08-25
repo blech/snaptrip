@@ -66,7 +66,7 @@ class IndexPage(webapp.RequestHandler):
     template_values = {
       'session': session,
       'permanent': permanent,
-      'traveller': traveller_info,
+      'traveller': traveller_info['traveller'],
       'trips': trips_info,
     }
 
@@ -90,16 +90,48 @@ class TripPage(webapp.RequestHandler):
                  headers = {'Authorization': 'AuthSub token="'+permanent+'"'},
                )
     trip_info = {}
-    logging.info(response.content)
     try:
       trip_info = simplejson.loads(response.content)
     except ValueError:
       logging.warn("Didn't get a JSON response from trip_info")
+
+    start  = datetime.strptime(trip_info["trip"]["start"],  "%Y-%m-%d")
+    trip_info["trip"]["startdate"]  = start
+    
+    finish = datetime.strptime(trip_info["trip"]["finish"], "%Y-%m-%d")
+    trip_info["trip"]["finishdate"] = finish
+
+    # do Flickr photo search
+    token = ""
+    try:
+      token = session['flickr']
+    except KeyError:
+      logging.warn("No Flickr token")
+
+    if token:
+      min_taken = start.strftime("%Y-%m-%d 00:00:01")
+      max_taken = finish.strftime("%Y-%m-%d 23:59:59")
+    
+      logging.info("Time duration: "+min_taken+" to "+max_taken)
+    
+      # TODO user ID
+      # TODO dtrt with day ends
+      photos = flickr.photos_search(
+                 format='json',
+                 token=token,
+                 user_id='48600109393@N01',
+                 min_taken_date=min_taken,
+                 max_taken_date=max_taken,
+                 sort="date-taken-asc",
+                 extras='license, date_upload, date_taken, tags, o_dims, views, media',
+               )
+      logging.info(photos)
     
     template_values = {
       'session': session,
       'permanent': permanent,
       'trip': trip_info,
+      'photos': photos,
     }
 
     path = os.path.join(os.path.dirname(__file__), 'trip.html')
@@ -136,6 +168,7 @@ class LoginPage(webapp.RequestHandler):
     if frob:
       permanent = flickr.get_token(frob)
       if permanent:
+        # TODO user ID
         session['flickr'] = permanent
         self.redirect("/")
 
@@ -153,14 +186,11 @@ class LoginPage(webapp.RequestHandler):
     
 # ==
 
-def prettify_trips(trips_info):
-  logging.info("in prettify_trips")
-  logging.info(trips_info)
-  
-  for trip in trips_info["trip"]:
+def prettify_trips(trip_list):
+  for trip in trip_list["trip"]:
     trip["startdate"]  = datetime.strptime(trip["start"],  "%Y-%m-%d")
     trip["finishdate"] = datetime.strptime(trip["finish"], "%Y-%m-%d")
-  return trips_info
+  return trip_list
 
 # ==
 
