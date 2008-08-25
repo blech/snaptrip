@@ -1,5 +1,6 @@
 import os
 import re
+import md5
 import sys
 import logging
 
@@ -8,6 +9,13 @@ from datetime import datetime
 import simplejson
 from utilities import sessions
 
+# flickr
+import flickrapi
+flickr = flickrapi.FlickrAPI('d0f74bf817f518ae4ce7892ac7fce7de', 
+                             '312fb375d41fcb09',
+                             store_token=False, )
+
+# gae
 from google.appengine.api import urlfetch
 
 from google.appengine.ext import webapp
@@ -67,28 +75,47 @@ class IndexPage(webapp.RequestHandler):
 
 class LoginPage(webapp.RequestHandler):
   def get(self):
-    url = "http://localhost:8080/login/" # TODO dynamic
-    token = self.request.get('token')
+    callback_url = "http://localhost:8080/login/" 
+  
+    dopplr_url = "https://www.dopplr.com/api/AuthSubRequest?scope=http://www.dopplr.com&next="+callback_url+"&session=1"
+    dopplr_token = self.request.get('token')
+
+    flickr_url = flickr.web_login_url('write')
     
     session = sessions.Session()
     
+    error = ""
     permanent = ""
-    if 'dopplr' in session:
+    token = self.request.get('token') # from Dopplr
+    frob  = self.request.get('frob')  # from Flickr
+
+    if token:
+      response = urlfetch.fetch(
+                   url = "https://www.dopplr.com/api/AuthSubSessionToken",
+                   headers = {'Authorization': 'AuthSub token="'+token+'"'},
+                 )
+      match = re.search('Token=(.*)\n', response.content)
+      if (match):
+        permanent = match.group(1)
+        session['dopplr'] = permanent
         self.redirect("/")
-    else:
-      if token:
-        response = urlfetch.fetch(
-                     url = "https://www.dopplr.com/api/AuthSubSessionToken",
-                     headers = {'Authorization': 'AuthSub token="'+token+'"'},
-                   )
-        match = re.search('Token=(.*)\n', response.content)
-        if (match):
-          permanent = match.group(1)
-          session['dopplr'] = permanent
-          self.redirect("/")
+
+    
+    if frob:
+      try:
+        permanent = flickr.get_token(frob)
+        session['flickr'] = permanent
+        self.redirect("/")
+      except error:
+        logging.warn("error getting frob: "+error)
 
     template_values = {
-      'url': url,
+      'dopplr_url': dopplr_url,
+      'flickr_url': flickr_url,
+      'error':      error,
+      'frob':       frob,
+      'permanent':  permanent,
+      'session':    session,
     }
     
     path = os.path.join(os.path.dirname(__file__), 'login.html')

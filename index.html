@@ -14,19 +14,6 @@
     
   <p>You've been on trips to:</p><!-- {{traveller}} -->
 
-<!--
-    if start.month == finish.month and start.year == finish.year:
-      trip["duration"] = start.strftime("in %B %Y");
-
-    if start.year != finish.year:
-      trip["duration"] = start.strftime("from %B %Y")+finish.strftime(" to %B %Y");
-
-    if start.month != finish.month and start.year == finish.year:
-      trip["duration"] = start.strftime("from %B ")+finish.strftime("to %B %Y");
-      
--->  
-
-
   <ul>
   {% for trip in trips.trip reversed %}
     <li><span class="block" style="background:#{{trip.city.rgb}}">&nbsp</span>
