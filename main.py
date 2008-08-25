@@ -73,6 +73,38 @@ class IndexPage(webapp.RequestHandler):
     path = os.path.join(os.path.dirname(__file__), 'index.html')
     self.response.out.write(template.render(path, template_values))
 
+class TripPage(webapp.RequestHandler):
+  def get(self, trip_id):
+    permanent = ''
+    session = sessions.Session()
+    try:
+      permanent = session['dopplr']
+    except KeyError, e:
+      return self.redirect("/login/")
+
+    logging.warn("Got trip_id "+trip_id)
+
+    url = "https://www.dopplr.com/api/trip_info.js?trip_id="+trip_id+"&token=929635a320b1a2b4af26a28262f9b4df"
+    response = urlfetch.fetch(
+                 url = url,
+                 headers = {'Authorization': 'AuthSub token="'+permanent+'"'},
+               )
+    trip_info = {}
+    logging.info(response.content)
+    try:
+      trip_info = simplejson.loads(response.content)
+    except ValueError:
+      logging.warn("Didn't get a JSON response from trip_info")
+    
+    template_values = {
+      'session': session,
+      'permanent': permanent,
+      'trip': trip_info,
+    }
+
+    path = os.path.join(os.path.dirname(__file__), 'trip.html')
+    self.response.out.write(template.render(path, template_values))    
+
 class LoginPage(webapp.RequestHandler):
   def get(self):
     callback_url = "http://localhost:8080/login/" 
@@ -134,6 +166,7 @@ def prettify_trips(trips_info):
 
 application = webapp.WSGIApplication(
                   [('/', IndexPage),
+                   ('/trip/(\d+)', TripPage),
                    ('/login/', LoginPage)],
                   debug=True)
 

@@ -1,0 +1,24 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+	<title>TripSnap - Your Trips</title>
+  <!-- link rel="stylesheet" href="/style/reset.css" title="Reset browser styles" type="text/css" media="all" --> 
+  <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
+</head>
+<body>
+  <h2>A trip to {{trip.trip.city.name}}.</h2>
+
+  <p><img src="http://maps.google.com/staticmap?center={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }}&zoom=8&size=512x192&maptype=roadmap&key=ABQIAAAAAuD6u2ORBgn25rPuxX1qxxTwM0brOpm-All5BF6PoaKBxRWWERQtnsYZp4mF-8WXCriNCoSun02Skw"
+          style="border: 5px solid #{{ trip.trip.city.rgb }}; height:192px; width:512px;"></p>
+
+  <!-- Have permanent Dopplr token '{{permanent}}' associated with session id {{session.sid}} (session {{session}}) -->
+    
+  <p>{{ sgm_token }} {{ trip }}</p>
+
+  </ul>
+  <!-- {{trips}} -->
+
+</body>
+</html>
