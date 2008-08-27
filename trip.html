@@ -16,11 +16,17 @@
 
   <!-- Have permanent Dopplr token '{{permanent}}' associated with session id {{session.sid}} (session {{session}}) -->
   
-  <div id="photos" style="width:512px;"><!-- {{ photos }} -->
-  {% for photo in photos.photos.photo %}
-    <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" width="75" height="75" alt="{{ photo.title }}" style="margin:0px 0px 5px 5px; padding:0px;"></a>
-  {% endfor %}
-  </div>
+  {% if photos %}
+    <div id="photos" style="width:512px;"><!-- {{ photos }} -->
+    {% for photo in photos.photos.photo %}
+      <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" width="75" height="75" alt="{{ photo.title }}" style="margin:0px 0px 5px 5px; padding:0px;"></a>
+    {% endfor %}
+    </div>
+  {% endif %}
+  
+  {% if not photos %}
+    <p>Please <a href="{{ url }}">authenticate with Flickr</a> to see and tag your photos from this trip.</p>
+  {% endif %}
   
   <!-- {{ trip }} -->
 </body>

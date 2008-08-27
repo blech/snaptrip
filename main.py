@@ -130,12 +130,17 @@ class TripPage(webapp.RequestHandler):
                )
       logging.info(photos)
       photos = simplejson.loads(photos)
+      url = ""
+    else:
+      photos = ""
+      url = flickr.web_login_url('write')
     
     template_values = {
-      'session': session,
-      'permanent': permanent,
-      'trip': trip_info,
-      'photos': photos,
+      'session':    session,
+      'permanent':  permanent,
+      'trip':       trip_info,
+      'photos':     photos,
+      'url':        url,
     }
 
     path = os.path.join(os.path.dirname(__file__), 'trip.html')
