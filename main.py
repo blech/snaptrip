@@ -125,7 +125,7 @@ class TripPage(webapp.RequestHandler):
                  min_taken_date=min_taken,
                  max_taken_date=max_taken,
                  sort="date-taken-asc",
-                 # per_page="2",
+                 per_page="24",
                  extras='license, date_upload, date_taken, tags, o_dims, views, media',
                )
       logging.info(photos)
