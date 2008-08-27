@@ -143,7 +143,7 @@ class TripPage(webapp.RequestHandler):
 
 class LoginPage(webapp.RequestHandler):
   def get(self):
-    callback_url = "http://localhost:8080/login/" 
+    callback_url = "http://"+request.host+"login/" 
   
     dopplr_url = "https://www.dopplr.com/api/AuthSubRequest?scope=http://www.dopplr.com&next="+callback_url+"&session=1"
     dopplr_token = self.request.get('token')
