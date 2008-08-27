@@ -10,21 +10,18 @@
 <body>
   <h2>A trip to {{trip.trip.city.name}}, {{trip.trip.city.country}}.</h2>
 
-  <p><img src="http://maps.google.com/staticmap?center={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }}&zoom=5&size=512x192&maptype=roadmap&markers={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }},smallwhite&key=ABQIAAAAAuD6u2ORBgn25rPuxX1qxxTwM0brOpm-All5BF6PoaKBxRWWERQtnsYZp4mF-8WXCriNCoSun02Skw"
+  {# TODO polyline from start point #}
+  <p><img src="http://maps.google.com/staticmap?center={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }}&zoom=4&size=512x192&maptype=roadmap&markers={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }},smallwhite&key=ABQIAAAAAuD6u2ORBgn25rPuxX1qxxTwM0brOpm-All5BF6PoaKBxRWWERQtnsYZp4mF-8WXCriNCoSun02Skw"
           style="border: 5px solid #{{ trip.trip.city.rgb }}; height:192px; width:512px;"></p>
 
   <!-- Have permanent Dopplr token '{{permanent}}' associated with session id {{session.sid}} (session {{session}}) -->
   
-  <div id="photos" style="width:512px;">
+  <div id="photos" style="width:512px;"><!-- {{ photos }} -->
   {% for photo in photos.photos.photo %}
-    <img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" width="75" height="75" alt="{{ photo.title }}" style="margin:0px 0px 5px 5px; padding:0px;">
+    <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" width="75" height="75" alt="{{ photo.title }}" style="margin:0px 0px 5px 5px; padding:0px;"></a>
   {% endfor %}
   </div>
   
-  <p>{{ trip }}</p>
-
-  </ul>
-  <!-- {{trips}} -->
-
+  <!-- {{ trip }} -->
 </body>
 </html>
