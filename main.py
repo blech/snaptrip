@@ -201,7 +201,8 @@ def prettify_trips(trip_list):
 application = webapp.WSGIApplication(
                   [('/', IndexPage),
                    ('/trip/(\d+)', TripPage),
-                   ('/login/', LoginPage)],
+                   ('/login/', LoginPage)
+                  ],
                   debug=True)
 
 def main():
