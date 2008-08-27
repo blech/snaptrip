@@ -7,9 +7,9 @@
   <link rel="stylesheet" href="/style/core.css" title="core" type="text/css" media="all"> 
 </head>
 <body>
-  <h1 style="color:#ccc;">{% if not session.dopplr %}<a href="{{ dopplr_url }}">{% endif %}Log in to Dopplr{% if not session.dopplr %}</a>{% endif %}</h1>
+  <h1 style="color:#ccc;">{% if not session.dopplr %}<a href="{{ dopplr_url }}">{% endif %}Log{% if session.dopplr %}ged{% endif %} in to Dopplr{% if not session.dopplr %}</a>{% endif %}</h1>
 
-  <h1 style="color:#ccc;">{% if not session.flickr %}<a href="{{ flickr_url }}">{% endif %}Log in to Flickr{% if not session.flickr %}</a>{% endif %}</h1>
+  <h1 style="color:#ccc;">{% if not session.flickr %}<a href="{{ flickr_url }}">{% endif %}Log{% if session.flickr %}ged{% endif %} in to Flickr{% if not session.flickr %}</a>{% endif %}</h1>
   
   <!-- Got token {{token}}, frob {{frob}} -->
   

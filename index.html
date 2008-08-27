@@ -8,14 +8,14 @@
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
 </head>
 <body>
-  <h2>Hello, {{traveller.traveller.name}}.</h2>
+  <h2>Hello, {{traveller.name}}.</h2>
 
   <!-- Have permanent Dopplr token '{{permanent}}' associated with session id {{session.sid}} (session {{session}}) -->
     
   <p>You've been on trips to:</p><!-- {{traveller}} -->
 
   <ul>
-  {% for trip in trips.trip reversed %}
+  {% for trip in trips reversed %}
     <li><span class="block" style="background:#{{trip.city.rgb}}">&nbsp</span>
       <a href="{{ trip.city.url }}">{{ trip.city.name }}</a>
 
@@ -33,7 +33,7 @@
       {% endifequal %}    
 
       <span class="internal"><a href="/trip/{{ trip.id }}">Edit this trip here</a></span>
-      <span class="external"><a href="http://www.dopplr.com/trip/{{ traveller.traveller.nick }}/{{ trip.id }}">View this trip at Dopplr</a></span>
+      <span class="external"><a href="http://www.dopplr.com/trip/{{ traveller.nick }}/{{ trip.id }}">View this trip at Dopplr</a></span>
     
     </li>
   {% endfor %}

@@ -67,7 +67,7 @@ class IndexPage(webapp.RequestHandler):
       'session': session,
       'permanent': permanent,
       'traveller': traveller_info['traveller'],
-      'trips': trips_info,
+      'trips': trips_info['trip'],
     }
 
     path = os.path.join(os.path.dirname(__file__), 'index.html')
@@ -91,6 +91,7 @@ class TripPage(webapp.RequestHandler):
                )
     trip_info = {}
     try:
+      logging.info(response.content)
       trip_info = simplejson.loads(response.content)
     except ValueError:
       logging.warn("Didn't get a JSON response from trip_info")
@@ -118,14 +119,17 @@ class TripPage(webapp.RequestHandler):
       # TODO dtrt with day ends
       photos = flickr.photos_search(
                  format='json',
+                 nojsoncallback="1",
                  token=token,
                  user_id='48600109393@N01',
                  min_taken_date=min_taken,
                  max_taken_date=max_taken,
                  sort="date-taken-asc",
+                 # per_page="2",
                  extras='license, date_upload, date_taken, tags, o_dims, views, media',
                )
       logging.info(photos)
+      photos = simplejson.loads(photos)
     
     template_values = {
       'session': session,
