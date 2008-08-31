@@ -75,7 +75,7 @@ class IndexPage(webapp.RequestHandler):
       'trips': trips_info['trip'],
     }
 
-    path = os.path.join(os.path.dirname(__file__), 'index.html')
+    path = os.path.join(os.path.dirname(__file__), 'templates/index.html')
     self.response.out.write(template.render(path, template_values))
 
 class TripPage(webapp.RequestHandler):
@@ -179,7 +179,7 @@ class TripPage(webapp.RequestHandler):
       'url':        url,
     }
 
-    path = os.path.join(os.path.dirname(__file__), 'trip.html')
+    path = os.path.join(os.path.dirname(__file__), 'templates/trip.html')
     self.response.out.write(template.render(path, template_values))    
 
 class LoginPage(webapp.RequestHandler):
@@ -226,7 +226,7 @@ class LoginPage(webapp.RequestHandler):
       'session':    session,
     }
     
-    path = os.path.join(os.path.dirname(__file__), 'login.html')
+    path = os.path.join(os.path.dirname(__file__), 'templates/login.html')
     self.response.out.write(template.render(path, template_values))
     
 
