@@ -11,23 +11,33 @@
   <h2>A trip to {{trip.trip.city.name}}, {{trip.trip.city.country}}.</h2>
 
   {# TODO polyline from start point #}
-  <p><img src="http://maps.google.com/staticmap?center={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }}&zoom=4&size=512x192&maptype=roadmap&markers={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }},smallwhite&key=ABQIAAAAAuD6u2ORBgn25rPuxX1qxxTwM0brOpm-All5BF6PoaKBxRWWERQtnsYZp4mF-8WXCriNCoSun02Skw"
-          style="border: 5px solid #{{ trip.trip.city.rgb }}; height:192px; width:512px;"></p>
+  {# TODO pick right key for domain #}
+  <p><img src="http://maps.google.com/staticmap?center={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }}&zoom=4&size=495x187&maptype=roadmap&markers={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }},smallwhite&key=ABQIAAAAAuD6u2ORBgn25rPuxX1qxxTwM0brOpm-All5BF6PoaKBxRWWERQtnsYZp4mF-8WXCriNCoSun02Skw" 
+{#  <p><img src="http://maps.google.com/staticmap?center={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }}&zoom=4&size=495x187&maptype=roadmap&markers={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }},smallwhite&key=ABQIAAAAAuD6u2ORBgn25rPuxX1qxxQ4d34u_oYfzC9kAIhtljFln5QgnBSLj4qbVLSLA2cKssBO11cTRrUoXg" #}
+          style="border: 5px solid #{{ trip.trip.city.rgb }}; height:187px; width:495px;"></p>
 
   <!-- Have permanent Dopplr token '{{permanent}}' associated with session id {{session.sid}} (session {{session}}) -->
   
+  <h3>Flickr photos from this trip</h3>
+  
   {% if photos %}
     <div id="photos" style="width:512px;"><!-- {{ photos }} -->
-    {% for photo in photos.photos.photo %}
-      <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" width="75" height="75" alt="{{ photo.title }}" style="margin:0px 0px 5px 5px; padding:0px;"></a>
+    {% for photo in photos.photo %}
+      <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" width="75" height="75" alt="{{ photo.title }}" style="margin:0px 0px 5px 5px; padding:0px; border:0px;"></a>
     {% endfor %}
+
+    <p>{% ifnotequal photo.pages 1 %}Showing 24 of {{ photo.total }} photos (page {{ photos.page }} of {{ photos.pages }}){% endifnotequal %} taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}</p>
     </div>
   {% endif %}
   
   {% if not photos %}
     <p>Please <a href="{{ url }}">authenticate with Flickr</a> to see and tag your photos from this trip.</p>
   {% endif %}
+
+  <p><a href="/">&larr; back to all trips</a></p>
   
   <!-- {{ trip }} -->
+
+  <p><span style="color:#f00;">{{ session.dopplr }}</span> <span style="color:#0f0">{{ session.flickr }}</span></p>
 </body>
 </html>
