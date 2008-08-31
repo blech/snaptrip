@@ -10,9 +10,35 @@
   <h1 style="color:#ccc;">{% if not session.dopplr %}<a href="{{ dopplr_url }}">{% endif %}Authenticate{% if session.dopplr %}d{% endif %} with Dopplr{% if not session.dopplr %}</a>{% endif %}</h1>
 
   <h1 style="color:#ccc;">{% if not session.flickr %}<a href="{{ flickr_url }}">{% endif %}Authenticate{% if session.flickr %}d{% endif %} with Flickr{% if not session.flickr %}</a>{% endif %}</h1>
+
+  <div id="faq" style="width:400px;">  
+    <h3>What is 'snaptrip'?</h3>
+    
+    <p>snaptrip is a web application that aims to give you a better view of your past trips in Dopplr, including working with Flickr.</p>
+    
+    <h3>Hence the name?</h3>
+    
+    <p>Yes, "snap" + "trip". Imaginative, huh?</p>
+    
+    <h3>Why do I have to authenticate?</h3>
+    
+    <p>Rather than asking you to log in here, snaptrip asks you to authenticate against Dopplr (and, preferably, Flickr). That's because they already know who you are, and more importantly, how to check you are who you say you are. Since you're probably alredy logged in at each site, you should just need to approve this application. <!-- (The screens look like this: --></p>
   
-  <!-- Got token {{token}}, frob {{frob}} -->
-  
-  <!-- Session has Dopplr token '{{ session.dopplr }}' and Flickr token '{{ session.flickr }}' -->  
+    <h3>Once I've authenticated, what can I do here?</h3>
+    
+    <p>The main page of this site shows you a list of all your trips, past and future (you can change this once you're logged in). From there, you can visit each trip's page at Dopplr, but also work with your Flickr photostream to associate photos with a trip, build sets, and associate a trip with a set.</p>
+    
+    <h3>How are these associations stored?</h3>
+    
+    <p>Well, there's no storage here. Instead, we use machine tags on both Flickr and Dopplr to record information with each photo and trip.</p>
+    
+    <!--
+    <h3>How do I find out more?</h3>
+
+    <p>Just get in touch via the <a href="/form/">form</a>.    
+    -->
+  </div>  
+    
+  <p><span style="color:#f00;">{{ session.dopplr }}</span> <span style="color:#0f0">{{ session.flickr }}</span></p>
 </body>
 </html>
