@@ -11,9 +11,14 @@ from utilities import sessions
 
 # flickr
 import flickrapi
+# dev
 flickr = flickrapi.FlickrAPI('d0f74bf817f518ae4ce7892ac7fce7de', 
                              '312fb375d41fcb09',
-                             store_token=False, )
+# live
+# flickr = flickrapi.FlickrAPI('6e990ae1ba4697e88afa5d626b138fd2', 
+#                              '172d6389fecab4bd',
+                             store_token=False, cache=True)
+flickr.cache = flickrapi.SimpleCache(timeout=300, max_entries=200)
 
 # gae
 from google.appengine.api import urlfetch
@@ -77,6 +82,7 @@ class TripPage(webapp.RequestHandler):
   def get(self, trip_id):
     permanent = ''
     session = sessions.Session()
+
     try:
       permanent = session['dopplr']
     except KeyError, e:
@@ -84,17 +90,25 @@ class TripPage(webapp.RequestHandler):
 
     logging.warn("Got trip_id "+trip_id)
 
-    url = "https://www.dopplr.com/api/trip_info.js?trip_id="+trip_id+"&token=929635a320b1a2b4af26a28262f9b4df"
+    if not trip_id:
+      return self.redirect("/")
+
+    url = "https://www.dopplr.com/api/trip_info.js?trip_id="+trip_id
     response = urlfetch.fetch(
                  url = url,
                  headers = {'Authorization': 'AuthSub token="'+permanent+'"'},
                )
     trip_info = {}
     try:
-      logging.info(response.content)
+#       logging.info(response.content)
       trip_info = simplejson.loads(response.content)
     except ValueError:
       logging.warn("Didn't get a JSON response from trip_info")
+      
+    if trip_info.get('error'):
+      # not good. show to user?
+      logging.error(trip_info['error'])
+      return self.redirect("/")
 
     start  = datetime.strptime(trip_info["trip"]["start"],  "%Y-%m-%d")
     trip_info["trip"]["startdate"]  = start
@@ -104,12 +118,33 @@ class TripPage(webapp.RequestHandler):
 
     # do Flickr photo search
     token = ""
+    nsid  = ""
     try:
       token = session['flickr']
     except KeyError:
       logging.warn("No Flickr token")
 
-    if token:
+    if token: # disable photos
+      # check token (and get nsid)
+      logging.warn("Using Flickr token "+token)
+      try:
+        auth = flickr.auth_checkToken(
+                  token=token,
+                  format='json',
+                  nojsoncallback="1",
+               )
+        logging.info(auth)
+        # username = auth.user.
+        auth = simplejson.loads(auth)
+        logging.info(auth)
+        if auth.get("auth"):
+          nsid = auth['auth']['user']['nsid']
+          logging.info(nsid)
+
+      except flickrapi.FlickrError:
+        token = ""
+
+    if nsid:
       min_taken = start.strftime("%Y-%m-%d 00:00:01")
       max_taken = finish.strftime("%Y-%m-%d 23:59:59")
     
@@ -118,9 +153,9 @@ class TripPage(webapp.RequestHandler):
       # TODO user ID
       # TODO dtrt with day ends
       photos = flickr.photos_search(
+                 token=token,
                  format='json',
                  nojsoncallback="1",
-                 token=token,
                  user_id='48600109393@N01',
                  min_taken_date=min_taken,
                  max_taken_date=max_taken,
@@ -130,6 +165,7 @@ class TripPage(webapp.RequestHandler):
                )
       logging.info(photos)
       photos = simplejson.loads(photos)
+      photos = photos['photos']
       url = ""
     else:
       photos = ""
@@ -193,6 +229,8 @@ class LoginPage(webapp.RequestHandler):
     path = os.path.join(os.path.dirname(__file__), 'login.html')
     self.response.out.write(template.render(path, template_values))
     
+
+
 # ==
 
 def prettify_trips(trip_list):
@@ -205,7 +243,7 @@ def prettify_trips(trip_list):
 
 application = webapp.WSGIApplication(
                   [('/', IndexPage),
-                   ('/trip/(\d+)', TripPage),
+                   ('/trip/(\d*)', TripPage),
                    ('/login/', LoginPage)
                   ],
                   debug=True)
@@ -221,4 +259,3 @@ if __name__ == "__main__":
 #   def get(url, args):
 #     response = urlfetch.fetch("https://www.dopplr.com/api/AuthSubSessionToken?token="+token)
 #     return response.content
-
