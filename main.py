@@ -9,18 +9,8 @@ from datetime import datetime
 import simplejson
 from utilities import sessions
 
-# flickr
 import flickrapi
-# dev
-flickr = flickrapi.FlickrAPI('d0f74bf817f518ae4ce7892ac7fce7de', 
-                             '312fb375d41fcb09',
-# live
-# flickr = flickrapi.FlickrAPI('6e990ae1ba4697e88afa5d626b138fd2', 
-#                              '172d6389fecab4bd',
-                             store_token=False, cache=True)
-flickr.cache = flickrapi.SimpleCache(timeout=300, max_entries=200)
 
-# gae
 from google.appengine.api import urlfetch
 
 from google.appengine.ext import webapp
@@ -90,6 +80,9 @@ class TripPage(webapp.RequestHandler):
 
     logging.warn("Got trip_id "+trip_id)
 
+    # get keys
+    keys = get_keys(self.request.host)
+
     if not trip_id:
       return self.redirect("/")
 
@@ -127,6 +120,9 @@ class TripPage(webapp.RequestHandler):
     if token: # disable photos
       # check token (and get nsid)
       logging.warn("Using Flickr token "+token)
+
+      flickr = get_flickr(keys)
+      
       try:
         auth = flickr.auth_checkToken(
                   token=token,
@@ -177,6 +173,7 @@ class TripPage(webapp.RequestHandler):
       'trip':       trip_info,
       'photos':     photos,
       'url':        url,
+      'keys':       keys,
     }
 
     path = os.path.join(os.path.dirname(__file__), 'templates/trip.html')
@@ -189,6 +186,8 @@ class LoginPage(webapp.RequestHandler):
     dopplr_url = "https://www.dopplr.com/api/AuthSubRequest?scope=http://www.dopplr.com&next="+callback_url+"&session=1"
     dopplr_token = self.request.get('token')
 
+    keys = get_keys(self.request.host)
+    flickr = get_flickr(keys)
     flickr_url = flickr.web_login_url('write')
     
     session = sessions.Session()
@@ -224,6 +223,7 @@ class LoginPage(webapp.RequestHandler):
       'frob':       frob,
       'permanent':  permanent,
       'session':    session,
+      'keys':       keys,
     }
     
     path = os.path.join(os.path.dirname(__file__), 'templates/login.html')
@@ -234,10 +234,39 @@ class LoginPage(webapp.RequestHandler):
 # ==
 
 def prettify_trips(trip_list):
+  # parse dates to datetime objects
   for trip in trip_list["trip"]:
     trip["startdate"]  = datetime.strptime(trip["start"],  "%Y-%m-%d")
     trip["finishdate"] = datetime.strptime(trip["finish"], "%Y-%m-%d")
   return trip_list
+
+def get_keys(host):
+  # get the right API keys for the current server
+  logging.info("Got host "+host)
+  keys = {}
+
+  if host.find("appspot.com"):
+    keys = {
+      'gmap':       "ABQIAAAAAuD6u2ORBgn25rPuxX1qxxQ4d34u_oYfzC9kAIhtljFln5QgnBSLj4qbVLSLA2cKssBO11cTRrUoXg",
+      'flickr_key': "6e990ae1ba4697e88afa5d626b138fd2",
+      'flickr_sec': "172d6389fecab4bd",
+    }
+    
+  if host.find("localhost"):
+    keys = {
+      'gmap':       "ABQIAAAAAuD6u2ORBgn25rPuxX1qxxTwM0brOpm-All5BF6PoaKBxRWWERQtnsYZp4mF-8WXCriNCoSun02Skw",
+      'flickr_key': "d0f74bf817f518ae4ce7892ac7fce7de",
+      'flickr_sec': "312fb375d41fcb09",
+    }
+    
+  return keys
+
+def get_flickr(keys):
+  flickr = flickrapi.FlickrAPI(keys['flickr_key'], keys['flickr_sec'], 
+                               store_token=False, cache=True)
+  flickr.cache = flickrapi.SimpleCache(timeout=300, max_entries=200)
+
+  return flickr
 
 # ==
 

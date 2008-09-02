@@ -26,7 +26,7 @@
       <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" width="75" height="75" alt="{{ photo.title }}" style="margin:0px 0px 5px 5px; padding:0px; border:0px;"></a>
     {% endfor %}
 
-    <p>{% ifnotequal photo.pages 1 %}Showing 24 of {{ photo.total }} photos (page {{ photos.page }} of {{ photos.pages }}){% endifnotequal %} taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}</p>
+    <p>Showing {% ifnotequal photos.pages 1 %}{{ photos.perpage }} of {{ photos.total }} photos (page {{ photos.page }} of {{ photos.pages }}){% else %}{{ photos.total }} photos {% endifnotequal %} taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}</p>
     </div>
   {% endif %}
   
