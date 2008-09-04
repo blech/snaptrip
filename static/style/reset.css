@@ -14,7 +14,9 @@ table, caption, tbody, tfoot, thead, tr, th, td {
 	outline: 0;
 	font-weight: inherit;
 	font-style: inherit;
+/*
 	font-size: 100%;
+*/
 	font-family: inherit;
 	vertical-align: baseline;
 }
@@ -23,7 +25,9 @@ table, caption, tbody, tfoot, thead, tr, th, td {
 	outline: 0;
 }
 body {
+/*
 	line-height: 1;
+*/
 	color: black;
 	background: white;
 }

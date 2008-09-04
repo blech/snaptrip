@@ -1,9 +1,41 @@
-ul {
-  margin: 30px;
+body {
+  font: 14px Arial, Helvetica, sans-serif;
+  line-height: 16px;
+  background-color: #fff;
+  color: #666;
   padding: 0px;
+  margin:  0px;
 }
 
-ul li {
+div#header {
+  padding: 5px 20px 5px 20px;
+  border-bottom: 1px dotted rgb(204, 204, 204);
+  font: 12px Arial, Helvetica, sans-serif;
+}
+
+div#header h1 {
+  font: bold 12px Arial, Helvetica, sans-serif;
+  display: inline;
+}
+
+div#main {
+  padding: 0px 20px 20px 20px;
+}
+
+h2 {
+  font: 200 18px Arial, Helvetica, sans-serif;
+
+}
+
+ul#trips {
+  margin: 0px 30px 0px 0px;
+  padding: 0px;
+  width: 600px;
+  float: left;
+}
+
+ul#trips li {
+  position: relative;
   list-style-type: none;
   padding: 5px 0px 5px 0px;
   margin-right: 0px;
@@ -11,7 +43,7 @@ ul li {
   color: #666;
 }
 
-ul li span.block {
+ul#trips li span.block {
   display:block;
   float: left;
   height:18px;
@@ -19,16 +51,10 @@ ul li span.block {
   margin-right:5px;
 }
 
-ul li span.external {
+ul#trips li span.internal {
   text-align: right;
   position: absolute;
-  right: 40px;
-}
-
-ul li span.internal {
-  text-align: right;
-  position: absolute;
-  right: 200px;
+  right: 0px;
 }
 
 a {
@@ -41,25 +67,10 @@ a:hover {
   background: #def;
 }
 
-ul li.external a {
-  background: #fff;
-  color: #69c;
-  text-decoration: none;
-  padding: 5px 10px 5px 15px;
+ul#trips li a {
+  padding: 5px 5px 5px 5px;
 }
 
-ul li.internal a {
-  background: #fff;
-  color: #69c;
-  text-decoration: none;
-  padding: 5px 20px 5px 15px;
-}
-
-ul li a:hover {
-  color: #47a;
-  background: #def;
-  padding: 5px;
-  text-decoration: underline;
-  padding: 5px;
-  margin: 5px 15px 5px 10px;
+ul#trips li a:hover {
+  padding: 5px 5px 5px 5px;
 }
