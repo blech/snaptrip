@@ -54,6 +54,7 @@ class IndexPage(webapp.RequestHandler):
     try:
       trips_info = simplejson.loads(response.content)
       prettify_trips(trips_info)
+      stats = build_stats(trips_info)
       # trips_info = prettify_trips(trips_info)
     except ValueError:
       logging.warn("Didn't get a JSON response from traveller_info")
@@ -63,6 +64,7 @@ class IndexPage(webapp.RequestHandler):
       'permanent': permanent,
       'traveller': traveller_info['traveller'],
       'trips': trips_info['trip'],
+      'stats': stats,
     }
 
     path = os.path.join(os.path.dirname(__file__), 'templates/index.html')
@@ -82,6 +84,7 @@ class TripPage(webapp.RequestHandler):
 
     # get keys
     keys = get_keys(self.request.host)
+    flickr = get_flickr(keys)      
 
     if not trip_id:
       return self.redirect("/")
@@ -121,8 +124,6 @@ class TripPage(webapp.RequestHandler):
       # check token (and get nsid)
       logging.warn("Using Flickr token "+token)
 
-      flickr = get_flickr(keys)
-      
       try:
         auth = flickr.auth_checkToken(
                   token=token,
@@ -239,6 +240,25 @@ def prettify_trips(trip_list):
     trip["startdate"]  = datetime.strptime(trip["start"],  "%Y-%m-%d")
     trip["finishdate"] = datetime.strptime(trip["finish"], "%Y-%m-%d")
   return trip_list
+  
+def build_stats(trip_list):
+  stats = {'countries': {},
+           'year':      {}, }
+  
+  for trip in trip_list["trip"]:
+    # how long?
+    duration = trip['finishdate'] - trip['startdate']
+    
+    # countries
+    country = trip['city']['country']
+    if not country in stats['countries']:
+      logging.info("reset "+country)
+      stats['countries'][country] = { 'duration': 0, 'trips': 0, }
+      
+    stats['countries'][country]['duration'] += duration.days
+    stats['countries'][country]['trips']    += 1
+    
+  return stats
 
 def get_keys(host):
   # get the right API keys for the current server

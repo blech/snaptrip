@@ -4,43 +4,66 @@
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8">
 	<title>TripSnap - Your Trips</title>
-  <!-- link rel="stylesheet" href="/style/reset.css" title="Reset browser styles" type="text/css" media="all" --> 
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
 </head>
 <body>
-  <h2>Hello, {{traveller.name}}.</h2>
-
-  <!-- Have permanent Dopplr token '{{permanent}}' associated with session id {{session.sid}} (session {{session}}) -->
-    
-  <p>You've been on trips to:</p><!-- {{traveller}} -->
-
-  <ul>
-  {% for trip in trips reversed %}
-    <li><span class="block" style="background:#{{trip.city.rgb}}">&nbsp</span>
-      <a href="{{ trip.city.url }}">{{ trip.city.name }}</a>
-
-      {# reusable block? #}
-      {% ifequal trip.startdate.year trip.finishdate.year %}
-        {% ifequal trip.startdate.month trip.finishdate.month %}
-          in <abbr style="color:#333;">{{ trip.startdate|date:"F Y" }}</abbr>
+  {% include "includes/header.html" %}
+  
+  <div id="main">
+  
+    <h2>Hello, {{traveller.name}}.</h2>
+  
+    <!-- Have permanent Dopplr token '{{permanent}}' associated with session id {{session.sid}} (session {{session}}) -->
+      
+    <p>You've been on trips to:</p><!-- {{traveller}} -->
+  
+    <ul id="trips">
+    {% for trip in trips reversed %}
+      <li><span class="block" style="background:#{{trip.city.rgb}}">&nbsp</span>
+        <a href="{{ trip.city.url }}">{{ trip.city.name }}</a>
+  
+        {# reusable block? #}
+        {% ifequal trip.startdate.year trip.finishdate.year %}
+          {% ifequal trip.startdate.month trip.finishdate.month %}
+            in <abbr style="color:#333;">{{ trip.startdate|date:"F Y" }}</abbr>
+          {% else %}
+            from <abbr style="color:#333;">{{ trip.startdate|date:"F" }}</abbr>
+              to <abbr style="color:#333;">{{ trip.finishdate|date:"F Y" }}</abbr>
+          {% endifequal %}
         {% else %}
-          from <abbr style="color:#333;">{{ trip.startdate|date:"F" }}</abbr>
+          from <abbr style="color:#333;">{{ trip.startdate|date:"F Y" }}</abbr>
             to <abbr style="color:#333;">{{ trip.finishdate|date:"F Y" }}</abbr>
-        {% endifequal %}
-      {% else %}
-        from <abbr style="color:#333;">{{ trip.startdate|date:"F Y" }}</abbr>
-          to <abbr style="color:#333;">{{ trip.finishdate|date:"F Y" }}</abbr>
-      {% endifequal %}    
-
-      <span class="internal"><a href="/trip/{{ trip.id }}">Edit this trip here</a></span>
-      <span class="external"><a href="http://www.dopplr.com/trip/{{ traveller.nick }}/{{ trip.id }}">View this trip at Dopplr</a></span>
+        {% endifequal %}    
+  
+        <span class="internal"><a href="/trip/{{ trip.id }}">Edit this trip here</a></span>
+        <!-- <span class="external"><a href="http://www.dopplr.com/trip/{{ traveller.nick }}/{{ trip.id }}">View this trip at Dopplr</a></span> -->
+      
+      </li>
+    {% endfor %}
+    </ul>
+    <!-- {{trips}} -->
     
-    </li>
-  {% endfor %}
-  </ul>
-  <!-- {{trips}} -->
-
-  <p><span style="color:#f00;">{{ session.dopplr }}</span> <span style="color:#0f0">{{ session.flickr }}</span></p>
+    <h3>Where?</h3>
+    
+    {{ stats }}
+    
+    <ul>
+    {% for country in stats.countries %}
+      <li>{{ country }} for {{ stats.countries.[country].duration }}</li>
+    {% endfor %}
+    </ul>
+  
+    <h3>When?</h3>
+    
+    <ul>
+    {% for year in stats.years %}
+      <li>{{ year }}</li>
+    {% endfor %}
+    </ul>
+  
+    <p><span style="color:#f00;">{{ session.dopplr }}</span> <span style="color:#0f0">{{ session.flickr }}</span></p>
+  
+  </div>
 
 </body>
 </html>

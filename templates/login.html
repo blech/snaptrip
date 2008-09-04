@@ -7,9 +7,9 @@
   <link rel="stylesheet" href="/style/core.css" title="core" type="text/css" media="all"> 
 </head>
 <body>
-  <div id="main">
-    <pre>{{keys.flickr_key }} {{ keys.gmap }}</pre>
+  {% include "includes/header.html" %}
   
+  <div id="main">
     <h1 style="color:#ccc;">{% if not session.dopplr %}<a href="{{ dopplr_url }}">{% endif %}Authenticate{% if session.dopplr %}d{% endif %} with Dopplr{% if not session.dopplr %}</a>{% endif %}</h1>
   
     <h1 style="color:#ccc;">{% if not session.flickr %}<a href="{{ flickr_url }}">{% endif %}Authenticate{% if session.flickr %}d{% endif %} with Flickr{% if not session.flickr %}</a>{% endif %}</h1>
