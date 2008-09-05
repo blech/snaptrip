@@ -5,9 +5,11 @@ import sys
 import logging
 
 from datetime import datetime
+from operator import itemgetter
 
 import simplejson
 from utilities import sessions
+from jinja2 import FileSystemLoader, Environment
 
 import flickrapi
 
@@ -16,6 +18,9 @@ from google.appengine.api import urlfetch
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
+
+# jinja2
+env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates/')))
 
 class IndexPage(webapp.RequestHandler):
   def get(self):
@@ -51,13 +56,16 @@ class IndexPage(webapp.RequestHandler):
                 headers = {'Authorization': 'AuthSub token="'+permanent+'"'},
                )
     trips_info = {}
+    stats      = {}
     try:
       trips_info = simplejson.loads(response.content)
-      prettify_trips(trips_info)
-      stats = build_stats(trips_info)
       # trips_info = prettify_trips(trips_info)
     except ValueError:
       logging.warn("Didn't get a JSON response from traveller_info")
+
+    if trips_info:
+      prettify_trips(trips_info)
+      stats = build_stats(trips_info)
     
     template_values = {
       'session': session,
@@ -66,9 +74,15 @@ class IndexPage(webapp.RequestHandler):
       'trips': trips_info['trip'],
       'stats': stats,
     }
+    
+#     @register.filter(name='cut')
+#     def cut(value, arg):
+#         return value.replace(arg, '')
 
     path = os.path.join(os.path.dirname(__file__), 'templates/index.html')
-    self.response.out.write(template.render(path, template_values))
+    template = env.get_template('index.html')
+    
+    self.response.out.write(template.render(template_values))
 
 class TripPage(webapp.RequestHandler):
   def get(self, trip_id):
@@ -243,21 +257,60 @@ def prettify_trips(trip_list):
   
 def build_stats(trip_list):
   stats = {'countries': {},
-           'year':      {}, }
+           'years':     {}, 
+           'ordered':   [], }
   
   for trip in trip_list["trip"]:
-    # how long?
+    # how long (simple version...)
     duration = trip['finishdate'] - trip['startdate']
     
-    # countries
+    # build country data
     country = trip['city']['country']
+    display = country
+
+    # special casing!
+    if not country.find("United"):
+      display = "the "+country
+    
     if not country in stats['countries']:
       logging.info("reset "+country)
-      stats['countries'][country] = { 'duration': 0, 'trips': 0, }
-      
+      stats['countries'][country] = { 'duration': 0, 'trips': 0, 'display':display,}
+
     stats['countries'][country]['duration'] += duration.days
     stats['countries'][country]['trips']    += 1
     
+    # build year data
+    year = trip['startdate'].year
+    if not year in stats['years']:
+      stats['years'][year] = 0
+    if year == trip['finishdate'].year:
+      stats['years'][year] += duration.days
+    else:
+      if trip['finishdate'].year - year == 1:
+        # spans a single year boundary, and is therefore Sane
+        # if there's *anyone* who has a trip spanning two, they can bloody
+        # well write this themselves. Otherwise...
+
+        logging.info("year boundary spanning trip")
+        year_end = datetime(year, 12, 31)
+        
+        stats['years'][year] += (year_end-trip['startdate']).days
+        logging.info("added "+(str((year_end-trip['startdate']).days))+" days to "+str(year))
+  
+        year = trip['finishdate'].year
+        year_start = datetime(year, 1, 1)
+        if not year in stats['years']:
+          stats['years'][year] = 0
+        stats['years'][year] += (trip['finishdate']-year_start).days
+        logging.info("added "+(str((trip['finishdate']-year_start).days))+" days to "+str(year))
+
+    # do we want to supply full-blown cross-cut stats? maybe later...
+
+  # order countries by trips for various things
+#   countries = sorted(stats['countries'], key = lambda (k,v): (v,k))
+  
+#   stats['ordered'] = countries
+
   return stats
 
 def get_keys(host):

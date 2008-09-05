@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
 </head>
 <body>
-  {% include "includes/header.html" %}
   
   <div id="main">
   
@@ -18,24 +17,24 @@
     <p>You've been on trips to:</p><!-- {{traveller}} -->
   
     <ul id="trips">
-    {% for trip in trips reversed %}
+    {% for trip in trips | reverse %}
       <li><span class="block" style="background:#{{trip.city.rgb}}">&nbsp</span>
         <a href="{{ trip.city.url }}">{{ trip.city.name }}</a>
   
         {# reusable block? #}
-        {% ifequal trip.startdate.year trip.finishdate.year %}
-          {% ifequal trip.startdate.month trip.finishdate.month %}
-            in <abbr style="color:#333;">{{ trip.startdate|date:"F Y" }}</abbr>
+        {% if trip.startdate.year == trip.finishdate.year %}
+          {% if trip.startdate.month == trip.finishdate.month %}
+            in <abbr style="color:#333;">{{ trip.startdate.strftime("%B %Y") }}</abbr>
           {% else %}
-            from <abbr style="color:#333;">{{ trip.startdate|date:"F" }}</abbr>
-              to <abbr style="color:#333;">{{ trip.finishdate|date:"F Y" }}</abbr>
-          {% endifequal %}
+            from <abbr style="color:#333;">{{ trip.startdate.strftime("%B") }}</abbr>
+              to <abbr style="color:#333;">{{ trip.finishdate.strftime("%B %Y") }}</abbr>
+          {% endif %}
         {% else %}
-          from <abbr style="color:#333;">{{ trip.startdate|date:"F Y" }}</abbr>
-            to <abbr style="color:#333;">{{ trip.finishdate|date:"F Y" }}</abbr>
-        {% endifequal %}    
+          from <abbr style="color:#333;">{{ trip.startdate.strftime("%B %Y") }}</abbr>
+            to <abbr style="color:#333;">{{ trip.finishdate.strftime("%B %Y") }}</abbr>
+        {% endif %}
   
-        <span class="internal"><a href="/trip/{{ trip.id }}">Edit this trip here</a></span>
+        <span class="internal"><a href="/trip/{{ trip.id }}">More on this trip</a></span>
         <!-- <span class="external"><a href="http://www.dopplr.com/trip/{{ traveller.nick }}/{{ trip.id }}">View this trip at Dopplr</a></span> -->
       
       </li>
@@ -45,19 +44,21 @@
     
     <h3>Where?</h3>
     
-    {{ stats }}
+    {{ stats.ordered }}
+    
+    <p>You've been on trips in {{ stats.countries|length }} countries, spending the most time in...</p>
     
     <ul>
-    {% for country in stats.countries %}
-      <li>{{ country }} for {{ stats.countries.[country].duration }}</li>
+    {% for country in stats.countries | reverse %}
+      <li>{{ country }} - {{ stats.countries[country].trips }} trips, {{ stats.countries[country].duration }} days</li>
     {% endfor %}
     </ul>
   
     <h3>When?</h3>
     
     <ul>
-    {% for year in stats.years %}
-      <li>{{ year }}</li>
+    {% for year in stats.years | reverse %}
+      <li>{{ year }} - {{ stats.years[year] }} days</li>
     {% endfor %}
     </ul>
   
