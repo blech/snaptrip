@@ -67,10 +67,12 @@ a:hover {
   background: #def;
 }
 
-ul#trips li a {
+/*
+ul#trips li span a {
   padding: 5px 5px 5px 5px;
 }
 
-ul#trips li a:hover {
+ul#trips li span a:hover {
   padding: 5px 5px 5px 5px;
 }
+*/
