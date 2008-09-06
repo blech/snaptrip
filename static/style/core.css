@@ -22,9 +22,20 @@ div#main {
   padding: 0px 20px 20px 20px;
 }
 
+h1 {
+  font: 200 22px Arial, Helvetica, sans-serif;
+}
+
 h2 {
   font: 200 18px Arial, Helvetica, sans-serif;
+}
 
+h3 {
+  font: 200 16px Arial, Helvetica, sans-serif;
+}
+
+ul li {
+  list-style-type: none;
 }
 
 ul#trips {
@@ -36,7 +47,6 @@ ul#trips {
 
 ul#trips li {
   position: relative;
-  list-style-type: none;
   padding: 5px 0px 5px 0px;
   margin-right: 0px;
   border-bottom: 1px dotted rgb(204, 204, 204);
@@ -55,6 +65,12 @@ ul#trips li span.internal {
   text-align: right;
   position: absolute;
   right: 0px;
+}
+
+ul#where li span.country {
+  width: 120px;
+  float: left;
+  display: block;
 }
 
 a {
