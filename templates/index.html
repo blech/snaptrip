@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
 </head>
 <body>
+  {% include "includes/header.html" %}
   
   <div id="main">
   
@@ -48,9 +49,11 @@
     
     <p>You've been on trips in {{ stats.countries|length }} countries, spending the most time in...</p>
     
-    <ul>
+    <ul id="where">
     {% for country in stats.countries | reverse %}
-      <li>{{ country }} - {{ stats.countries[country].trips }} trips, {{ stats.countries[country].duration }} days</li>
+      <li><span class="country">{{ country }}</span> - 
+          {{ stats.countries[country].trips }} trip{% if stats.countries[country].trips != 1 %}s{% endif %}, 
+          {{ stats.countries[country].duration }} day{% if stats.countries[country].duration != 1 %}s{% endif %}</li>
     {% endfor %}
     </ul>
   
