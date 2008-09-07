@@ -15,11 +15,8 @@
     {# TODO polyline from start point #}
     {# TODO pick right key for domain #}
     <p><img src="http://maps.google.com/staticmap?center={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }}&zoom=4&size=495x187&maptype=roadmap&markers={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }},smallwhite&key={{ keys.gmap }}" 
-  {#  <p><img src="http://maps.google.com/staticmap?center={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }}&zoom=4&size=495x187&maptype=roadmap&markers={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }},smallwhite&key=ABQIAAAAAuD6u2ORBgn25rPuxX1qxxQ4d34u_oYfzC9kAIhtljFln5QgnBSLj4qbVLSLA2cKssBO11cTRrUoXg" #}
             style="border: 5px solid #{{ trip.trip.city.rgb }}; height:187px; width:495px;"></p>
   
-    <!-- Have permanent Dopplr token '{{permanent}}' associated with session id {{session.sid}} (session {{session}}) -->
-    
     <h3>Flickr photos from this trip</h3>
     
     {% if photos %}

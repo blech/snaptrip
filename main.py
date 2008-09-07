@@ -96,10 +96,6 @@ class TripPage(webapp.RequestHandler):
 
     logging.warn("Got trip_id "+trip_id)
 
-    # get keys
-    keys = get_keys(self.request.host)
-    flickr = get_flickr(keys)      
-
     if not trip_id:
       return self.redirect("/")
 
@@ -135,25 +131,26 @@ class TripPage(webapp.RequestHandler):
       logging.warn("No Flickr token")
 
     if token: # disable photos
+      # get keys
+      keys = get_keys(self.request.host)
+      flickr = get_flickr(keys, token)      
+  
       # check token (and get nsid)
       logging.warn("Using Flickr token "+token)
+      logging.warn("Using Flickr API key "+keys['flickr_key'])
 
-      try:
-        auth = flickr.auth_checkToken(
-                  token=token,
-                  format='json',
-                  nojsoncallback="1",
-               )
-        logging.info(auth)
-        # username = auth.user.
-        auth = simplejson.loads(auth)
-        logging.info(auth)
-        if auth.get("auth"):
-          nsid = auth['auth']['user']['nsid']
-          logging.info(nsid)
-
-      except flickrapi.FlickrError:
-        token = ""
+      auth = flickr.auth_checkToken(
+#                 token=token,
+                format='json',
+                nojsoncallback="1",
+             )
+      logging.info(auth)
+      # username = auth.user.
+      auth = simplejson.loads(auth)
+      logging.info(auth)
+      if auth.get("auth"):
+        nsid = auth['auth']['user']['nsid']
+        logging.info(nsid)
 
     if nsid:
       min_taken = start.strftime("%Y-%m-%d 00:00:01")
@@ -167,7 +164,7 @@ class TripPage(webapp.RequestHandler):
                  token=token,
                  format='json',
                  nojsoncallback="1",
-                 user_id='48600109393@N01',
+                 user_id=nsid,
                  min_taken_date=min_taken,
                  max_taken_date=max_taken,
                  sort="date-taken-asc",
@@ -243,8 +240,6 @@ class LoginPage(webapp.RequestHandler):
     
     path = os.path.join(os.path.dirname(__file__), 'templates/login.html')
     self.response.out.write(template.render(path, template_values))
-    
-
 
 # ==
 
@@ -314,10 +309,9 @@ def build_stats(trip_list):
   return stats
 
 def get_keys(host):
-  # get the right API keys for the current server
-  logging.info("Got host "+host)
   keys = {}
 
+  # get the right API keys for the current server. Thanks Tom.
   DEVELOPMENT = os.environ['SERVER_SOFTWARE'][:11] == 'Development'
   if DEVELOPMENT:
     keys = {
@@ -334,9 +328,9 @@ def get_keys(host):
     
   return keys
 
-def get_flickr(keys):
+def get_flickr(keys, token=''):
   flickr = flickrapi.FlickrAPI(keys['flickr_key'], keys['flickr_sec'], 
-                               store_token=False, cache=True)
+                               token=token, store_token=False, cache=True)
   flickr.cache = flickrapi.SimpleCache(timeout=300, max_entries=200)
 
   return flickr
