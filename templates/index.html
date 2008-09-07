@@ -3,70 +3,88 @@
 <html lang="en">
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8">
-	<title>snaptrip - Your Trips</title>
+	<title>snaptrip - all your trips</title>
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
+  <script language="text/javascript" type="text/javascript">
+    $(document).ready(function() {
+      console.log("ready");
+      $("ul#trips li").hover(function() {
+        console.log("hover over");
+        $(this).css({ backgroundColor:"#def" });
+        $(this).children().children("a").css({ color:"#47a" });
+      }, function() {
+        console.log("hover out");
+        $(this).css({ backgroundColor:"#fff" })
+        $(this).children().children("a").css({ color:"#69c" });
+      });
+      $("li").click(function() {
+        console.log("click");
+        var href = ($(this).children().children("a").attr("href"));
+        console.log(href);
+        window.location.href = href;
+      });
+    })
+  </script>
+
 </head>
 <body>
   {% include "includes/header.html" %}
   
-  <div id="main">
-  
-    <h2>Hello, {{traveller.name}}.</h2>
-  
-    <!-- Have permanent Dopplr token '{{permanent}}' associated with session id {{session.sid}} (session {{session}}) -->
-      
-    <p>You've been on trips to:</p><!-- {{traveller}} -->
-  
-    <ul id="trips">
-    {% for trip in trips | reverse %}
-      <li><span class="block" style="background:#{{trip.city.rgb}}">&nbsp</span>
-        <a href="{{ trip.city.url }}">{{ trip.city.name }}</a>
-  
-        {# reusable block? #}
-        {% if trip.startdate.year == trip.finishdate.year %}
-          {% if trip.startdate.month == trip.finishdate.month %}
-            in <abbr style="color:#333;">{{ trip.startdate.strftime("%B %Y") }}</abbr>
+  <div id="content">
+    <div id="main">
+          
+      <p>You've been on trips to:</p><!-- {{traveller}} -->
+    
+      <ul id="trips">
+      {% for trip in trips | reverse %}
+        <li><span class="block" style="background:#{{trip.city.rgb}}">&nbsp</span>
+          <a href="{{ trip.city.url }}">{{ trip.city.name }}</a>
+    
+          {# reusable block? #}
+          {% if trip.startdate.year == trip.finishdate.year %}
+            {% if trip.startdate.month == trip.finishdate.month %}
+              in <abbr style="color:#333;">{{ trip.startdate.strftime("%B %Y") }}</abbr>
+            {% else %}
+              from <abbr style="color:#333;">{{ trip.startdate.strftime("%B") }}</abbr>
+                to <abbr style="color:#333;">{{ trip.finishdate.strftime("%B %Y") }}</abbr>
+            {% endif %}
           {% else %}
-            from <abbr style="color:#333;">{{ trip.startdate.strftime("%B") }}</abbr>
+            from <abbr style="color:#333;">{{ trip.startdate.strftime("%B %Y") }}</abbr>
               to <abbr style="color:#333;">{{ trip.finishdate.strftime("%B %Y") }}</abbr>
           {% endif %}
-        {% else %}
-          from <abbr style="color:#333;">{{ trip.startdate.strftime("%B %Y") }}</abbr>
-            to <abbr style="color:#333;">{{ trip.finishdate.strftime("%B %Y") }}</abbr>
-        {% endif %}
-  
-        <span class="internal"><a href="/trip/{{ trip.id }}">More on this trip</a></span>
-        <!-- <span class="external"><a href="http://www.dopplr.com/trip/{{ traveller.nick }}/{{ trip.id }}">View this trip at Dopplr</a></span> -->
+    
+          <span class="internal"><a href="/trip/{{ trip.id }}">More on this trip</a></span>
+          <!-- <span class="external"><a href="http://www.dopplr.com/trip/{{ traveller.nick }}/{{ trip.id }}">View this trip at Dopplr</a></span> -->
+        
+        </li>
+      {% endfor %}
+      </ul>
+      <!-- {{trips}} -->
       
-      </li>
-    {% endfor %}
-    </ul>
-    <!-- {{trips}} -->
+      <h3>Where?</h3>
+      
+      <p>You've been on trips in {{ stats.countries|length }} countries, spending the most time in...</p>
+      
+      <ul id="where">
+      {% for country in stats.countries | reverse %}
+        <li><span class="country">{{ country }}</span> - 
+            {{ stats.countries[country].trips }} trip{% if stats.countries[country].trips != 1 %}s{% endif %}, 
+            {{ stats.countries[country].duration }} day{% if stats.countries[country].duration != 1 %}s{% endif %}</li>
+      {% endfor %}
+      </ul>
     
-    <h3>Where?</h3>
+      <h3>When?</h3>
+      
+      <ul>
+      {% for year in stats.years | reverse %}
+        <li>{{ year }} - {{ stats.years[year] }} days</li>
+      {% endfor %}
+      </ul>
     
-    {{ stats.ordered }}
+      <p><span style="color:#f00;">{{ session.dopplr }}</span> <span style="color:#0f0">{{ session.flickr }}</span></p>
     
-    <p>You've been on trips in {{ stats.countries|length }} countries, spending the most time in...</p>
-    
-    <ul id="where">
-    {% for country in stats.countries | reverse %}
-      <li><span class="country">{{ country }}</span> - 
-          {{ stats.countries[country].trips }} trip{% if stats.countries[country].trips != 1 %}s{% endif %}, 
-          {{ stats.countries[country].duration }} day{% if stats.countries[country].duration != 1 %}s{% endif %}</li>
-    {% endfor %}
-    </ul>
-  
-    <h3>When?</h3>
-    
-    <ul>
-    {% for year in stats.years | reverse %}
-      <li>{{ year }} - {{ stats.years[year] }} days</li>
-    {% endfor %}
-    </ul>
-  
-    <p><span style="color:#f00;">{{ session.dopplr }}</span> <span style="color:#0f0">{{ session.flickr }}</span></p>
-  
+    </div>
   </div>
 
 </body>
