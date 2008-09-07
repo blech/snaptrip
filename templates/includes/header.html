@@ -1,10 +1,24 @@
   <div id="header">
-    <span>
-      <h1>snaptrip</h1>
-      
-      logged in as ....
-    </span>
+    <h1>snaptrip</h1>
     
-    <span class="who">
-    </span>  
+  {% if session.dopplr %}
+    <span class="who">logged in to dopplr as <a href="http://dopplr.com/traveller/{{ session.nick }}/">{{ session.name }}</a></span>
+
+<!-- 
+    <ul class="nav">
+      <li><b>your trips</b></li>
+      <li>log out</li>
+    </ul>
+ -->
+
+  {% else %}
+    <span class="who">not logged in to dopplr</span>
+
+<!-- 
+    <ul class="nav">
+      <li>log in</li>
+      <li>log out</li>
+    </ul>
+ -->
+  {% endif %}
   </div>

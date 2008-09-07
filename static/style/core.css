@@ -1,3 +1,5 @@
+/* general */
+
 body {
   font: 14px Arial, Helvetica, sans-serif;
   line-height: 16px;
@@ -7,17 +9,6 @@ body {
   margin:  0px;
 }
 
-div#header {
-  padding: 5px 20px 5px 20px;
-  border-bottom: 1px dotted rgb(204, 204, 204);
-  font: 12px Arial, Helvetica, sans-serif;
-}
-
-div#header h1 {
-  font: bold 12px Arial, Helvetica, sans-serif;
-  display: inline;
-}
-
 div#content {
   width:870px;
 }
@@ -25,6 +16,38 @@ div#content {
 div#main {
   padding: 0px 20px 20px 20px;
 }
+
+/* navigation */
+
+div#header {
+  padding: 5px 20px 5px 20px;
+  border-bottom: 1px dotted #ccc;
+  font: 12px Arial, Helvetica, sans-serif;
+}
+
+div#header h1 {
+  font: bold 12px Arial, Helvetica, sans-serif;
+  display: inline;
+  border-right: 1px dotted #ccc;
+  padding-right: 5px;
+  margin-right: 5px;
+}
+
+div#header span.who {
+  margin-left: 0px;
+  padding-left: 0px;
+}
+
+ul.nav {
+  text-align:right;
+  display: inline;
+}
+
+ul.nav li {
+  display: inline;
+}
+
+/* headings */
 
 h1 {
   font: 200 22px Arial, Helvetica, sans-serif;
@@ -41,6 +64,8 @@ h3 {
 ul li {
   list-style-type: none;
 }
+
+/* index page */
 
 ul#trips {
   margin: 0px 30px 0px 0px;
@@ -69,12 +94,6 @@ ul#trips li span.internal {
   text-align: right;
   position: absolute;
   right: 0px;
-}
-
-ul#where {
-/*
-  width: 250px;
-*/
 }
 
 ul#where li span.country {

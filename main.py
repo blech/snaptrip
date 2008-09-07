@@ -31,38 +31,11 @@ class IndexPage(webapp.RequestHandler):
     except KeyError, e:
       return self.redirect("/login/")
 
-    # get traveller info (todo cache?)
-    url = "https://www.dopplr.com/api/traveller_info.js"
-    if who:
-      url += "?traveller="+who
-    response = urlfetch.fetch(
-                 url = url,
-                 headers = {'Authorization': 'AuthSub token="'+permanent+'"'},
-               )
-    traveller_info = {}
-    try:
-      traveller_info = simplejson.loads(response.content)
-    except ValueError:
-      logging.warn("Didn't get a JSON response from traveller_info")
+    traveller_info = get_traveller_info(permanent, who)
+    trips_info     = get_trip_info(permanent, who)
 
-    # get trip info
-    url = "https://www.dopplr.com/api/trips_info.js"
-    if who:
-      url += "?traveller="+who
-    response = urlfetch.fetch(
-                 url = url,
-                headers = {'Authorization': 'AuthSub token="'+permanent+'"'},
-               )
-    trips_info = {}
     stats      = {}
-    try:
-      trips_info = simplejson.loads(response.content)
-      # trips_info = prettify_trips(trips_info)
-    except ValueError:
-      logging.warn("Didn't get a JSON response from traveller_info")
-
     if trips_info:
-      prettify_trips(trips_info)
       stats = build_stats(trips_info)
     
     template_values = {
@@ -73,10 +46,6 @@ class IndexPage(webapp.RequestHandler):
       'stats': stats,
     }
     
-#     @register.filter(name='cut')
-#     def cut(value, arg):
-#         return value.replace(arg, '')
-
     path = os.path.join(os.path.dirname(__file__), 'templates/index.html')
     template = env.get_template('index.html')
     
@@ -216,7 +185,14 @@ class LoginPage(webapp.RequestHandler):
       match = re.search('Token=(.*)\n', response.content)
       if (match):
         permanent = match.group(1)
+ 
+        # use this to store the traveller info
+        dopplr_info = get_traveller_info(permanent)
+ 
         session['dopplr'] = permanent
+        session['name'] = dopplr_info['traveller']['name']        
+        session['nick'] = dopplr_info['traveller']['nick']        
+
         self.redirect("/")
 
     
@@ -240,7 +216,47 @@ class LoginPage(webapp.RequestHandler):
     path = os.path.join(os.path.dirname(__file__), 'templates/login.html')
     self.response.out.write(template.render(path, template_values))
 
-# ==
+# == Dopplr
+
+def get_traveller_info(token, who=""):
+  # get traveller info (todo cache?)
+  url = "https://www.dopplr.com/api/traveller_info.js"
+  if who:
+    url += "?traveller="+who
+  response = urlfetch.fetch(
+               url = url,
+               headers = {'Authorization': 'AuthSub token="'+token+'"'},
+             )
+  traveller_info = {}
+  try:
+    traveller_info = simplejson.loads(response.content)
+  except ValueError:
+    logging.warn("Didn't get a JSON response from traveller_info")
+
+  return traveller_info
+
+def get_trip_info(token, who=""):
+  # get trip info
+  url = "https://www.dopplr.com/api/trips_info.js"
+  if who:
+    url += "?traveller="+who
+  response = urlfetch.fetch(
+               url = url,
+               headers = {'Authorization': 'AuthSub token="'+token+'"'},
+             )
+  trips_info = {}
+  try:
+    trips_info = simplejson.loads(response.content)
+    # trips_info = prettify_trips(trips_info)
+  except ValueError:
+    logging.warn("Didn't get a JSON response from traveller_info")
+
+  if trips_info:
+       prettify_trips(trips_info)
+
+  return trips_info
+
+# == utilities
 
 def prettify_trips(trip_list):
   # parse dates to datetime objects
@@ -333,6 +349,7 @@ def get_flickr(keys, token=''):
   flickr.cache = flickrapi.SimpleCache(timeout=300, max_entries=200)
 
   return flickr
+
 
 # ==
 
