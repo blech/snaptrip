@@ -23,15 +23,13 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates/')))
 
 class IndexPage(webapp.RequestHandler):
-  def get(self):
+  def get(self, who=""):
     permanent = ''
     session = sessions.Session()
     try:
       permanent = session['dopplr']
     except KeyError, e:
       return self.redirect("/login/")
-
-    who = ""; # TODO grab from URL
 
     # get traveller info (todo cache?)
     url = "https://www.dopplr.com/api/traveller_info.js"
@@ -140,7 +138,6 @@ class TripPage(webapp.RequestHandler):
       logging.warn("Using Flickr API key "+keys['flickr_key'])
 
       auth = flickr.auth_checkToken(
-#                 token=token,
                 format='json',
                 nojsoncallback="1",
              )
@@ -177,6 +174,8 @@ class TripPage(webapp.RequestHandler):
       url = ""
     else:
       photos = ""
+      keys = get_keys(self.request.host)
+      flickr = get_flickr(keys)      
       url = flickr.web_login_url('write')
     
     template_values = {
@@ -339,6 +338,7 @@ def get_flickr(keys, token=''):
 
 application = webapp.WSGIApplication(
                   [('/', IndexPage),
+                   ('/where/(\w*)', IndexPage),
                    ('/trip/(\d*)', TripPage),
                    ('/login/', LoginPage)
                   ],
