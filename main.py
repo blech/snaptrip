@@ -321,15 +321,15 @@ def get_keys(host):
   DEVELOPMENT = os.environ['SERVER_SOFTWARE'][:11] == 'Development'
   if DEVELOPMENT:
     keys = {
-      'gmap':       "ABQIAAAAAuD6u2ORBgn25rPuxX1qxxQ4d34u_oYfzC9kAIhtljFln5QgnBSLj4qbVLSLA2cKssBO11cTRrUoXg",
-      'flickr_key': "6e990ae1ba4697e88afa5d626b138fd2",
-      'flickr_sec': "172d6389fecab4bd",
-    }
-  else:    
-    keys = {
       'gmap':       "ABQIAAAAAuD6u2ORBgn25rPuxX1qxxTwM0brOpm-All5BF6PoaKBxRWWERQtnsYZp4mF-8WXCriNCoSun02Skw",
       'flickr_key': "d0f74bf817f518ae4ce7892ac7fce7de",
       'flickr_sec': "312fb375d41fcb09",
+    }
+  else:    
+    keys = {
+      'gmap':       "ABQIAAAAAuD6u2ORBgn25rPuxX1qxxQ4d34u_oYfzC9kAIhtljFln5QgnBSLj4qbVLSLA2cKssBO11cTRrUoXg",
+      'flickr_key': "6e990ae1ba4697e88afa5d626b138fd2",
+      'flickr_sec': "172d6389fecab4bd",
     }
     
   return keys
