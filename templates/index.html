@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
   <script language="text/javascript" type="text/javascript">
+    // set up onhover handlers
+
     $(document).ready(function() {
       console.log("ready");
       $("ul#trips li").hover(function() {
@@ -25,6 +27,10 @@
         window.location.href = href;
       });
     })
+
+    // show or hide selected types of trip
+    // $("li.future").show()
+
   </script>
 
 </head>
@@ -38,7 +44,7 @@
     
       <ul id="trips">
       {% for trip in trips | reverse %}
-        <li><span class="block" style="background:#{{trip.city.rgb}}">&nbsp</span>
+        <li class="{{ trip.status|lower }}"><span class="block" style="background:#{{trip.city.rgb}}">&nbsp</span>
           <a href="{{ trip.city.url }}">{{ trip.city.name }}</a>
     
           {# reusable block? #}
@@ -53,6 +59,8 @@
             from <abbr style="color:#333;">{{ trip.startdate.strftime("%B %Y") }}</abbr>
               to <abbr style="color:#333;">{{ trip.finishdate.strftime("%B %Y") }}</abbr>
           {% endif %}
+          
+          <span class="status" style="color:#ccc;">{{ trip.status }}</span>
     
           <span class="internal"><a href="/trip/{{ trip.id }}">More on this trip</a></span>
           <!-- <span class="external"><a href="http://www.dopplr.com/trip/{{ traveller.nick }}/{{ trip.id }}">View this trip at Dopplr</a></span> -->

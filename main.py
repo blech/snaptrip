@@ -260,9 +260,20 @@ def get_trip_info(token, who=""):
 
 def prettify_trips(trip_list):
   # parse dates to datetime objects
+  now = datetime.now()
+  
   for trip in trip_list["trip"]:
     trip["startdate"]  = datetime.strptime(trip["start"],  "%Y-%m-%d")
     trip["finishdate"] = datetime.strptime(trip["finish"], "%Y-%m-%d")
+
+    if trip["startdate"] < now:
+      if trip["finishdate"] > now:
+        trip["status"] = "Ongoing"
+      else:
+        trip["status"] = "Past"
+    else:
+      trip["status"] = "Future"
+      
   return trip_list
   
 def build_stats(trip_list):

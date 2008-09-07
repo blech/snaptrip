@@ -82,6 +82,10 @@ ul#trips li {
   color: #666;
 }
 
+ul#trips li.future {
+  display: none;
+}
+
 ul#trips li span.block {
   display:block;
   float: left;
@@ -94,6 +98,12 @@ ul#trips li span.internal {
   text-align: right;
   position: absolute;
   right: 0px;
+}
+
+ul#trips li span.status {
+  text-align: right;
+  position: absolute;
+  right: 115px;
 }
 
 ul#where li span.country {
