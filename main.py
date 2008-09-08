@@ -61,8 +61,6 @@ class TripPage(webapp.RequestHandler):
     except KeyError, e:
       return self.redirect("/login/")
 
-    logging.warn("Got trip_id "+trip_id)
-
     if not trip_id:
       return self.redirect("/")
 
@@ -73,7 +71,6 @@ class TripPage(webapp.RequestHandler):
                )
     trip_info = {}
     try:
-#       logging.info(response.content)
       trip_info = simplejson.loads(response.content)
     except ValueError:
       logging.warn("Didn't get a JSON response from trip_info")
@@ -103,20 +100,16 @@ class TripPage(webapp.RequestHandler):
       flickr = get_flickr(keys, token)      
   
       # check token (and get nsid)
-      logging.warn("Using Flickr token "+token)
-      logging.warn("Using Flickr API key "+keys['flickr_key'])
-
       auth = flickr.auth_checkToken(
                 format='json',
                 nojsoncallback="1",
              )
-      logging.info(auth)
-      # username = auth.user.
+
       auth = simplejson.loads(auth)
-      logging.info(auth)
       if auth.get("auth"):
         nsid = auth['auth']['user']['nsid']
-        logging.info(nsid)
+        # username = auth.user.
+        logging.info("Got Flickr user NSID "+nsid)
 
     if nsid:
       min_taken = start.strftime("%Y-%m-%d 00:00:01")
@@ -146,6 +139,8 @@ class TripPage(webapp.RequestHandler):
       keys = get_keys(self.request.host)
       flickr = get_flickr(keys)      
       url = flickr.web_login_url('write')
+      # if (permanent):
+      #   url = "" # TODO reflect in template
     
     template_values = {
       'session':    session,
@@ -266,6 +261,7 @@ def prettify_trips(trip_list):
     trip["startdate"]  = datetime.strptime(trip["start"],  "%Y-%m-%d")
     trip["finishdate"] = datetime.strptime(trip["finish"], "%Y-%m-%d")
 
+    # find status of trip: ongoing/past/future
     if trip["startdate"] < now:
       if trip["finishdate"] > now:
         trip["status"] = "Ongoing"
@@ -294,7 +290,6 @@ def build_stats(trip_list):
       display = "the "+country
     
     if not country in stats['countries']:
-      logging.info("reset "+country)
       stats['countries'][country] = { 'duration': 0, 'trips': 0, 'display':display,}
 
     stats['countries'][country]['duration'] += duration.days
@@ -316,14 +311,12 @@ def build_stats(trip_list):
         year_end = datetime(year, 12, 31)
         
         stats['years'][year] += (year_end-trip['startdate']).days
-        logging.info("added "+(str((year_end-trip['startdate']).days))+" days to "+str(year))
   
         year = trip['finishdate'].year
         year_start = datetime(year, 1, 1)
         if not year in stats['years']:
           stats['years'][year] = 0
         stats['years'][year] += (trip['finishdate']-year_start).days
-        logging.info("added "+(str((trip['finishdate']-year_start).days))+" days to "+str(year))
 
     # do we want to supply full-blown cross-cut stats? maybe later...
 
