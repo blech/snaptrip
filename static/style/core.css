@@ -15,6 +15,38 @@ div#content {
 
 div#main {
   padding: 0px 20px 20px 20px;
+  width:560px;
+  float:left;
+}
+
+/* headings */
+
+h1 {
+  font: 200 22px Arial, Helvetica, sans-serif;
+}
+
+h2 {
+  font: 200 18px Arial, Helvetica, sans-serif;
+}
+
+h3 {
+  font: 200 16px Arial, Helvetica, sans-serif;
+}
+
+/* general classes */
+
+a {
+  color: #69c;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #47a;
+  background: #def;
+}
+
+ul li {
+  list-style-type: none;
 }
 
 /* navigation */
@@ -47,28 +79,17 @@ ul.nav li {
   display: inline;
 }
 
-/* headings */
-
-h1 {
-  font: 200 22px Arial, Helvetica, sans-serif;
-}
-
-h2 {
-  font: 200 18px Arial, Helvetica, sans-serif;
-}
-
-h3 {
-  font: 200 16px Arial, Helvetica, sans-serif;
-}
-
-ul li {
-  list-style-type: none;
-}
-
 /* index page */
 
+div#side {
+  float:left;
+  min-width: 250px;
+  max-width: 270px;
+  padding: 0px;
+}
+
 ul#trips {
-  margin: 0px 30px 0px 0px;
+  margin: 0px 30px 10px 0px;
   padding: 0px;
   width: 550px;
   float: left;
@@ -106,28 +127,34 @@ ul#trips li span.status {
   right: 115px;
 }
 
+ul#where {
+  padding: 0px;
+}
+
 ul#where li span.country {
   width: 120px;
   float: left;
   display: block;
 }
 
-a {
-  color: #69c;
-  text-decoration: none;
+ul#when {
+  padding: 0px;
 }
 
-a:hover {
-  color: #47a;
-  background: #def;
+/* trip page */
+
+div#main.trip {
+  width: 520px;
 }
 
-/*
-ul#trips li span a {
-  padding: 5px 5px 5px 5px;
+div#trip_nav {
+  width: 512px;
 }
 
-ul#trips li span a:hover {
-  padding: 5px 5px 5px 5px;
+div#trip_nav span.index {
+  float:left;
 }
-*/
+
+div#trip_nav span.dopplr {
+  float:right;
+}

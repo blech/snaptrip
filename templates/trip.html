@@ -8,33 +8,45 @@
 </head>
 <body>
   {% include "includes/header.html" %}
- 
-  <div id="main">
-    <h2>A trip to {{trip.trip.city.name}}, {{trip.trip.city.country}}.</h2>
-  
-    {# TODO polyline from start point #}
-    {# TODO pick right key for domain #}
-    <p><img src="http://maps.google.com/staticmap?center={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }}&zoom=4&size=495x187&maptype=roadmap&markers={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }},smallwhite&key={{ keys.gmap }}" 
-            style="border: 5px solid #{{ trip.trip.city.rgb }}; height:187px; width:495px;"></p>
-  
-    <h3>Flickr photos from this trip</h3>
+
+  <div id="content">
+    <div id="main" class="trip">
+      <h2>A trip to {{trip.trip.city.name}}, {{trip.trip.city.country}}.</h2>
     
-    {% if photos %}
-      <div id="photos" style="width:512px;"><!-- {{ photos }} -->
-      {% for photo in photos.photo %}
-        <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" width="75" height="75" alt="{{ photo.title }}" style="margin:0px 0px 5px 5px; padding:0px; border:0px;"></a>
-      {% endfor %}
-  
-      <p>Showing {% ifnotequal photos.pages 1 %}{{ photos.perpage }} of {{ photos.total }} photos (page {{ photos.page }} of {{ photos.pages }}){% else %}{{ photos.total }} photos {% endifnotequal %} taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}</p>
+      {# TODO polyline from start point #}
+      {# TODO pick right key for domain #}
+      <p><img src="http://maps.google.com/staticmap?center={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }}&zoom=4&size=495x187&maptype=roadmap&markers={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }},smallwhite&key={{ keys.gmap }}" 
+              style="border: 5px solid #{{ trip.trip.city.rgb }}; height:187px; width:495px;"></p>
+    
+      <h3>Flickr photos from this trip</h3>
+      
+      {% if photos %}
+        <div id="photos" style="width:512px;"><!-- {{ photos }} -->
+        {% for photo in photos.photo %}
+          <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" width="75" height="75" alt="{{ photo.title }}" style="margin:0px 0px 5px 5px; padding:0px; border:0px;"></a>
+        {% endfor %}
+    
+        <p>Showing {% ifnotequal photos.pages 1 %}{{ photos.perpage }} of {{ photos.total }} photos (page {{ photos.page }} of {{ photos.pages }}){% else %}{{ photos.total }} photos {% endifnotequal %} taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}</p>
+        </div>
+      {% endif %}
+      
+      {% if not photos %}
+        <p>Please <a href="{{ url }}">authenticate with Flickr</a> to see and tag your photos from this trip.</p>
+      {% endif %}
+    
+      <div id="trip_nav">
+        <span class="index"><a href="/">&larr; back to all trips</a></span>
+        <span class="dopplr"><a href="{{ trip.trip.url }}">view this trip at Dopplr &rarr;</a></span>
       </div>
-    {% endif %}
-    
-    {% if not photos %}
-      <p>Please <a href="{{ url }}">authenticate with Flickr</a> to see and tag your photos from this trip.</p>
-    {% endif %}
+      
+      <!-- {{ trip }} -->
   
-    <p><a href="/">&larr; back to all trips</a></p>
-    
+    </div>
+
+    <div id="side">
+      <h3>More trips</h3>
+    </div>
   </div>
+  
 </body>
 </html>

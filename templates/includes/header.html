@@ -1,8 +1,8 @@
   <div id="header">
     <h1>snaptrip</h1>
     
-  {% if session.dopplr %}
-    <span class="who">logged in to dopplr as <a href="http://dopplr.com/traveller/{{ session.nick }}/">{{ session.name }}</a></span>
+  {% if session.dopplr %}{# lowercase? #}
+    <span class="who">logged in to Dopplr as <a href="http://dopplr.com/traveller/{{ session.nick }}/">{{ session.name }}</a></span>
 
 <!-- 
     <ul class="nav">

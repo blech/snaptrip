@@ -40,7 +40,7 @@
   <div id="content">
     <div id="main">
           
-      <p>You've been on trips to:</p><!-- {{traveller}} -->
+      <h3>Past trips{% if traveller.name != session.name %} for {{ traveller.name }}{% endif %}</h3>
     
       <ul id="trips">
       {% for trip in trips | reverse %}
@@ -68,10 +68,20 @@
         </li>
       {% endfor %}
       </ul>
+      
+<!-- 
+      <p id="trip_selector">Show 
+        <a href="/where/{{ session.nick }}/all">all trips</a>, 
+        <a href="/where/{{ session.nick }}/future">future trips, or 
+        <a href="/where/{{ session.nick }}/past">past trips</a> only.</p>
+ -->
+    </div>
+
+    <div id="side">
 
       <h3>Where?</h3>
       
-      <p>You've been on trips in {{ stats.countries|length }} countries, spending the most time in...</p>
+      <p>{% if traveller.name == session.name %}You've{% else %}{{ traveller.name }} has {% endif %} been on trips in {{ stats.countries|length }} countries, spending the most time in...</p>
       
       <ul id="where">
       {% for country in stats.countries | reverse %}
@@ -83,7 +93,7 @@
     
       <h3>When?</h3>
       
-      <ul>
+      <ul id="when">
       {% for year in stats.years | reverse %}
         <li>{{ year }} - {{ stats.years[year] }} days</li>
       {% endfor %}
