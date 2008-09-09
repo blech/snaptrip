@@ -29,7 +29,9 @@
     
         <p>Showing {% ifnotequal photos.pages 1 %}{{ photos.perpage }} of {{ photos.total }} photos (page {{ photos.page }} of {{ photos.pages }}){% else %}{{ photos.total }} photos {% endifnotequal %} taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}</p>
         
+<!-- 
         <p>Tag these photos at Flickr. (Why?)</p>
+ -->
         </div>
       {% else %}
         <h3>No Flickr photos found for this trip.</h3>
