@@ -65,9 +65,12 @@ div#header h1 {
   margin-right: 5px;
 }
 
-div#header span.who {
+div#header span {
   margin-left: 0px;
   padding-left: 0px;
+  border-right: 1px dotted #ccc;
+  padding-right: 5px;
+  margin-right: 5px;
 }
 
 ul.nav {
