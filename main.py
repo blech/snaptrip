@@ -115,8 +115,6 @@ class TripPage(webapp.RequestHandler):
       min_taken = start.strftime("%Y-%m-%d 00:00:01")
       max_taken = finish.strftime("%Y-%m-%d 23:59:59")
     
-      logging.info("Time duration: "+min_taken+" to "+max_taken)
-    
       # TODO user ID
       # TODO dtrt with day ends
       photos = flickr.photos_search(
@@ -130,7 +128,6 @@ class TripPage(webapp.RequestHandler):
                  per_page="24",
                  extras='license, date_upload, date_taken, tags, o_dims, views, media',
                )
-      logging.info(photos)
       photos = simplejson.loads(photos)
       photos = photos['photos']
       url = ""
@@ -307,7 +304,6 @@ def build_stats(trip_list):
         # if there's *anyone* who has a trip spanning two, they can bloody
         # well write this themselves. Otherwise...
 
-        logging.info("year boundary spanning trip")
         year_end = datetime(year, 12, 31)
         
         stats['years'][year] += (year_end-trip['startdate']).days
