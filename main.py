@@ -239,7 +239,7 @@ def get_traveller_info(token, who=""):
   traveller_info = {}
   try:
     traveller_info = simplejson.loads(response.content)
-    traveller = traveller_info['traveller']
+    traveller_info = traveller_info['traveller']
   except ValueError:
     logging.warn("Didn't get a JSON response from traveller_info")
 
