@@ -12,10 +12,12 @@
     $(document).ready(function() {
       $("ul#trips li").hover(function() {
         $(this).css({ backgroundColor:"#def" });
-        $(this).children().children("a").css({ color:"#47a"; cursor: hand; });
+        $(this).css({ cursor:"hand" });
+        $(this).children().children("a").css({ color:"#47a" });
       }, function() {
         $(this).css({ backgroundColor:"#fff" })
-        $(this).children().children("a").css({ color:"#69c"; cursor: pointer; });
+        $(this).css({ cursor:"pointer" });
+        $(this).children().children("a").css({ color:"#69c" });
       });
       $("li").click(function() {
         var href = ($(this).children().children("a").attr("href"));
