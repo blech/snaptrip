@@ -31,19 +31,17 @@ class IndexPage(webapp.RequestHandler):
     except KeyError, e:
       return self.redirect("/login/")
 
-    traveller_info = get_traveller_info(permanent, who)
-    trips_info     = get_trip_info(permanent, who)
-
-    stats      = {}
+    stats           = {}
+    trips_info      = get_trip_info(permanent, who)
     if trips_info:
-      stats = build_stats(trips_info)
+      stats         = build_stats(trips_info)
     
     template_values = {
-      'session': session,
-      'permanent': permanent,
-      'traveller': traveller_info['traveller'],
-      'trips': trips_info['trip'],
-      'stats': stats,
+      'session':    session,
+      'permanent':  permanent,
+      'traveller':  get_traveller_info(permanent, who),
+      'trips':      trips_info,
+      'stats':      stats,
     }
     
     path = os.path.join(os.path.dirname(__file__), 'templates/index.html')
@@ -241,6 +239,7 @@ def get_traveller_info(token, who=""):
   traveller_info = {}
   try:
     traveller_info = simplejson.loads(response.content)
+    traveller = traveller_info['traveller']
   except ValueError:
     logging.warn("Didn't get a JSON response from traveller_info")
 
@@ -258,12 +257,13 @@ def get_trip_info(token, who=""):
   trips_info = {}
   try:
     trips_info = simplejson.loads(response.content)
+    trips_info = trips_info['trip']
     # trips_info = prettify_trips(trips_info)
   except ValueError:
     logging.warn("Didn't get a JSON response from traveller_info")
 
   if trips_info:
-       prettify_trips(trips_info)
+    prettify_trips(trips_info)
 
   return trips_info
 
@@ -273,7 +273,7 @@ def prettify_trips(trip_list):
   # parse dates to datetime objects
   now = datetime.now()
   
-  for trip in trip_list["trip"]:
+  for trip in trip_list:
     trip["startdate"]  = datetime.strptime(trip["start"],  "%Y-%m-%d")
     trip["finishdate"] = datetime.strptime(trip["finish"], "%Y-%m-%d")
 
@@ -293,7 +293,7 @@ def build_stats(trip_list):
            'years':     {}, 
            'ordered':   [], }
   
-  for trip in trip_list["trip"]:
+  for trip in trip_list:
     # skip if not a past trip
     if trip['status'] != "Past":
       continue
