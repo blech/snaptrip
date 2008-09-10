@@ -23,29 +23,30 @@
       });
     })
 
-  // TODO consolidate these, they're way too similar
   // TODO hash should DTRT
-  function show_all() {
-    $("li.future:last").attr("class", "future last");
-    $("li.future").show();
-    $("li.past").show();
+  function show_trips(type) {
+    $("h3 span#type").text(type);
+    
+    // TODO consolidate these, they're way too similar
+    if (type == "All") {
+      $("li.future:last").attr("class", "future last");
+      $("li.future").show();
+      $("li.past").show();
+    }
+    
+    if (type == "Future") {
+      $("li.future:last").attr("class", "future");
+      $("li.future").show();
+      $("li.past").hide();
+    }
+  
+    if (type == "Past") {
+      $("li.future").hide();
+      $("li.past").show();
+    }
+  
     return false;
   }
-  
-  function show_future() {
-    $("li.future:last").attr("class", "future");
-    $("li.future").show();
-    $("li.past").hide();
-    return false;
-  }
-  
-  function show_past() {
-    $("li.future").hide();
-    $("li.past").show();
-    return false;
-  }
-  
-  
   </script>
 
 </head>
@@ -55,7 +56,7 @@
   <div id="content">
     <div id="main">
           
-      <h3>Past trips{% if traveller.name != session.name %} for {{ traveller.name }}{% endif %}</h3>
+      <h3><span id="type">Past</span> trips{% if traveller.name != session.name %} for {{ traveller.name }}{% endif %}</h3>
     
       <ul id="trips">
       {% for trip in trips | reverse %}
@@ -83,11 +84,6 @@
         </li>
       {% endfor %}
       </ul>
-      
-      <p id="trip_selector">Show 
-        <a href="#" onclick="javascript:show_all();">all trips</a>, or only
-        <a href="#" onclick="javascript:show_future();">future</a> or 
-        <a href="#" onclick="javascript:show_past();">past</a> trips.</p>
     </div>
 
     <div id="side">
@@ -111,6 +107,11 @@
         <li>{{ year }} - {{ stats.years[year] }} days</li>
       {% endfor %}
       </ul>
+
+      <p id="trip_selector">Show 
+        <a href="#" onclick="javascript: return show_trips('All');">all trips</a>, or only
+        <a href="#" onclick="javascript: return show_trips('Future');">future</a> or 
+        <a href="#" onclick="javascript: return show_trips('Past');">past</a> trips.</p>
 
       <p>These statistics are for past trips only, even if you're looking at all trips.</p>
     
