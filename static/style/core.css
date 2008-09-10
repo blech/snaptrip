@@ -164,6 +164,10 @@ div#main.trip {
   width: 520px;
 }
 
+div#main.trip h2 {
+  font: 200 16px Arial, Helvetica, sans-serif;
+}
+
 div#trip_nav {
   width: 512px;
 }
@@ -176,6 +180,6 @@ div#trip_nav span.dopplr {
   float:right;
 }
 
-div#side li {
+div#side ul.trip li {
   list-style-type: disc;
 }
