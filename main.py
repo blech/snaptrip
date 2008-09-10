@@ -64,6 +64,8 @@ class TripPage(webapp.RequestHandler):
     if not trip_id:
       return self.redirect("/")
 
+    #== start trip fetch
+
     url = "https://www.dopplr.com/api/trip_info.js?trip_id="+trip_id
     response = urlfetch.fetch(
                  url = url,
@@ -86,6 +88,20 @@ class TripPage(webapp.RequestHandler):
     finish = datetime.strptime(trip_info["trip"]["finish"], "%Y-%m-%d")
     trip_info["trip"]["finishdate"] = finish
 
+    # find status of trip: ongoing/past/future
+    now = datetime.now()
+    if trip_info["trip"]["startdate"] < now:
+      if trip_info["trip"]["finishdate"] > now:
+        trip_info["trip"]["status"] = "Ongoing"
+      else:
+        trip_info["trip"]["status"] = "Past"
+    else:
+      trip_info["trip"]["status"] = "Future"
+
+    #== end trip fetch
+
+    #== start flickr fetch
+
     # do Flickr photo search
     token = ""
     nsid  = ""
@@ -94,7 +110,8 @@ class TripPage(webapp.RequestHandler):
     except KeyError:
       logging.warn("No Flickr token")
 
-    if token: # disable photos
+    if token and not trip_info["trip"]["status"] == "Future":
+      logging.warn("Attempting photo search")
       # get keys
       keys = get_keys(self.request.host)
       flickr = get_flickr(keys, token)      
@@ -138,6 +155,8 @@ class TripPage(webapp.RequestHandler):
       url = flickr.web_login_url('write')
       # if (permanent):
       #   url = "" # TODO reflect in template
+
+    #== end flickr fetch
     
     template_values = {
       'session':    session,

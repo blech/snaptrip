@@ -45,8 +45,13 @@ a:hover {
   background: #def;
 }
 
+ul {
+  padding: 0px;
+}
+
 ul li {
   list-style-type: none;
+  padding: 0px;
 }
 
 /* navigation */
@@ -169,4 +174,8 @@ div#trip_nav span.index {
 
 div#trip_nav span.dopplr {
   float:right;
+}
+
+div#side li {
+  list-style-type: disc;
 }

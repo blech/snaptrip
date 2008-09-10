@@ -18,32 +18,37 @@
       <p><img src="http://maps.google.com/staticmap?center={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }}&zoom=4&size=495x187&maptype=roadmap&markers={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }},smallwhite&key={{ keys.gmap }}" 
               style="border: 5px solid #{{ trip.trip.city.rgb }}; height:187px; width:495px;"></p>
     
-    {% if photos %}
-    
-      {% if photos.total %}
-      <h3>Flickr photos from this trip</h3>
-        <div id="photos" style="width:512px;"><!-- {{ photos }} -->
-        {% for photo in photos.photo %}
-          <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" width="75" height="75" alt="{{ photo.title }}" style="margin:0px 0px 5px 5px; padding:0px; border:0px;"></a>
-        {% endfor %}
-    
-        <p>Showing {% ifnotequal photos.pages 1 %}{{ photos.perpage }} of {{ photos.total }} photos (page {{ photos.page }} of {{ photos.pages }}){% else %}{{ photos.total }} photos {% endifnotequal %} taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}</p>
-        
-<!-- 
-        <p>Tag these photos at Flickr. (Why?)</p>
- -->
-        </div>
-      {% else %}
-        <h3>No Flickr photos found for this trip.</h3>
+    {% ifequal trip.trip.status "Future" %}
+      <p>This trip is in the future, so no Flickr photos are available.</p>
+      
+    {% else %}
+      {% if photos %}
+      
+        {% if photos.total %}
+        <h3>Flickr photos from this trip</h3>
+          <div id="photos" style="width:512px;"><!-- {{ photos }} -->
+          {% for photo in photos.photo %}
+            <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" width="75" height="75" alt="{{ photo.title }}" style="margin:0px 0px 5px 5px; padding:0px; border:0px;"></a>
+          {% endfor %}
+      
+          <p>Showing {% ifnotequal photos.pages 1 %}{{ photos.perpage }} of {{ photos.total }} photos (page {{ photos.page }} of {{ photos.pages }}){% else %}{{ photos.total }} photos {% endifnotequal %} taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}</p>
+          
+  <!-- 
+          <p>Tag these photos at Flickr. (Why?)</p>
+   -->
+          </div>
+        {% else %}
+          <h3>No Flickr photos found for this trip.</h3>
+        {% endif %}
       {% endif %}
-    {% endif %}
-    
-    {% if not photos %}
-        <p>Please <a href="{{ url }}">authenticate with Flickr</a> to see and tag your photos from this trip.</p>
-    {% endif %}
+      
+      {% if not photos %}
+          <p>Please <a href="{{ url }}">authenticate with Flickr</a> to see and tag your photos from this trip.</p>
+      {% endif %}
+    {% endifequal %}
     
       <div id="trip_nav">
-        <span class="index"><a href="/">&larr; back to all trips</a></span>
+        <span class="index"><a href="/where/{{ session.nick }}">&larr; back to all trips</a></span>
         <span class="dopplr"><a href="{{ trip.trip.url }}">view this trip at Dopplr &rarr;</a></span>
       </div>
       
@@ -52,7 +57,16 @@
     </div>
 
     <div id="side">
-      <h3></h3>
+      <h3>About photos on Dopplr</h3>
+      
+      <p>Dopplr's trip pages can include photos you've taken on a trip. Firstly, you'll need to <a href="http://www.dopplr.com/account/flickr">associate your Flickr and Dopplr accounts</a>. Once this is done, Dopplr will look for your photos in three steps:</p>
+      
+      <ul>
+        <li>Using a <a href="http://www.flickr.com/groups/api/discuss/72157594497877875/">machine tag</a> for a given trip</li>
+        <li>Searching on date taken</li>
+      </ul>
+      
+      <p>snaptrip can help by making sure that your machine tags are correct, and by setting them if you don't have them already.</p>
     </div>
   </div>
   
