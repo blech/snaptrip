@@ -12,10 +12,10 @@
     $(document).ready(function() {
       $("ul#trips li").hover(function() {
         $(this).css({ backgroundColor:"#def" });
-        $(this).children().children("a").css({ color:"#47a" });
+        $(this).children().children("a").css({ color:"#47a"; cursor: hand; });
       }, function() {
         $(this).css({ backgroundColor:"#fff" })
-        $(this).children().children("a").css({ color:"#69c" });
+        $(this).children().children("a").css({ color:"#69c"; cursor: pointer; });
       });
       $("li").click(function() {
         var href = ($(this).children().children("a").attr("href"));
@@ -56,7 +56,7 @@
   <div id="content">
     <div id="main">
     
-      <h3><span id="type">Past</span> trips{% if traveller.name != session.name %}{% if traveller.name != session.name %} for {{ traveller.name }}{% endif %}</h3>
+      <h3><span id="type">Past</span> trips{% if traveller.name != session.name %} for {{ traveller.name }}{% endif %}</h3>
     
       <ul id="trips">
       {% for trip in trips | reverse %}
