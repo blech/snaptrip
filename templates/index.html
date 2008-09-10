@@ -10,27 +10,42 @@
     // set up onhover handlers
 
     $(document).ready(function() {
-      console.log("ready");
       $("ul#trips li").hover(function() {
-        console.log("hover over");
         $(this).css({ backgroundColor:"#def" });
         $(this).children().children("a").css({ color:"#47a" });
       }, function() {
-        console.log("hover out");
         $(this).css({ backgroundColor:"#fff" })
         $(this).children().children("a").css({ color:"#69c" });
       });
       $("li").click(function() {
-        console.log("click");
         var href = ($(this).children().children("a").attr("href"));
-        console.log(href);
         window.location.href = href;
       });
     })
 
-    // show or hide selected types of trip
-    // $("li.future").show()
-
+  // TODO consolidate these, they're way too similar
+  // TODO hash should DTRT
+  function show_all() {
+    $("li.future:last").attr("class", "future last");
+    $("li.future").show();
+    $("li.past").show();
+    return false;
+  }
+  
+  function show_future() {
+    $("li.future:last").attr("class", "future");
+    $("li.future").show();
+    $("li.past").hide();
+    return false;
+  }
+  
+  function show_past() {
+    $("li.future").hide();
+    $("li.past").show();
+    return false;
+  }
+  
+  
   </script>
 
 </head>
@@ -69,12 +84,10 @@
       {% endfor %}
       </ul>
       
-<!-- 
       <p id="trip_selector">Show 
-        <a href="/where/{{ session.nick }}/all">all trips</a>, 
-        <a href="/where/{{ session.nick }}/future">future trips, or 
-        <a href="/where/{{ session.nick }}/past">past trips</a> only.</p>
- -->
+        <a href="#" onclick="javascript:show_all();">all trips</a>, or only
+        <a href="#" onclick="javascript:show_future();">future</a> or 
+        <a href="#" onclick="javascript:show_past();">past</a> trips.</p>
     </div>
 
     <div id="side">
@@ -84,8 +97,8 @@
       <p>{% if traveller.name == session.name %}You've{% else %}{{ traveller.name }} has {% endif %} been on trips in {{ stats.countries|length }} countries, spending the most time in...</p>
       
       <ul id="where">
-      {% for country in stats.countries | reverse %}
-        <li><span class="country">{{ country }}</span> - 
+      {% for country in stats.countries %}
+        <li><span class="country">{{ stats.countries[country].display }}</span> - 
             {{ stats.countries[country].trips }} trip{% if stats.countries[country].trips != 1 %}s{% endif %}, 
             {{ stats.countries[country].duration }} day{% if stats.countries[country].duration != 1 %}s{% endif %}</li>
       {% endfor %}
@@ -94,10 +107,12 @@
       <h3>When?</h3>
       
       <ul id="when">
-      {% for year in stats.years | reverse %}
+      {% for year in stats.years %}
         <li>{{ year }} - {{ stats.years[year] }} days</li>
       {% endfor %}
       </ul>
+
+      <p>These statistics are for past trips only, even if you're looking at all trips.</p>
     
     </div>
   </div>

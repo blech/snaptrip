@@ -102,12 +102,16 @@ ul#trips li {
   position: relative;
   padding: 5px 0px 5px 0px;
   margin-right: 0px;
-  border-bottom: 1px dotted rgb(204, 204, 204);
+  border-bottom: 1px dotted #ccc;
   color: #666;
 }
 
 ul#trips li.future {
   display: none;
+}
+
+ul#trips li.last {
+  border-bottom: 1px solid #ccc;
 }
 
 ul#trips li span.block {
@@ -134,8 +138,13 @@ ul#where {
   padding: 0px;
 }
 
+ul#where li {
+  padding: 0px;
+  clear: both;
+}
+
 ul#where li span.country {
-  width: 120px;
+  width: 140px;
   float: left;
   display: block;
 }
