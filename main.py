@@ -275,6 +275,10 @@ def build_stats(trip_list):
            'ordered':   [], }
   
   for trip in trip_list["trip"]:
+    # skip if not a past trip
+    if trip['status'] != "Past":
+      continue
+      
     # how long (simple version...)
     duration = trip['finishdate'] - trip['startdate']
     
@@ -283,9 +287,14 @@ def build_stats(trip_list):
     display = country
 
     # special casing!
-    if not country.find("United"):
-      display = "the "+country
+    # if not country.find("United"):
+    #   display = "the "+country
+      
+    # more special casing! TODO hash
+    if not country.find("Hong Kong"):
+      display = "Hong Kong"
     
+    # stuff info into the data structure
     if not country in stats['countries']:
       stats['countries'][country] = { 'duration': 0, 'trips': 0, 'display':display,}
 
