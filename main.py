@@ -32,7 +32,7 @@ class IndexPage(webapp.RequestHandler):
       return self.redirect("/login/")
 
     stats           = {}
-    trips_info      = get_trip_info(permanent, who)
+    trips_info      = get_trips_info(permanent, who)
     if trips_info:
       stats         = build_stats(trips_info)
     
@@ -54,132 +54,54 @@ class TripPage(webapp.RequestHandler):
     permanent = ''
     session = sessions.Session()
 
+    # get trip id and hence info from Dopplr
+    if not trip_id:
+      return self.redirect("/")
+
     try:
       permanent = session['dopplr']
     except KeyError, e:
       return self.redirect("/login/")
 
-    if not trip_id:
-      return self.redirect("/")
+    trip_info = get_trip_info(permanent, trip_id)
 
-    #== start trip fetch
+    # initialise template data before we call Flickr
+    template_values = {
+      'session':    session,
+      'trip':       trip_info,
+      'keys':       get_keys(self.request.host),
+    }
 
-    url = "https://www.dopplr.com/api/trip_info.js?trip_id="+trip_id
-    response = urlfetch.fetch(
-                 url = url,
-                 headers = {'Authorization': 'AuthSub token="'+permanent+'"'},
-               )
-    trip_info = {}
-    try:
-      trip_info = simplejson.loads(response.content)
-    except ValueError:
-      logging.warn("Didn't get a JSON response from trip_info")
-      
-    if trip_info.get('error'):
-      # not good. show to user?
-      logging.error(trip_info['error'])
-      return self.redirect("/")
-
-    start  = datetime.strptime(trip_info["trip"]["start"],  "%Y-%m-%d")
-    trip_info["trip"]["startdate"]  = start
-    
-    finish = datetime.strptime(trip_info["trip"]["finish"], "%Y-%m-%d")
-    trip_info["trip"]["finishdate"] = finish
-
-    # find status of trip: ongoing/past/future
-    now = datetime.now()
-    if trip_info["trip"]["startdate"] < now:
-      if trip_info["trip"]["finishdate"] > now:
-        trip_info["trip"]["status"] = "Ongoing"
-      else:
-        trip_info["trip"]["status"] = "Past"
-    else:
-      trip_info["trip"]["status"] = "Future"
-
-    #== end trip fetch
-
-    #== start flickr fetch
-
-    # do Flickr photo search
-    token = ""
-    nsid  = ""
+    token = ''
     try:
       token = session['flickr']
     except KeyError:
       logging.warn("No Flickr token")
-
+  
     if token and not trip_info["trip"]["status"] == "Future":
-      logging.warn("Attempting photo search")
       # get keys
       keys = get_keys(self.request.host)
       flickr = get_flickr(keys, token)      
-  
-      # check token (and get nsid)
-      auth = flickr.auth_checkToken(
-                format='json',
-                nojsoncallback="1",
-             )
-
-      auth = simplejson.loads(auth)
-      if auth.get("auth"):
-        nsid = auth['auth']['user']['nsid']
-        # username = auth.user.
-        logging.info("Got Flickr user NSID "+nsid)
-
-    if nsid:
-      min_taken = start.strftime("%Y-%m-%d 00:00:01")
-      max_taken = finish.strftime("%Y-%m-%d 23:59:59")
     
-      # TODO user ID
-      # TODO dtrt with day ends
-      photos = flickr.photos_search(
-                 token=token,
-                 format='json',
-                 nojsoncallback="1",
-                 user_id=nsid,
-                 min_taken_date=min_taken,
-                 max_taken_date=max_taken,
-                 sort="date-taken-asc",
-                 per_page="24",
-                 extras='license, date_upload, date_taken, tags, o_dims, views, media',
-               )
-      photos = simplejson.loads(photos)
-      photos = photos['photos']
-      url = ""
+      template_values['photos'] = get_flickr_photos_by_date(flickr, trip_info)
     else:
-      photos = ""
-      keys = get_keys(self.request.host)
-      flickr = get_flickr(keys)      
-      url = flickr.web_login_url('write')
-      # if (permanent):
-      #   url = "" # TODO reflect in template
-
-    #== end flickr fetch
-    
-    template_values = {
-      'session':    session,
-      'permanent':  permanent,
-      'trip':       trip_info,
-      'photos':     photos,
-      'url':        url,
-      'keys':       keys,
-    }
+      template_values['url'] = get_flickr_auth_url(self.request.host);
 
     path = os.path.join(os.path.dirname(__file__), 'templates/trip.html')
     self.response.out.write(template.render(path, template_values))    
 
 class LoginPage(webapp.RequestHandler):
   def get(self):
+    session = sessions.Session()
+
     callback_url = "http://"+self.request.host+"/login/" 
   
     dopplr_url = "https://www.dopplr.com/api/AuthSubRequest?scope=http://www.dopplr.com&next="+callback_url+"&session=1"
     dopplr_token = self.request.get('token')
 
     keys = get_keys(self.request.host)
-    flickr = get_flickr(keys)
+    flickr = get_flickr(keys)      
     flickr_url = flickr.web_login_url('write')
-    
-    session = sessions.Session()
     
     error = ""
     permanent = ""
@@ -199,8 +121,8 @@ class LoginPage(webapp.RequestHandler):
         dopplr_info = get_traveller_info(permanent)
  
         session['dopplr'] = permanent
-        session['name'] = dopplr_info['traveller']['name']        
-        session['nick'] = dopplr_info['traveller']['nick']        
+        session['name'] = dopplr_info['name']        
+        session['nick'] = dopplr_info['nick']        
 
         self.redirect("/")
 
@@ -245,7 +167,7 @@ def get_traveller_info(token, who=""):
 
   return traveller_info
 
-def get_trip_info(token, who=""):
+def get_trips_info(token, who=""):
   # get trip info
   url = "https://www.dopplr.com/api/trips_info.js"
   if who:
@@ -267,6 +189,84 @@ def get_trip_info(token, who=""):
 
   return trips_info
 
+def get_trip_info(token, trip_id):
+  url = "https://www.dopplr.com/api/trip_info.js?trip_id="+trip_id
+  response = urlfetch.fetch(
+               url = url,
+               headers = {'Authorization': 'AuthSub token="'+token+'"'},
+             )
+  trip_info = {}
+  try:
+    trip_info = simplejson.loads(response.content)
+  except ValueError:
+    logging.warn("Didn't get a JSON response from trip_info")
+    
+  if trip_info.get('error'):
+    # not good. show to user?
+    logging.error(trip_info['error'])
+    return self.redirect("/")
+
+  start  = datetime.strptime(trip_info["trip"]["start"],  "%Y-%m-%d")
+  trip_info["trip"]["startdate"]  = start
+  
+  finish = datetime.strptime(trip_info["trip"]["finish"], "%Y-%m-%d")
+  trip_info["trip"]["finishdate"] = finish
+
+  # find status of trip: ongoing/past/future
+  now = datetime.now()
+  if trip_info["trip"]["startdate"] < now:
+    if trip_info["trip"]["finishdate"] > now:
+      trip_info["trip"]["status"] = "Ongoing"
+    else:
+      trip_info["trip"]["status"] = "Past"
+  else:
+    trip_info["trip"]["status"] = "Future"
+    
+  return trip_info
+
+# == Flickr
+
+def get_flickr_photos_by_date(flickr, trip_info):
+  logging.warn("Attempting photo search by date")
+  nsid  = ""
+
+  # check token (and get nsid)
+  auth = flickr.auth_checkToken(
+            format='json',
+            nojsoncallback="1",
+         )
+
+  auth = simplejson.loads(auth)
+  if auth.get("auth"):
+    nsid = auth['auth']['user']['nsid']
+    # username = auth.user.
+    logging.info("Got Flickr user NSID "+nsid)
+
+  if nsid:
+    min_taken = trip_info["trip"]["startdate"].strftime("%Y-%m-%d 00:00:01")
+    max_taken = trip_info["trip"]["finishdate"].strftime("%Y-%m-%d 23:59:59")
+  
+    # TODO user ID
+    # TODO dtrt with day ends
+    photos = flickr.photos_search(
+               format='json',
+               nojsoncallback="1",
+               user_id=nsid,
+#                privacy_filter="1",
+               min_taken_date=min_taken,
+               max_taken_date=max_taken,
+               sort="date-taken-asc",
+               per_page="24",
+               extras='license, date_upload, date_taken, tags, o_dims, views, media',
+             )
+    photos = simplejson.loads(photos)
+    return photos['photos']
+
+def get_flickr_auth_url(host):
+  keys = get_keys(host)
+  flickr = get_flickr(keys)      
+  return flickr.web_login_url('write')
+    
 # == utilities
 
 def prettify_trips(trip_list):
