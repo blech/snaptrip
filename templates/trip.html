@@ -5,6 +5,35 @@
 	<meta http-equiv="content-type" content="text/html; charset=utf-8">
 	<title>snaptrip - a trip to {{ trip.trip.city.name }}</title>
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
+  <script language="text/javascript" type="text/javascript">
+  var page = 1;
+
+  function loadmore() {
+    page++;
+    console.log("'"+page+"'");
+
+  {% ifequal method 'machinetag' %}
+    $.getJSON("/ajax/photos.more?page="+page+"&token={{ session.flickr }}&nsid={{ photos.photo.0.owner }}&tripid={{ trip.trip.id }}",
+              function(json) { 
+                console.log(json.photos.total);
+                page = json.photos.page;
+              }
+             );
+  {% else %}
+    $.getJSON("/ajax/photos.more?page="+page+"&token={{ session.flickr }}&nsid={{ photos.photo.0.owner }}&startdate={{ trip.trip.startdate|date:"Y-m-d" }}&finishdate={{ trip.trip.finishdate|date:"Y-m-d" }}",
+              function(json) { 
+                console.log(json.photos.total);
+                page = json.photos.page;
+              }
+             );
+  {% endifequal %}
+
+    return false;
+  }
+  </script>
+
 </head>
 <body>
   {% include "includes/header.html" %}
@@ -12,6 +41,8 @@
   <div id="content">
     <div id="main" class="trip">
       <h2>A trip to {{trip.trip.city.name}}, {{trip.trip.city.country}}.</h2>
+      
+      {{ session.flickr }} {{ photos.photo.0.owner }}
       
       {# TODO polyline from start point #}
       {# TODO slippymap? #}
@@ -36,20 +67,26 @@
               <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/" class="img"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" alt="{{ photo.title }}" class="{% cycle f,n,n,n,n,l %}"></a>
             {% endfor %}
         
-            <p>Showing {% ifnotequal photos.pages 1 %}{{ photos.perpage }} of {{ photos.total }} photos (page {{ photos.page }} of {{ photos.pages }}){% else %}all {{ photos.total }} photos       
-              {% endifnotequal %} 
-            
-              {% ifequal method 'machinetag' %}
-            with the machine tag 'dopplr:trip={{ trip.trip.id }}'.
-            
-            Dopplr will use this tag to show your pubic photos, if you have associated your account.</p>
-              {% else %}
-            taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}.
-              {% endifequal %}</p>
-            
+            <p>Showing
+            {% ifnotequal photos.pages 1 %}
+              {{ photos.perpage }} of {{ photos.total }} photos (page {{ photos.page }} of {{ photos.pages }})
+            {% else %}
+              all {{ photos.total }} photos       
+            {% endifnotequal %} 
+          
+            {% ifequal method 'machinetag' %}
+              with the machine tag 'dopplr:trip={{ trip.trip.id }}'. <a href="#" onclick="javascript:return loadmore();" id="more">Load more?</a>
+              
+              Dopplr will use this tag to show your pubic photos, if you have associated your account.</p>
+            {% else %}
+              taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}. <a href="#" onclick="javascript:return loadmore();">Load more?</a></p>
+
     <!-- 
             <p>Tag these photos at Flickr. (Why?)</p>
      -->
+
+            {% endifequal %}
+            
             </div>
           {% else %}
             <h3>No Flickr photos found for this trip.</h3>

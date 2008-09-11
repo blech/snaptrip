@@ -85,7 +85,7 @@ class TripPage(webapp.RequestHandler):
         flickr = get_flickr(keys, token)      
   
         photos = get_flickr_photos_by_machinetag(flickr, trip_info)
-        if photos:
+        if photos and photos['total']:
           template_values['photos'] = photos
           template_values['method'] = "machinetag"
         else:
@@ -138,7 +138,6 @@ class LoginPage(webapp.RequestHandler):
     if frob:
       permanent = flickr.get_token(frob)
       if permanent:
-        # TODO user ID
         session['flickr'] = permanent
         self.redirect("/")
 
@@ -154,6 +153,76 @@ class LoginPage(webapp.RequestHandler):
     
     path = os.path.join(os.path.dirname(__file__), 'templates/login.html')
     self.response.out.write(template.render(path, template_values))
+
+# == AJAX
+
+class MoreJSON(webapp.RequestHandler):
+  def get(self):
+#     session = sessions.Session()
+# 
+#     token = ''
+#     try:
+#       token = session['flickr']
+#     except KeyError:
+#       logging.warn("No Flickr token")
+#       self.response.out.write("")
+#       return
+#     
+#     nsid  = ""
+# 
+    token = self.request.get("token")
+    nsid = self.request.get("nsid")
+    page = self.request.get("page")
+
+    keys = get_keys(self.request.host)
+    flickr = get_flickr(keys, token)
+
+    logging.info("'"+token+"', '"+nsid+"', '"+page+"'")    
+
+    if self.request.get("tripid", ""):
+      machine_tag = "dopplr:trip="+self.request.get("tripid")
+
+      logging.info("machine tag with '"+machine_tag+"'")
+
+      json = flickr.photos_search(
+                 format='json',
+                 nojsoncallback="1",
+                 user_id=nsid,
+                 sort="date-taken-asc",
+                 tags=machine_tag,
+                 page=page,
+                 per_page="24",
+  #                extras='license, date_upload, date_taken, tags, o_dims, views, media',
+  #                privacy_filter="1",
+               )
+  
+      self.response.out.write(json)
+
+    if self.request.get("startdate", ""):
+      startdate = self.request.get("startdate")+" 00:00:01"
+      finishdate = self.request.get("finishdate")+" 23:59:59"
+
+      logging.info("dates from '"+startdate+"' to '"+finishdate+"'")
+
+      json = flickr.photos_search(
+                 format='json',
+                 nojsoncallback="1",
+                 user_id=nsid,
+                 sort="date-taken-asc",
+                 min_taken_date=startdate,
+                 max_taken_date=finishdate,
+                 page=page,
+                 per_page="24",
+  #                extras='license, date_upload, date_taken, tags, o_dims, views, media',
+  #                privacy_filter="1",
+               )
+  
+      self.response.out.write(json)
+
+class TagJSON(webapp.RequestHandler):
+  def get(self):
+
+    self.response.out.write("")
 
 # == Dopplr
 
@@ -174,6 +243,7 @@ def get_traveller_info(token, who=""):
     logging.warn("Didn't get a JSON response from traveller_info")
 
   return traveller_info
+  
 
 def get_trips_info(token, who=""):
   # get trip info
@@ -274,7 +344,7 @@ def get_flickr_photos_by_machinetag(flickr, trip_info):
                tags=machine_tag,
                sort="date-taken-asc",
                per_page="24",
-               extras='license, date_upload, date_taken, tags, o_dims, views, media',
+#                extras='license, date_upload, date_taken, tags, o_dims, views, media',
 #                privacy_filter="1",
              )
     photos = simplejson.loads(photos)
@@ -284,11 +354,11 @@ def get_flickr_photos_by_date(flickr, trip_info):
   logging.debug("Attempting photo search by date")
   nsid  = get_flickr_nsid(flickr)
 
+  # TODO right thing with times
   if nsid:
     min_taken = trip_info["trip"]["startdate"].strftime("%Y-%m-%d 00:00:01")
     max_taken = trip_info["trip"]["finishdate"].strftime("%Y-%m-%d 23:59:59")
   
-    # TODO user ID
     # TODO dtrt with day ends
     photos = flickr.photos_search(
                format='json',
@@ -298,7 +368,7 @@ def get_flickr_photos_by_date(flickr, trip_info):
                max_taken_date=max_taken,
                sort="date-taken-asc",
                per_page="24",
-               extras='license, date_upload, date_taken, tags, o_dims, views, media',
+#                extras='license, date_upload, date_taken, tags, o_dims, views, media',
 #                privacy_filter="1",
              )
     photos = simplejson.loads(photos)
@@ -427,7 +497,9 @@ application = webapp.WSGIApplication(
                   [('/', IndexPage),
                    ('/where/(\w*)', IndexPage),
                    ('/trip/(\d*)', TripPage),
-                   ('/login/', LoginPage)
+                   ('/login/', LoginPage),
+                   ('/ajax/photos.more', MoreJSON),
+                   ('/ajax/photos.tag', TagJSON),
                   ],
                   debug=True)
 
