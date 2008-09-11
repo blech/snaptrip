@@ -10,14 +10,18 @@
     // set up onhover handlers
 
     $(document).ready(function() {
+      // $("ul#trips li").css { cursor:"hand" };
+
       $("ul#trips li").hover(function() {
         $(this).css({ backgroundColor:"#def" });
-        $(this).css({ cursor:"hand" });
         $(this).children().children("a").css({ color:"#47a" });
+        // get URL
+        local = $(this).children().children("a").attr("href").substring(1);
+        window.status = window.location + local;
       }, function() {
         $(this).css({ backgroundColor:"#fff" })
-        $(this).css({ cursor:"pointer" });
         $(this).children().children("a").css({ color:"#69c" });
+        window.status = '';
       });
       $("li").click(function() {
         var href = ($(this).children().children("a").attr("href"));
