@@ -78,14 +78,22 @@ class TripPage(webapp.RequestHandler):
     except KeyError:
       logging.warn("No Flickr token")
   
-    if token and not trip_info["trip"]["status"] == "Future":
-      # get keys
-      keys = get_keys(self.request.host)
-      flickr = get_flickr(keys, token)      
-    
-      template_values['photos'] = get_flickr_photos_by_date(flickr, trip_info)
-    else:
-      template_values['url'] = get_flickr_auth_url(self.request.host);
+    if session["nick"] == trip_info["trip"]["nick"]:
+      if token and not trip_info["trip"]["status"] == "Future":
+        # get keys
+        keys = get_keys(self.request.host)
+        flickr = get_flickr(keys, token)      
+  
+        photos = get_flickr_photos_by_machinetag(flickr, trip_info)
+        if photos:
+          template_values['photos'] = photos
+          template_values['method'] = "machinetag"
+        else:
+          template_values['photos'] = get_flickr_photos_by_date(flickr, trip_info)
+          template_values['method'] = "date"
+
+      else:
+        template_values['url'] = get_flickr_auth_url(self.request.host);
 
     path = os.path.join(os.path.dirname(__file__), 'templates/trip.html')
     self.response.out.write(template.render(path, template_values))    
@@ -206,6 +214,12 @@ def get_trip_info(token, trip_id):
     logging.error(trip_info['error'])
     return self.redirect("/")
 
+  # get who info
+  match = re.search('trip/(.*?)/', trip_info["trip"]["url"])
+  if (match):
+    trip_info["trip"]["nick"] = match.group(1)
+
+  # get date info
   start  = datetime.strptime(trip_info["trip"]["start"],  "%Y-%m-%d")
   trip_info["trip"]["startdate"]  = start
   
@@ -226,8 +240,8 @@ def get_trip_info(token, trip_id):
 
 # == Flickr
 
-def get_flickr_photos_by_date(flickr, trip_info):
-  logging.warn("Attempting photo search by date")
+def get_flickr_nsid(flickr):
+  logging.debug("Attempting to fetch Flickr NSID (check token)")
   nsid  = ""
 
   # check token (and get nsid)
@@ -242,6 +256,34 @@ def get_flickr_photos_by_date(flickr, trip_info):
     # username = auth.user.
     logging.info("Got Flickr user NSID "+nsid)
 
+  return nsid
+
+def get_flickr_photos_by_machinetag(flickr, trip_info):
+  logging.debug("Attempting photo search by date")
+
+  nsid  = get_flickr_nsid(flickr)
+
+  if nsid:
+    machine_tag = "dopplr:trip="+str(trip_info["trip"]["id"])
+    logging.info("Got trip ID to search on: "+machine_tag);
+   
+    photos = flickr.photos_search(
+               format='json',
+               nojsoncallback="1",
+               user_id=nsid,
+               tags=machine_tag,
+               sort="date-taken-asc",
+               per_page="24",
+               extras='license, date_upload, date_taken, tags, o_dims, views, media',
+#                privacy_filter="1",
+             )
+    photos = simplejson.loads(photos)
+    return photos['photos']
+
+def get_flickr_photos_by_date(flickr, trip_info):
+  logging.debug("Attempting photo search by date")
+  nsid  = get_flickr_nsid(flickr)
+
   if nsid:
     min_taken = trip_info["trip"]["startdate"].strftime("%Y-%m-%d 00:00:01")
     max_taken = trip_info["trip"]["finishdate"].strftime("%Y-%m-%d 23:59:59")
@@ -252,12 +294,12 @@ def get_flickr_photos_by_date(flickr, trip_info):
                format='json',
                nojsoncallback="1",
                user_id=nsid,
-#                privacy_filter="1",
                min_taken_date=min_taken,
                max_taken_date=max_taken,
                sort="date-taken-asc",
                per_page="24",
                extras='license, date_upload, date_taken, tags, o_dims, views, media',
+#                privacy_filter="1",
              )
     photos = simplejson.loads(photos)
     return photos['photos']

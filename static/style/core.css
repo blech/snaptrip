@@ -168,6 +168,34 @@ div#main.trip h2 {
   font: 200 16px Arial, Helvetica, sans-serif;
 }
 
+div#photos {
+  width:512px;
+  margin-left:3px;
+}
+
+div#photos img {
+  width: 75px;
+  height: 75px;
+  padding:0px 3px 5px 3px;
+  border:0px;
+}
+
+div#photos img.f {
+  margin: 0px;
+}
+
+div#photos img.n {
+  margin: 0px;
+}
+
+div#photos img.l {
+  margin: 0px;
+}
+
+div#photos a.img:hover  {
+  background:#47a;
+}
+
 div#trip_nav {
   width: 512px;
 }
