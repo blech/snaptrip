@@ -10,9 +10,9 @@
   {% include "includes/header.html" %}
   
   <div id="main">
-    <h1 style="color:#ccc;">{% if not session.dopplr %}<a href="{{ dopplr_url }}">{% endif %}Authenticate{% if session.dopplr %}d{% endif %} with Dopplr{% if not session.dopplr %}</a>{% endif %}</h1>
+    <h1 style="color:#ccc;">{% if not session.dopplr %}<a href="{{ dopplr_url }}">{% endif %}Authenticate{% if session.dopplr %}d{% endif %} with Dopplr.{% if not session.dopplr %}</a>{% endif %}</h1>
   
-    <h1 style="color:#ccc;">{% if not session.flickr %}<a href="{{ flickr_url }}">{% endif %}Authenticate{% if session.flickr %}d{% endif %} with Flickr{% if not session.flickr %}</a>{% endif %}</h1>
+    <h1 style="color:#ccc;">{% if not session.flickr %}<a href="{{ flickr_url }}">{% endif %}Authenticate{% if session.flickr %}d{% endif %} with Flickr.{% if not session.flickr %}</a>{% endif %}</h1>
   
     <div id="faq" style="width:400px;">  
       <h3>What is 'snaptrip'?</h3>
