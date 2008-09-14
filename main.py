@@ -100,7 +100,7 @@ class TripPage(webapp.RequestHandler):
 
 class LoginPage(webapp.RequestHandler):
   def get(self):
-    session = sessions.Session()
+    session = sessions.Session(session_expire_time=10368000,)
 
     callback_url = "http://"+self.request.host+"/login/" 
   
@@ -158,21 +158,12 @@ class LoginPage(webapp.RequestHandler):
 
 class MoreJSON(webapp.RequestHandler):
   def get(self):
-#     session = sessions.Session()
-# 
-#     token = ''
-#     try:
-#       token = session['flickr']
-#     except KeyError:
-#       logging.warn("No Flickr token")
-#       self.response.out.write("")
-#       return
-#     
-#     nsid  = ""
-# 
     token = self.request.get("token")
     nsid = self.request.get("nsid")
     page = self.request.get("page")
+
+    if not token or not nsid:
+      self.response.out.write('')
 
     keys = get_keys(self.request.host)
     flickr = get_flickr(keys, token)
