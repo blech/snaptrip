@@ -176,20 +176,9 @@ div#photos {
 div#photos img {
   width: 75px;
   height: 75px;
-  padding:0px 3px 5px 3px;
-  border:0px;
-}
-
-div#photos img.f {
-  margin: 0px;
-}
-
-div#photos img.n {
-  margin: 0px;
-}
-
-div#photos img.l {
-  margin: 0px;
+  margin:0px 1px 5px 1px;
+  border:2px solid white;
+  padding: 0px;
 }
 
 div#photos a.img:hover  {
