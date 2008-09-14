@@ -5,6 +5,10 @@
     <span class="dopplr">authenticated via Dopplr as <a href="http://dopplr.com/traveller/{{ session.nick }}/">{{ session.name }}</a></span>
     {% if session.flickr %}{# lowercase? #}
     <span class="flickr">authenticated via Flickr</span>
+    {% else %}
+<!-- 
+    <span class="flickr"><!-- not authenticated via Flickr --></span>
+ -->
     {% endif %}
 
 <!-- 
