@@ -18,7 +18,6 @@
   {% ifequal method 'machinetag' %}
     $.getJSON("/ajax/photos.more?page="+page+"&token={{ session.flickr }}&nsid={{ photos.photo.0.owner }}&tripid={{ trip.trip.id }}",
               function(json) { 
-                console.log(json.photos.total);
                 page = json.photos.page;
                 add_photos(json);
               }
@@ -26,7 +25,6 @@
   {% else %}
     $.getJSON("/ajax/photos.more?page="+page+"&token={{ session.flickr }}&nsid={{ photos.photo.0.owner }}&startdate={{ trip.trip.startdate|date:"Y-m-d" }}&finishdate={{ trip.trip.finishdate|date:"Y-m-d" }}",
               function(json) { 
-                console.log(json.photos.total);
                 page = json.photos.page;
                 add_photos(json);
               }
@@ -34,7 +32,6 @@
   {% endifequal %}
 
     function add_photos(json) {
-      console.log("got json");
       for (var index in json.photos.photo) {
         // add photos
         photo = json.photos.photo[index];
@@ -44,7 +41,7 @@
       
       // update text
       photos = json.photos;
-      console.log(photos);
+      
       var count="";
       if (photos.page = photos.pages) {
         count = "all "+photos.total+" photos";
@@ -66,7 +63,6 @@
         photos_to_tag.push(this.id);
       })
   
-      console.log(photos_to_tag);
       $('p#tag').text("You are adding a Dopplr tag to all these photos at Flickr. Please wait.");
       // $('p#tag').css({ background:'#ffc' });
       _do_tag(photos_to_tag[tag_index]);
@@ -76,16 +72,12 @@
   }
 
   function _do_tag(photo_id) {
-    console.log("adding tag for trip {{ trip.trip.id }} to "+photo_id);
-        
     $.getJSON("/ajax/photos.tag?photo_id="+photo_id+"&trip_id={{ trip.trip.id }}&token={{ session.flickr }}",
               function(json) {
-                console.log("got Ajax response")
                 if (json.stat != "ok") {
                   // Flickr returns empty JSON on success, so...
                   alert("There was an error: "+json)
                 } else {
-                  console.log("tagged ok");
                   $('img#'+photo_id).css({ border:"2px solid green" });
                 }
                 
