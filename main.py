@@ -25,7 +25,7 @@ env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(__file__)
 class IndexPage(webapp.RequestHandler):
   def get(self, who=""):
     permanent = ''
-    session = sessions.Session()
+    session = get_session()
     try:
       permanent = session['dopplr']
     except KeyError, e:
@@ -52,7 +52,7 @@ class IndexPage(webapp.RequestHandler):
 class TripPage(webapp.RequestHandler):
   def get(self, trip_id):
     permanent = ''
-    session = sessions.Session()
+    session = get_session()
 
     # get trip id and hence info from Dopplr
     if not trip_id:
@@ -100,7 +100,7 @@ class TripPage(webapp.RequestHandler):
 
 class LoginPage(webapp.RequestHandler):
   def get(self):
-    session = sessions.Session(session_expire_time=10368000,)
+    session = get_session()
 
     callback_url = "http://"+self.request.host+"/login/" 
   
@@ -163,7 +163,7 @@ class MoreJSON(webapp.RequestHandler):
     page = self.request.get("page")
 
     if not token or not nsid:
-      self.response.out.write('')
+      return self.response.out.write('')
 
     keys = get_keys(self.request.host)
     flickr = get_flickr(keys, token)
@@ -212,8 +212,35 @@ class MoreJSON(webapp.RequestHandler):
 
 class TagJSON(webapp.RequestHandler):
   def get(self):
+    logging.info("in TagJSON")
+    token = self.request.get("token")
 
-    self.response.out.write("")
+    if not token:
+      return self.response.out.write('')
+
+    photo_id = self.request.get("photo_id")
+    trip_id = self.request.get("trip_id")
+
+    logging.info("Got token "+token+", photo_id "+photo_id+" and trip id '"+trip_id+"'")
+
+    if not photo_id or not trip_id:
+      logging.warn("No photo_id or trip_id!")
+      return self.response.out.write('')
+
+    keys = get_keys(self.request.host)
+    flickr = get_flickr(keys, token, True)
+    logging.info(flickr.cache)
+
+    json = flickr.photos_addTags(
+               format='json',
+               nojsoncallback="1",
+               photo_id=photo_id,
+               tags="dopplr:trip="+trip_id+" dopplr:tagged=snaptrip",
+              )
+              
+    logging.info("got json "+repr(json));
+
+    self.response.out.write(json)
 
 # == Dopplr
 
@@ -474,13 +501,20 @@ def get_keys(host):
     
   return keys
 
-def get_flickr(keys, token=''):
-  flickr = flickrapi.FlickrAPI(keys['flickr_key'], keys['flickr_sec'], 
-                               token=token, store_token=False, cache=True)
-  flickr.cache = flickrapi.SimpleCache(timeout=300, max_entries=200)
+def get_flickr(keys, token='', disablecache=False):
+  if disablecache:
+    flickr = flickrapi.FlickrAPI(keys['flickr_key'], keys['flickr_sec'], 
+                                 token=token, store_token=False)
+    return flickr
+  else:
+    flickr = flickrapi.FlickrAPI(keys['flickr_key'], keys['flickr_sec'], 
+                                 token=token, store_token=False, cache=True)
+    flickr.cache = flickrapi.SimpleCache(timeout=300, max_entries=200)
+    return flickr
+  return  
 
-  return flickr
-
+def get_session():
+  return sessions.Session(session_expire_time=10368000,)
 
 # ==
 
