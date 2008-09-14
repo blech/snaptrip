@@ -9,16 +9,18 @@
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
   <script language="text/javascript" type="text/javascript">
   var page = 1;
+  var tag_index = 0;
+  var photos_to_tag = new Array();
 
   function loadmore() {
     page++;
-    console.log("'"+page+"'");
 
   {% ifequal method 'machinetag' %}
     $.getJSON("/ajax/photos.more?page="+page+"&token={{ session.flickr }}&nsid={{ photos.photo.0.owner }}&tripid={{ trip.trip.id }}",
               function(json) { 
                 console.log(json.photos.total);
                 page = json.photos.page;
+                add_photos(json);
               }
              );
   {% else %}
@@ -26,12 +28,78 @@
               function(json) { 
                 console.log(json.photos.total);
                 page = json.photos.page;
+                add_photos(json);
               }
              );
   {% endifequal %}
 
+    function add_photos(json) {
+      console.log("got json");
+      for (var index in json.photos.photo) {
+        // add photos
+        photo = json.photos.photo[index];
+        html = '<a class="img" href="http://flickr.com/photos/'+photo.owner+'/'+photo.id+'/"><img src="http://farm'+photo.farm+'.static.flickr.com/'+photo.server+'/'+photo.id+'_'+photo.secret+'_s.jpg" alt="'+photo.title+'" class="l" alt="'+photo.title+'" id="'+photo.id+'" /></a> '+"\n";
+        $('div#photos a.img:last').after(html);
+      }
+      
+      // update text
+      photos = json.photos;
+      console.log(photos);
+      var count="";
+      if (photos.page = photos.pages) {
+        count = "all "+photos.total+" photos";
+        $('div#photos a#more').hide();             
+        $('div#photos p#tag').show();             
+      } else {
+        count = photos.perpage+" of "+photos.total+" photos (page "+photos.page+" of "+photos.pages;
+      }
+      
+      $('div#photos span.count').text(count);             
+    }
+
     return false;
   }
+
+  function tag(type) {
+    if (type == 'dopplr') {
+      $('div#photos img').each(function(i) {
+        photos_to_tag.push(this.id);
+      })
+  
+      console.log(photos_to_tag);
+      $('p#tag').text("You are adding a Dopplr tag to all these photos at Flickr. Please wait.");
+      // $('p#tag').css({ background:'#ffc' });
+      _do_tag(photos_to_tag[tag_index]);
+    }
+    
+    return false;
+  }
+
+  function _do_tag(photo_id) {
+    console.log("adding tag for trip {{ trip.trip.id }} to "+photo_id);
+        
+    $.getJSON("/ajax/photos.tag?photo_id="+photo_id+"&trip_id={{ trip.trip.id }}&token={{ session.flickr }}",
+              function(json) {
+                console.log("got Ajax response")
+                if (json.stat != "ok") {
+                  // Flickr returns empty JSON on success, so...
+                  alert("There was an error: "+json)
+                } else {
+                  console.log("tagged ok");
+                  $('img#'+photo_id).css({ border:"2px solid green" });
+                }
+                
+                tag_index++;
+                if (photos_to_tag[tag_index]) {
+                  _do_tag(photos_to_tag[tag_index]);
+                } else {
+                  $('p#tag').html("Your photos have been tagged with <a href='http://flickr.com/photos/tags/"+tag+"'>'"+tag+"'</a>. Thanks.");
+                  // alert("Tagged all photos.");
+                }
+              }
+             );
+   }
+
   </script>
 
 </head>
@@ -41,8 +109,6 @@
   <div id="content">
     <div id="main" class="trip">
       <h2>A trip to {{trip.trip.city.name}}, {{trip.trip.city.country}}.</h2>
-      
-      {{ session.flickr }} {{ photos.photo.0.owner }}
       
       {# TODO polyline from start point #}
       {# TODO slippymap? #}
@@ -63,28 +129,29 @@
           {% if photos.total %}
           <h3>Flickr photos from this trip.</h3>
             <div id="photos"><!-- {{ photos }} -->
-            {% for photo in photos.photo %}
-              <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/" class="img"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" alt="{{ photo.title }}" class="{% cycle f,n,n,n,n,l %}"></a>
-            {% endfor %}
+            {% spaceless %}
+              {% for photo in photos.photo %}
+                <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/" class="img"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" alt="{{ photo.title }}" class="{% cycle f,n,n,n,n,l %}" title="View '{{ photo.title }}' at Flickr." id="{{ photo.id }}"></a>
+              {% endfor %}
+            {% endspaceless %}
         
-            <p>Showing
+            <p id="phototext">Showing 
             {% ifnotequal photos.pages 1 %}
-              {{ photos.perpage }} of {{ photos.total }} photos (page {{ photos.page }} of {{ photos.pages }})
+              <span class="count">{{ photos.perpage }} of {{ photos.total }} photos (page {{ photos.page }} of {{ photos.pages }})</span>
             {% else %}
               all {{ photos.total }} photos       
-            {% endifnotequal %} 
+            {% endifnotequal %}
           
             {% ifequal method 'machinetag' %}
-              with the machine tag 'dopplr:trip={{ trip.trip.id }}'. <a href="#" onclick="javascript:return loadmore();" id="more">Load more?</a>
+              with the machine tag 'dopplr:trip={{ trip.trip.id }}'.{% ifnotequal photos.pages 1 %} <a href="#" onclick="javascript:return loadmore();" id="more">Load more?</a>{% endifnotequal %}
               
               Dopplr will use this tag to show your pubic photos, if you have associated your account.</p>
             {% else %}
-              taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}. <a href="#" onclick="javascript:return loadmore();">Load more?</a></p>
+              taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}.{% ifnotequal photos.pages 1 %} <a href="#" onclick="javascript:return loadmore();" id="more">Load more?</a>{% endifnotequal %}</p>
 
-    <!-- 
-            <p>Tag these photos at Flickr. (Why?)</p>
-     -->
-
+            <p id="tag"{% ifnotequal photos.pages 1 %} style="display:none"{% endifnotequal %}>You can 
+              <a href="#" onclick="javascript:return tag('dopplr')">add a Dopplr tag</a> to all these photos at Flickr.</p>
+    
             {% endifequal %}
             
             </div>
@@ -100,8 +167,8 @@
     {% endifequal %}
     
       <div id="trip_nav">
-        <span class="index"><a href="/where/{{ session.nick }}">&larr; back to all trips</a></span>
-        <span class="dopplr"><a href="{{ trip.trip.url }}">view this trip at Dopplr &rarr;</a></span>
+        <span class="index"><a href="/where/{{ session.nick }}">&larr; Back to all trips.</a></span>
+        <span class="dopplr"><a href="{{ trip.trip.url }}">View this trip at Dopplr. &rarr;</a></span>
       </div>
       
       <!-- {{ trip }} -->
