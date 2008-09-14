@@ -85,7 +85,7 @@
                 if (photos_to_tag[tag_index]) {
                   _do_tag(photos_to_tag[tag_index]);
                 } else {
-                  $('p#tag').html("Your photos have been tagged with <a href='http://flickr.com/photos/tags/"+tag+"'>'"+tag+"'</a>. Thanks.");
+                  $('p#tag').html("Your photos have been tagged with <a href='http://flickr.com/photos/tags/dopplr:trip={{trip.trip.id}}'>'dopplr:trip={{ trip.trip.id }}'</a>. Thanks.");
                   // alert("Tagged all photos.");
                 }
               }
