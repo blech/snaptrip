@@ -13,6 +13,7 @@ from jinja2 import FileSystemLoader, Environment
 
 import flickrapi
 
+from google.appengine.api import mail
 from google.appengine.api import urlfetch
 
 from google.appengine.ext import webapp
@@ -154,6 +155,58 @@ class LoginPage(webapp.RequestHandler):
     path = os.path.join(os.path.dirname(__file__), 'templates/login.html')
     self.response.out.write(template.render(path, template_values))
 
+class FormPage(webapp.RequestHandler):
+  def get(self):
+    session = get_session()
+
+    template_values = {
+      'session':    session,
+    }
+
+    path = os.path.join(os.path.dirname(__file__), 'templates/form.html')
+    self.response.out.write(template.render(path, template_values))
+
+  def post(self):
+    session = get_session()
+    name = self.request.get("name")
+    text = self.request.get("text")
+
+    logging.info("Got name '"+name+"' and text '"+text+"'")
+
+    sent = False
+    error = ''
+
+    email = ''
+    if session['dopplr']:
+      traveller = get_traveller_info(session['dopplr'])
+      email = traveller['email']
+    
+    if name and text:
+      sent = True;  
+      # send
+      message = mail.EmailMessage(subject='snaptrip feedback (via form)',)
+      message.sender = "misonp+snaptrip@gmail.com"
+    
+      message.to = "Paul Mison <misonp+snaptrip@gmail.com>"
+      if email:
+        message.cc = name+" <"+email+">"
+        
+      message.body = "The following is feedback about snaptrip.\n\n"+text;
+      message.send()
+    else:
+      error = "You must enter a name and some feedback."
+  
+    template_values = {
+      'name':       name,
+      'text':       text,
+      'error':      error,
+      'sent':       sent,
+      'session':    session,
+    }
+
+    path = os.path.join(os.path.dirname(__file__), 'templates/form.html')
+    self.response.out.write(template.render(path, template_values))
+    
 # == AJAX
 
 class MoreJSON(webapp.RequestHandler):
@@ -237,6 +290,8 @@ class TagJSON(webapp.RequestHandler):
                photo_id=photo_id,
                tags="dopplr:trip="+trip_id+" dopplr:tagged=snaptrip",
               )
+
+    # DownloadError: ApplicationError: 3
               
     logging.info("got json "+repr(json));
 
@@ -261,7 +316,6 @@ def get_traveller_info(token, who=""):
     logging.warn("Didn't get a JSON response from traveller_info")
 
   return traveller_info
-  
 
 def get_trips_info(token, who=""):
   # get trip info
@@ -523,6 +577,7 @@ application = webapp.WSGIApplication(
                    ('/where/(\w*)', IndexPage),
                    ('/trip/(\d*)', TripPage),
                    ('/login/', LoginPage),
+                   ('/form/', FormPage),
                    ('/ajax/photos.more', MoreJSON),
                    ('/ajax/photos.tag', TagJSON),
                   ],

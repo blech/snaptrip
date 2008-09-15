@@ -200,3 +200,30 @@ div#trip_nav span.dopplr {
 div#side ul.trip li {
   list-style-type: disc;
 }
+
+/* form page */
+
+div#main.form {
+  width: 520px;
+}
+
+/*
+div#main.trip h2 {
+  font: 200 16px Arial, Helvetica, sans-serif;
+}
+*/
+
+label {
+  display: block;
+  float: left;
+  width: 150px;
+}
+
+input.wide, select, textarea {
+  width: 350px;
+  border: 1px solid black;
+}
+
+textarea {
+  width: 352px;
+}

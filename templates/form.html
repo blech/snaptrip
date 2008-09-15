@@ -1,0 +1,50 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+	<title>snaptrip - leave feedback</title>
+  <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
+
+</head>
+<body>
+  {% include "includes/header.html" %}
+
+  <div id="content">
+    <div id="main" class="form">
+      <h2>Leave feedback.</h2>
+      
+    {% if sent %}
+      <p>Your feedback has been sent. Thank you.</p>
+      
+      <p>Your name was sent as {{ name }} and your feedback was:</p>
+      
+      <pre>{{ text }}</pre>
+      
+      <p>You can return to your <a href="/">list of trips</a> or the <a href="/login/">login page</a>.</p>
+
+    {% else %}
+      
+      <p>If you'd like to leave feedback, please do so here.{% if error %}<br><span style="color:red;">{{ error }}{% endif %}</p>
+      
+      <form action="/form/" method="post">
+        <label for="name">Your name.</label>
+        <input name="name" type="text" value="{% if name %}{{ name }}{% else %}{{ session.name }}{% endif %}" class="wide"><br>
+          
+        <label for="text">Enter your comment.</label>
+          <textarea name="text" rows="10" cols="40">{{ text }}</textarea><br>
+          
+        <label for="submit">&nbsp;</label>
+          <input type="submit" value="Send.">
+      </form>
+
+      {% endif %}
+    </div>
+
+    <div id="side">
+    </div>
+  </div>
+  
+  {% include "includes/footer.html" %}
+</body>
+</html>
