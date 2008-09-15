@@ -104,7 +104,7 @@
       
       {# TODO polyline from start point #}
       {# TODO slippymap? #}
-      <p><img src="http://maps.google.com/staticmap?center={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }}&zoom=4&size=500x188&maptype=roadmap&markers={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }},smallwhite&key={{ keys.gmap }}" 
+      <p><img src="http://maps.google.com/staticmap?center={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }}&zoom=4&size=500x188&maptype=terrain&markers={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }},smallwhite&key={{ keys.gmap }}" 
               style="border: 5px solid #{{ trip.trip.city.rgb }}; height:188px; width:500px;"></p>
     
     {% ifequal trip.trip.status "Future" %}
@@ -135,16 +135,16 @@
             {% endifnotequal %}
           
             {% ifequal method 'machinetag' %}
-              with the machine tag 'dopplr:trip={{ trip.trip.id }}'.{% ifnotequal photos.pages 1 %} <a href="#" onclick="javascript:return loadmore();" id="more">Load more?</a>{% endifnotequal %}
+              with the machine tag 'dopplr:trip={{ trip.trip.id }}'.{% ifnotequal photos.pages 1 %} <a href="#" onclick="javascript:return loadmore();" id="more">Load more?</a>{% endifnotequal %}</p>
               
-              Dopplr will use this tag to show your pubic photos, if you have associated your account.</p>
+              <p id="tag">Dopplr will use this tag to show your pubic photos, if you have associated your account.</p>
             {% else %}
               taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}.{% ifnotequal photos.pages 1 %} <a href="#" onclick="javascript:return loadmore();" id="more">Load more?</a>{% endifnotequal %}</p>
 
             <p id="tag"{% ifnotequal photos.pages 1 %} style="display:none"{% endifnotequal %}>You can 
               <a href="#" onclick="javascript:return tag('dopplr')">add a Dopplr tag</a> to all these photos at Flickr.</p>
-    
             {% endifequal %}
+            
             
             </div>
           {% else %}
