@@ -231,7 +231,8 @@ label {
 
 input.wide, select, textarea {
   width: 350px;
-  border: 1px solid black;
+  border: 1px solid #666;
+  color:#666;
 }
 
 textarea {
