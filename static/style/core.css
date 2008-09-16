@@ -14,7 +14,8 @@ div#content {
 }
 
 div#main {
-  padding: 0px 20px 20px 20px;
+  margin: 0px;
+  padding: 0px 20px;
   width:520px;
   float:left;
 }
@@ -52,6 +53,15 @@ ul {
 ul li {
   list-style-type: none;
   padding: 0px;
+}
+
+hr {
+  width:100%;
+  color:#fff;
+  background-color:#fff;
+  height:0px;
+  border-top: 1px solid #fff;
+  border-bottom: 1px dotted #ccc;
 }
 
 /* navigation */
@@ -226,4 +236,11 @@ input.wide, select, textarea {
 
 textarea {
   width: 352px;
+}
+
+/* login page */
+
+div#login {
+  padding: 0px 20px 0px 20px;
+  border-bottom: 1px dotted #ccc;
 }
