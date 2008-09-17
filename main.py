@@ -236,7 +236,7 @@ class MoreJSON(webapp.RequestHandler):
                  tags=machine_tag,
                  page=page,
                  per_page="24",
-  #                extras='license, date_upload, date_taken, tags, o_dims, views, media',
+                 extras='geo' # license, date_upload, date_taken, tags, o_dims, views, media',
   #                privacy_filter="1",
                )
   
@@ -257,7 +257,7 @@ class MoreJSON(webapp.RequestHandler):
                  max_taken_date=finishdate,
                  page=page,
                  per_page="24",
-  #                extras='license, date_upload, date_taken, tags, o_dims, views, media',
+                 extras='geo' # license, date_upload, date_taken, tags, o_dims, views, media',
   #                privacy_filter="1",
                )
   
@@ -416,10 +416,19 @@ def get_flickr_photos_by_machinetag(flickr, trip_info):
                tags=machine_tag,
                sort="date-taken-asc",
                per_page="24",
-#                extras='license, date_upload, date_taken, tags, o_dims, views, media',
+               extras='geo' # license, date_upload, date_taken, tags, o_dims, views, media',
 #                privacy_filter="1",
              )
     photos = simplejson.loads(photos)
+
+    photos['photos']['geototal'] = 0
+    for photo in photos['photos']['photo']:
+      if photo['latitude'] and photo['longitude']:
+        photos['photos']['geototal'] = photos['photos']['geototal']+1
+
+    # TODO coercion properly
+    photos['photos']['geototal'] = str(photos['photos']['geototal'])
+
     return photos['photos']
 
 def get_flickr_photos_by_date(flickr, trip_info):
@@ -440,10 +449,11 @@ def get_flickr_photos_by_date(flickr, trip_info):
                max_taken_date=max_taken,
                sort="date-taken-asc",
                per_page="24",
-#                extras='license, date_upload, date_taken, tags, o_dims, views, media',
+               extras='geo' # license, date_upload, date_taken, tags, o_dims, views, media',
 #                privacy_filter="1",
              )
     photos = simplejson.loads(photos)
+
     return photos['photos']
 
 def get_flickr_auth_url(host):

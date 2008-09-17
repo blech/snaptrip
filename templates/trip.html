@@ -108,7 +108,7 @@
               style="border: 5px solid #{{ trip.trip.city.rgb }}; height:188px; width:500px;"></p>
     
     {% ifequal trip.trip.status "Future" %}
-      <p>This trip is in the future, so no Flickr photos are available.</p>
+      <p>This trip hasn't happened yet, so no Flickr photos are available.</p>
       
     {% else %}
       {% ifnotequal trip.trip.nick session.nick %}
@@ -137,14 +137,17 @@
             {% ifequal method 'machinetag' %}
               with the machine tag 'dopplr:trip={{ trip.trip.id }}'.{% ifnotequal photos.pages 1 %} <a href="#" onclick="javascript:return loadmore();" id="more">Load more?</a>{% endifnotequal %}</p>
               
-              <p id="tag">Dopplr will use this tag to show your pubic photos, if you have associated your account.</p>
+              <p id="tag">Dopplr will use this tag to show your pubic photos, if you have associated your account. However, there may be more photos from this trip. Would you like to <a href="#" onclick="javascript:return loaddate();">search by date</a> instead?</p>
             {% else %}
               taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}.{% ifnotequal photos.pages 1 %} <a href="#" onclick="javascript:return loadmore();" id="more">Load more?</a>{% endifnotequal %}</p>
 
             <p id="tag"{% ifnotequal photos.pages 1 %} style="display:none"{% endifnotequal %}>You can 
               <a href="#" onclick="javascript:return tag('dopplr')">add a Dopplr tag</a> to all these photos at Flickr.</p>
             {% endifequal %}
-            
+ 
+            <p>{% if not photos.geototal %}None{% else %}{% ifequal photos.geototal photos.total %}All{% else %}{{ photos.geototal }}{% endifequal %}{% endif %} of these photo{% ifnotequal photos.geototal 1 %}s{% endifnotequal %} are already tagged with their location in Flickr.{% ifnotequal photos.total photos.geototal %}
+              You can <a href="href="#" onclick="javascript:return tag('geo')">add location data</a> based on your trip to photos that don't already have it.
+            {% endifnotequal %}</p>
             
             </div>
           {% else %}
