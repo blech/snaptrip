@@ -23,7 +23,11 @@
       });
       $("li").click(function() {
         var href = ($(this).children().children("a").attr("href"));
-        window.location.href = href;
+        if (href.match(/undefined/)) {
+          return false;
+        } else {
+          window.location.href = href;
+        }
       });
 
       // if they're clickable, they should look clickable
