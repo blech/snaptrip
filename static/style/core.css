@@ -7,15 +7,18 @@ body {
   color: #666;
   padding: 0px;
   margin:  0px;
+  width: 100%;
 }
 
 div#content {
-  width:830px;
+  width:800px;
+  margin: 0px;
+  padding: 0px 0px 0px 20px;
 }
 
 div#main {
   margin: 0px;
-  padding: 0px 20px;
+  padding: 0px;
   width:520px;
   float:left;
 }
@@ -67,9 +70,14 @@ hr {
 /* navigation */
 
 div#header {
+  margin: 0px;
   padding: 5px 20px 5px 20px;
   border-bottom: 1px dotted #ccc;
   font: 12px Arial, Helvetica, sans-serif;
+/*
+  margin: 0px auto;
+  width: 800px;
+*/
 }
 
 div#header h1 {
@@ -103,7 +111,8 @@ div#side {
   float:left;
   min-width: 250px;
   max-width: 270px;
-  padding: 0px;
+  padding: 0px 0px 0px 10px;
+  margin: 0px;
 }
 
 ul#trips {
@@ -119,6 +128,8 @@ ul#trips li {
   margin-right: 0px;
   border-bottom: 1px dotted #ccc;
   color: #666;
+  font: 14px Arial, Helvetica, sans-serif;
+  line-height: 16px;
 }
 
 ul#trips li.future {
@@ -243,5 +254,10 @@ textarea {
 
 div#login {
   padding: 0px 20px 0px 20px;
+  margin: 0px;
   border-bottom: 1px dotted #ccc;
+/*
+  margin: auto;
+  width: 800px;
+*/
 }
