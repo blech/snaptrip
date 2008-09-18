@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8">
-	<title>snaptrip - a trip to {{ trip.trip.city.name }}</title>
+	<title>snaptrip - a trip to {{ trip.trip.city.name }} in {{ trip.trip.startdate|date:"F Y" }}</title>
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
 
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
@@ -35,7 +35,7 @@
       for (var index in json.photos.photo) {
         // add photos
         photo = json.photos.photo[index];
-        html = '<a class="img" href="http://flickr.com/photos/'+photo.owner+'/'+photo.id+'/"><img src="http://farm'+photo.farm+'.static.flickr.com/'+photo.server+'/'+photo.id+'_'+photo.secret+'_s.jpg" alt="'+photo.title+'" class="l" alt="'+photo.title+'" title="'+photo.title+'" id="'+photo.id+'" /></a> '+"\n";
+        html = '\n<a class="img" href="http://flickr.com/photos/'+photo.owner+'/'+photo.id+'/"><img src="http://farm'+photo.farm+'.static.flickr.com/'+photo.server+'/'+photo.id+'_'+photo.secret+'_s.jpg" alt="'+photo.title+'" class="l" alt="'+photo.title+'" title="View \''+photo.title+'\' at Flickr." id="'+photo.id+'" /></a> ';
         $('div#photos a.img:last').after(html);
       }
       
@@ -43,12 +43,12 @@
       photos = json.photos;
       
       var count="";
-      if (photos.page = photos.pages) {
-        count = "all "+photos.total+" photos";
+      if (photos.page == photos.pages) {
+        count = "all "+(photos.total)+" photos";
         $('div#photos a#more').hide();             
         $('div#photos p#tag').show();             
       } else {
-        count = photos.perpage+" of "+photos.total+" photos (page "+photos.page+" of "+photos.pages;
+        count = (photos.perpage*page)+" of "+photos.total+" photos (pages 1-"+photos.page+" of "+photos.pages+")";
       }
       
       $('div#photos span.count').text(count);             
@@ -91,7 +91,7 @@
                   // Flickr returns empty JSON on success, so...
                   alert("There was an error: "+json)
                 } else {
-                  $('img#'+photo_id).css({ border:"2px solid green" });
+                  $('img#'+photo_id).css({ border:"2px solid #{{ trip.trip.city.rgb }}"});
                 }
                 
                 tag_index++;
@@ -133,12 +133,10 @@
         
           {% if photos.total %}
           <h3>Flickr photos from this trip.</h3>
-            <div id="photos"><!-- {{ photos }} -->
-            {% spaceless %}
+            <div id="photos">
               {% for photo in photos.photo %}
-                <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/" class="img"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" alt="{{ photo.title }}" class="{% cycle f,n,n,n,n,l %}" title="View '{{ photo.title }}' at Flickr." id="{{ photo.id }}"></a>
+                <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/" class="img"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" alt="{{ photo.title }}"{% if photo.dopplr %} class="tagged"{% endif %} title="View '{{ photo.title }}' at Flickr." id="{{ photo.id }}"></a>
               {% endfor %}
-            {% endspaceless %}
         
             <p id="phototext">Showing 
             {% ifnotequal photos.pages 1 %}
@@ -159,7 +157,7 @@
             {% endifequal %}
  
             <p>{% if not photos.geototal %}None{% else %}{% ifequal photos.geototal photos.total %}All{% else %}{{ photos.geototal }}{% endifequal %}{% endif %} of these photo{% ifnotequal photos.geototal 1 %}s{% endifnotequal %} are already tagged with their location in Flickr.{% ifnotequal photos.total photos.geototal %}
-              You can <a href="#" onclick="javascript:return tag('geo')">add location data</a> based on your trip to photos that don't already have it.
+              You can <a href="#" onclick="javascript:return tag('geo')">add a location</a> based on your trip to photos that don't already have one.
             {% endifnotequal %}</p>
             
             </div>
@@ -179,8 +177,6 @@
         <span class="dopplr"><a href="{{ trip.trip.url }}">View this trip at Dopplr. &rarr;</a></span>
       </div>
       
-      <!-- {{ trip }} -->
-  
     </div>
 
     <div id="side">

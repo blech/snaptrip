@@ -219,7 +219,11 @@ div#trip_nav span.dopplr {
 }
 
 div#side ul.trip li {
-  list-style-type: disc;
+  margin-left:4px;
+}
+
+div#side ul.trip li:before {
+  content: "- ";
 }
 
 /* form page */
