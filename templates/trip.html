@@ -35,7 +35,7 @@
       for (var index in json.photos.photo) {
         // add photos
         photo = json.photos.photo[index];
-        html = '<a class="img" href="http://flickr.com/photos/'+photo.owner+'/'+photo.id+'/"><img src="http://farm'+photo.farm+'.static.flickr.com/'+photo.server+'/'+photo.id+'_'+photo.secret+'_s.jpg" alt="'+photo.title+'" class="l" alt="'+photo.title+'" id="'+photo.id+'" /></a> '+"\n";
+        html = '<a class="img" href="http://flickr.com/photos/'+photo.owner+'/'+photo.id+'/"><img src="http://farm'+photo.farm+'.static.flickr.com/'+photo.server+'/'+photo.id+'_'+photo.secret+'_s.jpg" alt="'+photo.title+'" class="l" alt="'+photo.title+'" title="'+photo.title+'" id="'+photo.id+'" /></a> '+"\n";
         $('div#photos a.img:last').after(html);
       }
       
@@ -57,6 +57,17 @@
     return false;
   }
 
+  function loaddate() {
+    page = 1;
+
+    $.getJSON("/ajax/photos.more?page="+page+"&token={{ session.flickr }}&nsid={{ photos.photo.0.owner }}&startdate={{ trip.trip.startdate|date:"Y-m-d" }}&finishdate={{ trip.trip.finishdate|date:"Y-m-d" }}",
+              function(json) { 
+                page = json.photos.page;
+                add_photos(json);
+              }
+             );
+  }
+
   function tag(type) {
     if (type == 'dopplr') {
       $('div#photos img').each(function(i) {
@@ -66,6 +77,8 @@
       $('p#tag').text("You are adding a Dopplr tag to all these photos at Flickr. Please wait.");
       // $('p#tag').css({ background:'#ffc' });
       _do_tag(photos_to_tag[tag_index]);
+    } else {
+      alert("Sorry, but tagging of type '"+type+"' isn't enabled yet.");
     }
     
     return false;
@@ -137,7 +150,7 @@
             {% ifequal method 'machinetag' %}
               with the machine tag 'dopplr:trip={{ trip.trip.id }}'.{% ifnotequal photos.pages 1 %} <a href="#" onclick="javascript:return loadmore();" id="more">Load more?</a>{% endifnotequal %}</p>
               
-              <p id="tag">Dopplr will use this tag to show your pubic photos, if you have associated your account. However, there may be more photos from this trip. Would you like to <a href="#" onclick="javascript:return loaddate();">search by date</a> instead?</p>
+              <p id="tag">Dopplr will use this tag to show your pubic photos, if you have associated your account. However, there may be more photos from this trip. Would you like to <a href="/trip/{{ trip.trip.id }}?by=date">search by date</a> instead?</p>
             {% else %}
               taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}.{% ifnotequal photos.pages 1 %} <a href="#" onclick="javascript:return loadmore();" id="more">Load more?</a>{% endifnotequal %}</p>
 
@@ -146,7 +159,7 @@
             {% endifequal %}
  
             <p>{% if not photos.geototal %}None{% else %}{% ifequal photos.geototal photos.total %}All{% else %}{{ photos.geototal }}{% endifequal %}{% endif %} of these photo{% ifnotequal photos.geototal 1 %}s{% endifnotequal %} are already tagged with their location in Flickr.{% ifnotequal photos.total photos.geototal %}
-              You can <a href="href="#" onclick="javascript:return tag('geo')">add location data</a> based on your trip to photos that don't already have it.
+              You can <a href="#" onclick="javascript:return tag('geo')">add location data</a> based on your trip to photos that don't already have it.
             {% endifnotequal %}</p>
             
             </div>

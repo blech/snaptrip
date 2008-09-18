@@ -7,9 +7,10 @@ import logging
 from datetime import datetime
 from operator import itemgetter
 
+import feedparser
 import simplejson
-from utilities import sessions
 from jinja2 import FileSystemLoader, Environment
+from utilities import sessions
 
 import flickrapi
 
@@ -84,14 +85,19 @@ class TripPage(webapp.RequestHandler):
         # get keys
         keys = get_keys(self.request.host)
         flickr = get_flickr(keys, token)      
-  
-        photos = get_flickr_photos_by_machinetag(flickr, trip_info)
-        if photos and photos['total']:
-          template_values['photos'] = photos
-          template_values['method'] = "machinetag"
-        else:
+
+        if self.request.get('by') == 'date':  
           template_values['photos'] = get_flickr_photos_by_date(flickr, trip_info)
           template_values['method'] = "date"
+
+        else:
+          photos = get_flickr_photos_by_machinetag(flickr, trip_info)
+          if photos and photos['total']:
+            template_values['photos'] = photos
+            template_values['method'] = "machinetag"
+          else:
+            template_values['photos'] = get_flickr_photos_by_date(flickr, trip_info)
+            template_values['method'] = "date"
 
       else:
         template_values['url'] = get_flickr_auth_url(self.request.host);
@@ -116,6 +122,13 @@ class LoginPage(webapp.RequestHandler):
     permanent = ""
     token = self.request.get('token') # from Dopplr
     frob  = self.request.get('frob')  # from Flickr
+
+    # get blog
+    atom = urlfetch.fetch("http://blech.vox.com/library/posts/tags/snaptrip/atom-full.xml")
+    feed = feedparser.parse(atom.content)
+    for entry in feed['entries']:
+      entry['published_date'] = datetime( *entry.published_parsed[:-3] )
+      entry['link']           = re.sub('\?.*$', '', entry['link'])
 
     if token:
       response = urlfetch.fetch(
@@ -150,6 +163,7 @@ class LoginPage(webapp.RequestHandler):
       'permanent':  permanent,
       'session':    session,
       'keys':       keys,
+      'feed':       feed,
     }
     
     path = os.path.join(os.path.dirname(__file__), 'templates/login.html')
@@ -177,10 +191,12 @@ class FormPage(webapp.RequestHandler):
     error = ''
 
     email = ''
-    if session['dopplr']:
+    try:
       traveller = get_traveller_info(session['dopplr'])
       email = traveller['email']
-    
+    except KeyError, e:
+      email = ''
+      
     if name and text:
       sent = True;  
       # send
@@ -236,7 +252,7 @@ class MoreJSON(webapp.RequestHandler):
                  tags=machine_tag,
                  page=page,
                  per_page="24",
-                 extras='geo' # license, date_upload, date_taken, tags, o_dims, views, media',
+                 extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
   #                privacy_filter="1",
                )
   
@@ -257,7 +273,7 @@ class MoreJSON(webapp.RequestHandler):
                  max_taken_date=finishdate,
                  page=page,
                  per_page="24",
-                 extras='geo' # license, date_upload, date_taken, tags, o_dims, views, media',
+                 extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
   #                privacy_filter="1",
                )
   
@@ -416,18 +432,11 @@ def get_flickr_photos_by_machinetag(flickr, trip_info):
                tags=machine_tag,
                sort="date-taken-asc",
                per_page="24",
-               extras='geo' # license, date_upload, date_taken, tags, o_dims, views, media',
+               extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
 #                privacy_filter="1",
              )
     photos = simplejson.loads(photos)
-
-    photos['photos']['geototal'] = 0
-    for photo in photos['photos']['photo']:
-      if photo['latitude'] and photo['longitude']:
-        photos['photos']['geototal'] = photos['photos']['geototal']+1
-
-    # TODO coercion properly
-    photos['photos']['geototal'] = str(photos['photos']['geototal'])
+    photos = get_flickr_geototal(photos)
 
     return photos['photos']
 
@@ -449,10 +458,11 @@ def get_flickr_photos_by_date(flickr, trip_info):
                max_taken_date=max_taken,
                sort="date-taken-asc",
                per_page="24",
-               extras='geo' # license, date_upload, date_taken, tags, o_dims, views, media',
+               extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
 #                privacy_filter="1",
              )
     photos = simplejson.loads(photos)
+    photos = get_flickr_geototal(photos)
 
     return photos['photos']
 
@@ -460,7 +470,29 @@ def get_flickr_auth_url(host):
   keys = get_keys(host)
   flickr = get_flickr(keys)      
   return flickr.web_login_url('write')
-    
+
+def get_flickr_geototal(photos):
+  photos['photos']['geototal'] = 0
+  for photo in photos['photos']['photo']:
+    if photo['latitude'] and photo['longitude']:
+      photos['photos']['geototal'] = photos['photos']['geototal']+1
+
+  # TODO coercion properly
+  photos['photos']['geototal'] = str(photos['photos']['geototal'])
+
+  return photos
+
+def get_flickr_tagtotal(photos, trip_id):
+  photos['photos']['geototal'] = 0
+  for photo in photos['photos']['photo']:
+    if photo['latitude'] and photo['longitude']:
+      photos['photos']['geototal'] = photos['photos']['geototal']+1
+
+  # TODO coercion properly
+  photos['photos']['geototal'] = str(photos['photos']['geototal'])
+
+  return photos
+
 # == utilities
 
 def prettify_trips(trip_list):
