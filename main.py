@@ -8,11 +8,10 @@ from datetime import datetime
 from operator import itemgetter
 
 import feedparser
+import flickrapi
 import simplejson
 from jinja2 import FileSystemLoader, Environment
 from utilities import sessions
-
-import flickrapi
 
 from google.appengine.api import mail
 from google.appengine.api import urlfetch
