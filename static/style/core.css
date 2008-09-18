@@ -202,6 +202,10 @@ div#photos img {
   padding: 0px;
 }
 
+div#photos img.dopplr {
+  border:2px solid black;
+}
+
 div#photos a.img:hover  {
   background:#47a;
 }

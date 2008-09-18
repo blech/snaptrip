@@ -5,6 +5,11 @@
 	<meta http-equiv="content-type" content="text/html; charset=utf-8">
 	<title>snaptrip - a trip to {{ trip.trip.city.name }} in {{ trip.trip.startdate|date:"F Y" }}</title>
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
+  <style type="text/css">
+    div#photos img.dopplr {
+      border:2px solid #{{ trip.trip.city.rgb }};
+    }
+  </style>
 
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
   <script language="text/javascript" type="text/javascript">
@@ -35,7 +40,8 @@
       for (var index in json.photos.photo) {
         // add photos
         photo = json.photos.photo[index];
-        html = '\n<a class="img" href="http://flickr.com/photos/'+photo.owner+'/'+photo.id+'/"><img src="http://farm'+photo.farm+'.static.flickr.com/'+photo.server+'/'+photo.id+'_'+photo.secret+'_s.jpg" alt="'+photo.title+'" class="l" alt="'+photo.title+'" title="View \''+photo.title+'\' at Flickr." id="'+photo.id+'" /></a> ';
+        html = "\n                ";
+        html += '<a class="img" href="http://flickr.com/photos/'+photo.owner+'/'+photo.id+'/"><img src="http://farm'+photo.farm+'.static.flickr.com/'+photo.server+'/'+photo.id+'_'+photo.secret+'_s.jpg" alt="'+photo.title+'" class="l" alt="'+photo.title+'" title="View \''+photo.title+'\' at Flickr." id="'+photo.id+'" /></a> ';
         $('div#photos a.img:last').after(html);
       }
       
@@ -71,7 +77,9 @@
   function tag(type) {
     if (type == 'dopplr') {
       $('div#photos img').each(function(i) {
-        photos_to_tag.push(this.id);
+        if (this.class != "dopplr") {
+          photos_to_tag.push(this.id);
+        }
       })
   
       $('p#tag').text("You are adding a Dopplr tag to all these photos at Flickr. Please wait.");
@@ -135,7 +143,7 @@
           <h3>Flickr photos from this trip.</h3>
             <div id="photos">
               {% for photo in photos.photo %}
-                <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/" class="img"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" alt="{{ photo.title }}"{% if photo.dopplr %} class="tagged"{% endif %} title="View '{{ photo.title }}' at Flickr." id="{{ photo.id }}"></a>
+                <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/" class="img"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" alt="{{ photo.title }}"{% if photo.dopplr %} class="dopplr"{% endif %} title="View '{{ photo.title }}' at Flickr." id="{{ photo.id }}"></a>
               {% endfor %}
         
             <p id="phototext">Showing 
@@ -152,12 +160,15 @@
             {% else %}
               taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}.{% ifnotequal photos.pages 1 %} <a href="#" onclick="javascript:return loadmore();" id="more">Load more?</a>{% endifnotequal %}</p>
 
-            <p id="tag"{% ifnotequal photos.pages 1 %} style="display:none"{% endifnotequal %}>You can 
-              <a href="#" onclick="javascript:return tag('dopplr')">add a Dopplr tag</a> to all these photos at Flickr.</p>
+            <p id="tag"{% ifnotequal photos.pages 1 %} style="display:none"{% endifnotequal %}>You can {% ifnotequal photos.totag photos.total %}
+              <a href="#" onclick="javascript:return tag('dopplr')">add a Dopplr tag</a> to {{ photos.totag }} photos at Flickr that don't currently have them.</p>
+              {% else %}
+              <a href="#" onclick="javascript:return tag('dopplr')">add a Dopplr tag</a> to the all these photos at Flickr.</p>
+              {% endifnotequal %}
             {% endifequal %}
  
-            <p>{% if not photos.geototal %}None{% else %}{% ifequal photos.geototal photos.total %}All{% else %}{{ photos.geototal }}{% endifequal %}{% endif %} of these photo{% ifnotequal photos.geototal 1 %}s{% endifnotequal %} are already tagged with their location in Flickr.{% ifnotequal photos.total photos.geototal %}
-              You can <a href="#" onclick="javascript:return tag('geo')">add a location</a> based on your trip to photos that don't already have one.
+            <p>{% ifequal photos.geototal "0" %}None{% else %}{% ifequal photos.geototal photos.total %}All{% else %}{{ photos.geototal }}{% endifequal %}{% endifequal %} of these photo{% ifnotequal photos.geototal 1 %}s{% endifnotequal %} are already tagged with their location in Flickr.{% ifnotequal photos.total photos.geototal %}
+              You can <a href="#" onclick="javascript:return tag('geo')">add a location</a> based on your trip to {% ifequal photos.geototal "0" %}all these photos{% else %}the photos that don't already have one{% endifequal %}.
             {% endifnotequal %}</p>
             
             </div>

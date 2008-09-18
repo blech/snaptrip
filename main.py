@@ -436,6 +436,7 @@ def get_flickr_photos_by_machinetag(flickr, trip_info):
              )
     photos = simplejson.loads(photos)
     photos = get_flickr_geototal(photos)
+    photos = get_flickr_tagtotal(photos, trip_info["trip"]["id"])
 
     return photos['photos']
 
@@ -462,6 +463,7 @@ def get_flickr_photos_by_date(flickr, trip_info):
              )
     photos = simplejson.loads(photos)
     photos = get_flickr_geototal(photos)
+    photos = get_flickr_tagtotal(photos, trip_info["trip"]["id"])
 
     return photos['photos']
 
@@ -476,19 +478,23 @@ def get_flickr_geototal(photos):
     if photo['latitude'] and photo['longitude']:
       photos['photos']['geototal'] = photos['photos']['geototal']+1
 
-  # TODO coercion properly
   photos['photos']['geototal'] = str(photos['photos']['geototal'])
 
   return photos
 
 def get_flickr_tagtotal(photos, trip_id):
-  photos['photos']['geototal'] = 0
+  photos['photos']['tagtotal'] = 0
   for photo in photos['photos']['photo']:
-    if photo['latitude'] and photo['longitude']:
-      photos['photos']['geototal'] = photos['photos']['geototal']+1
+    logging.info("got tags "+photo['tags'])
+    if photo['tags'].find('dopplr:trip='+str(trip_id)) > 0:
+      photos['photos']['tagtotal'] = photos['photos']['tagtotal']+1
+      photo['dopplr'] = True;
 
-  # TODO coercion properly
-  photos['photos']['geototal'] = str(photos['photos']['geototal'])
+  if photos['photos']['tagtotal']:
+    photos['photos']['totag']    = str(int(photos['photos']['total'])-photos['photos']['tagtotal'])
+  else:
+    photos['photos']['totag']    = photos['photos']['total']
+  photos['photos']['tagtotal'] = str(photos['photos']['tagtotal'])
 
   return photos
 
