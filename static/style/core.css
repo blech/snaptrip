@@ -221,7 +221,7 @@ div#photos span.image span.geo {
   display:block;
   position: absolute;
   top:-14px;
-  right: 8px;
+  right: 10px;
   z-index:5;
 }
 

@@ -145,13 +145,11 @@
               {% for photo in photos.photo %}
                 <span class="image">
                   <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/" class="img"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" alt="{{ photo.title }}"{% if photo.dopplr %} class="dopplr"{% endif %} title="View '{{ photo.title }}' at Flickr." id="{{ photo.id }}"></a>
-<!-- 
                   {% if photo.latitude %}<span class="geo"><a href="javascript:alert('{{ photo.latitude }}, {{ photo.longitude }}, {{ photo.accuracy }}')"><img src="/images/pushpin-whitesmall.png" class="pin"></a></span>{% endif %}
- -->
                 </span>
               {% endfor %}
         
-<!-- photos -->
+<!-- 'showing' text -->
             <p id="phototext">Showing 
             {% ifnotequal photos.pages 1 %}
               <span class="count">{{ photos.perpage }} of {{ photos.total }} photos (page {{ photos.page }} of {{ photos.pages }})</span>
@@ -159,10 +157,12 @@
               all {{ photos.total }} photos       
             {% endifnotequal %}
           
+<!-- 'showing' text: machinetag -->
             {% ifequal method 'machinetag' %}
               with the machine tag 'dopplr:trip={{ trip.trip.id }}'.{% ifnotequal photos.pages 1 %} <a href="#" onclick="javascript:return loadmore();" id="more">Load more?</a>{% endifnotequal %}</p>
               
               <p id="tag">Dopplr will use this tag to show your pubic photos, if you have associated your account. However, there may be more photos from this trip. Would you like to <a href="/trip/{{ trip.trip.id }}?by=date">search by date</a> instead?</p>
+<!-- 'showing' text: by date -->
             {% else %}
               taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}.{% ifnotequal photos.pages 1 %} <a href="#" onclick="javascript:return loadmore();" id="more">Load more?</a>{% endifnotequal %}</p>
 
@@ -173,6 +173,7 @@
               {% endifnotequal %}
             {% endifequal %}
  
+<!-- location info -->
             <p>{% ifequal photos.geototal "0" %}None{% else %}{% ifequal photos.geototal photos.total %}All{% else %}{{ photos.geototal }}{% endifequal %}{% endifequal %} of these photo{% ifnotequal photos.geototal 1 %}s{% endifnotequal %} are already tagged with their location in Flickr.{% ifnotequal photos.total photos.geototal %}
               You can <a href="#" onclick="javascript:return tag('geo')">add a location</a> based on your trip to {% ifequal photos.geototal "0" %}all these photos{% else %}the photos that don't already have one{% endifequal %}.
             {% endifnotequal %}</p>
