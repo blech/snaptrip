@@ -9,11 +9,10 @@ handlers:
   
 - url: /js
   static_dir: static/js
-  
-- url: /favicon.ico
-  static_files: static/images/favicon.ico
-  upload: static/images/favicon.ico
-  
+
+- url: /images
+  static_dir: static/images
+    
 - url: /.*
   script: main.py
 

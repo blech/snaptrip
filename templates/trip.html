@@ -6,7 +6,7 @@
 	<title>snaptrip - a trip to {{ trip.trip.city.name }} in {{ trip.trip.startdate|date:"F Y" }}</title>
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
   <style type="text/css">
-    div#photos img.dopplr {
+    div#photos span.image img.dopplr {
       border:2px solid #{{ trip.trip.city.rgb }};
     }
   </style>
@@ -136,16 +136,22 @@
         <p>Unfortunately, for now we can't look up photos for other people's trips.</p>
 
       {% else %}
-        
         {% if photos %}
-        
+
+<!-- photos -->        
           {% if photos.total %}
           <h3>Flickr photos from this trip.</h3>
             <div id="photos">
               {% for photo in photos.photo %}
-                <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/" class="img"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" alt="{{ photo.title }}"{% if photo.dopplr %} class="dopplr"{% endif %} title="View '{{ photo.title }}' at Flickr." id="{{ photo.id }}"></a>
+                <span class="image">
+                  <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/" class="img"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" alt="{{ photo.title }}"{% if photo.dopplr %} class="dopplr"{% endif %} title="View '{{ photo.title }}' at Flickr." id="{{ photo.id }}"></a>
+<!-- 
+                  {% if photo.latitude %}<span class="geo"><a href="javascript:alert('{{ photo.latitude }}, {{ photo.longitude }}, {{ photo.accuracy }}')"><img src="/images/pushpin-whitesmall.png" class="pin"></a></span>{% endif %}
+ -->
+                </span>
               {% endfor %}
         
+<!-- photos -->
             <p id="phototext">Showing 
             {% ifnotequal photos.pages 1 %}
               <span class="count">{{ photos.perpage }} of {{ photos.total }} photos (page {{ photos.page }} of {{ photos.pages }})</span>

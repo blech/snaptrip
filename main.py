@@ -200,9 +200,9 @@ class FormPage(webapp.RequestHandler):
       sent = True;  
       # send
       message = mail.EmailMessage(subject='snaptrip feedback (via form)',)
-      message.sender = "misonp+snaptrip@gmail.com"
+      message.sender = "misonp@googlemail.com"
     
-      message.to = "Paul Mison <misonp+snaptrip@gmail.com>"
+      message.to = "Paul Mison <misonp+snaptrip@googlemail.com>"
       if email:
         message.cc = name+" <"+email+">"
         

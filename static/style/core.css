@@ -194,7 +194,11 @@ div#photos {
   margin-left:3px;
 }
 
-div#photos img {
+div#photos span.image {
+  position: relative;
+}
+
+div#photos span.image img {
   width: 75px;
   height: 75px;
   margin:0px 1px 5px 1px;
@@ -202,13 +206,33 @@ div#photos img {
   padding: 0px;
 }
 
-div#photos img.dopplr {
+div#photos span.image img.dopplr {
   border:2px solid black;
+}
+
+div#photos span.image img.pin {
+  width:10px;
+  height:18px;
+  border: 0;
+  margin: 0;
+}
+
+div#photos span.image span.geo {
+  display:block;
+  position: absolute;
+  top:-14px;
+  right: 8px;
+  z-index:5;
 }
 
 div#photos a.img:hover  {
   background:#47a;
 }
+
+div#photos span.image span.geo a:hover {
+  background: none;
+}
+
 
 div#trip_nav {
   width: 512px;
@@ -264,8 +288,4 @@ div#login {
   padding: 0px 20px 0px 20px;
   margin: 0px;
   border-bottom: 1px dotted #ccc;
-/*
-  margin: auto;
-  width: 800px;
-*/
 }
