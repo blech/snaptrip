@@ -195,10 +195,19 @@ div#photos {
 }
 
 div#photos span.image {
+  display:block;
+  float:left;
   position: relative;
+  width: 85px;
+  height: 85px;
 }
 
-div#photos span.image img {
+div#photos span.image a {
+  color:white;
+}
+
+div#photos span.image a.img {
+  position:absolute;
   width: 75px;
   height: 75px;
   margin:0px 1px 5px 1px;
@@ -206,11 +215,14 @@ div#photos span.image img {
   padding: 0px;
 }
 
-div#photos span.image img.dopplr {
+div#photos span.image img {
+}
+
+div#photos span.image a.img img.dopplr {
   border:2px solid black;
 }
 
-div#photos span.image img.pin {
+div#photos span.image a img.pin {
   width:10px;
   height:18px;
   border: 0;
@@ -220,13 +232,12 @@ div#photos span.image img.pin {
 div#photos span.image span.geo {
   display:block;
   position: absolute;
-  top:-14px;
-  right: 10px;
-  z-index:5;
+  top:60px;
+  left:65px;
 }
 
-div#photos a.img:hover  {
-  background:#47a;
+div#photos span.image a.img:hover  {
+  color:#47a;
 }
 
 div#photos span.image span.geo a:hover {

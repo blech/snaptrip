@@ -6,13 +6,13 @@
 	<title>snaptrip - a trip to {{ trip.trip.city.name }} in {{ trip.trip.startdate|date:"F Y" }}</title>
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
   <style type="text/css">
-    div#photos span.image img.dopplr {
+    div#photos span.image a.img img.dopplr {
       border:2px solid #{{ trip.trip.city.rgb }};
     }
   </style>
 
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
-  <script language="text/javascript" type="text/javascript">
+  <script type="text/javascript">
   var page = 1;
   var tag_index = 0;
   var photos_to_tag = new Array();
@@ -41,7 +41,7 @@
         // add photos
         photo = json.photos.photo[index];
         html = "\n                ";
-        html += '<a class="img" href="http://flickr.com/photos/'+photo.owner+'/'+photo.id+'/"><img src="http://farm'+photo.farm+'.static.flickr.com/'+photo.server+'/'+photo.id+'_'+photo.secret+'_s.jpg" alt="'+photo.title+'" class="l" alt="'+photo.title+'" title="View \''+photo.title+'\' at Flickr." id="'+photo.id+'" /></a> ';
+        html += '<a class="img" href="http://flickr.com/photos/'+photo.owner+'/'+photo.id+'/"><img src="http://farm'+photo.farm+'.static.flickr.com/'+photo.server+'/'+photo.id+'_'+photo.secret+'_s.jpg" alt="'+photo.title+'" class="l" alt="'+photo.title+'" title="View \''+photo.title+'\' at Flickr." id="'+photo.id+'" /><'+'/a> ';
         $('div#photos a.img:last').after(html);
       }
       
@@ -63,23 +63,13 @@
     return false;
   }
 
-  function loaddate() {
-    page = 1;
-
-    $.getJSON("/ajax/photos.more?page="+page+"&token={{ session.flickr }}&nsid={{ photos.photo.0.owner }}&startdate={{ trip.trip.startdate|date:"Y-m-d" }}&finishdate={{ trip.trip.finishdate|date:"Y-m-d" }}",
-              function(json) { 
-                page = json.photos.page;
-                add_photos(json);
-              }
-             );
-  }
-
   function tag(type) {
     if (type == 'dopplr') {
       $('div#photos img').each(function(i) {
-        if (this.class != "dopplr") {
-          photos_to_tag.push(this.id);
-        }
+        console.log(this.attr('class'));
+//         if (this.class() != "dopplr") {
+//           photos_to_tag.push(this.id);
+//         }
       })
   
       $('p#tag').text("You are adding a Dopplr tag to all these photos at Flickr. Please wait.");
@@ -106,7 +96,7 @@
                 if (photos_to_tag[tag_index]) {
                   _do_tag(photos_to_tag[tag_index]);
                 } else {
-                  $('p#tag').html("Your photos have been tagged with <a href='http://flickr.com/photos/tags/dopplr:trip={{trip.trip.id}}'>'dopplr:trip={{ trip.trip.id }}'</a>. Thanks.");
+                  $('p#tag').html("Your photos have been tagged with <a href='http://flickr.com/photos/tags/dopplr:trip={{trip.trip.id}}'>'dopplr:trip={{ trip.trip.id }}'<'+'/a>. Thanks.");
                   // alert("Tagged all photos.");
                 }
               }
