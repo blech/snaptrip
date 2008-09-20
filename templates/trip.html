@@ -135,10 +135,11 @@
               {% for photo in photos.photo %}
                 <span class="image">
                   <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/" class="img"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" alt="{{ photo.title }}"{% if photo.dopplr %} class="dopplr"{% endif %} title="View '{{ photo.title }}' at Flickr." id="{{ photo.id }}"></a>
-                  {% if photo.latitude %}<span class="geo"><a href="javascript:alert('{{ photo.latitude }}, {{ photo.longitude }}, {{ photo.accuracy }}')"><img src="/images/pushpin-whitesmall.png" class="pin"></a></span>{% endif %}
+                  {% if photo.latitude %}<span class="geo"><a href="javascript:alert('{{ photo.latitude }}, {{ photo.longitude }}, {{ photo.accuracy }}')" title="This photo has a location."><img src="/images/pushpin-whitesmall.png" class="pin"></a></span>{% endif %}
                 </span>
               {% endfor %}
-        
+
+              <br style="clear:both;">        
 <!-- 'showing' text -->
             <p id="phototext">Showing 
             {% ifnotequal photos.pages 1 %}

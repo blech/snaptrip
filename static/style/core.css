@@ -191,6 +191,9 @@ div#main.trip h2 {
 
 div#photos {
   width:512px;
+}
+
+div#photos p {
   margin-left:3px;
 }
 
@@ -208,8 +211,8 @@ div#photos span.image a {
 
 div#photos span.image a.img {
   position:absolute;
-  width: 75px;
-  height: 75px;
+  width: 79px;
+  height: 83px;
   margin:0px 1px 5px 1px;
   border:2px solid white;
   padding: 0px;
@@ -237,7 +240,7 @@ div#photos span.image span.geo {
 }
 
 div#photos span.image a.img:hover  {
-  color:#47a;
+  background:#47a;
 }
 
 div#photos span.image span.geo a:hover {
