@@ -10,11 +10,7 @@
   {% include "includes/header.html" %}
   
   <div id="login">
-    {% if session.dopplr %}
-      <h1><a href="/">View your trips.</a></h1>
-    {% else %}
-      <h1 style="color:#ccc;"><a href="{{ dopplr_url }}">Authenticate with Dopplr.</a></h1>
-    {% endif %}
+    <h1 style="color:#ccc;">{% if not session.dopplr %}<a href="{{ dopplr_url }}">{% endif %}Authenticate{% if session.dopplr %}d{% endif %} with Dopplr.{% if not session.dopplr %}</a>{% endif %}</h1>
   
     <h1 style="color:#ccc;">{% if not session.flickr %}<a href="{{ flickr_url }}">{% endif %}Authenticate{% if session.flickr %}d{% endif %} with Flickr.{% if not session.flickr %}</a>{% endif %}</h1>
   </div>
@@ -22,6 +18,14 @@
   <div id="content">
     <div id="main">
       <h2>Questions and Answers.</h2>
+
+      {% if session.dopplr and session.flickr %}
+      
+      <h3>Where do I start?</h3>
+      
+      <p>You can <a href="/">view your list of past trips</a> now you've authenticated.</p>
+      
+      {% endif %}
 
       <h3>What is 'snaptrip'?</h3>
       

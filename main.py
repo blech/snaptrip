@@ -26,12 +26,12 @@ env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(__file__)
 
 class IndexPage(webapp.RequestHandler):
   def get(self, who=""):
-    permanent = ''
     session = get_session()
 
     # session objects don't support has_key. bah.
     try:
       permanent = session['dopplr']
+      token     = session['flickr']
     except KeyError, e:
       return self.redirect("/login/")
 
@@ -60,7 +60,6 @@ class IndexPage(webapp.RequestHandler):
 
 class TripPage(webapp.RequestHandler):
   def get(self, trip_id, type="tag", page="1"):
-    permanent = ''
     session = get_session()
 
     logging.info("got type "+type+" and page "+page);
@@ -71,6 +70,7 @@ class TripPage(webapp.RequestHandler):
 
     try:
       permanent = session['dopplr']
+      token     = session['flickr']
     except KeyError, e:
       return self.redirect("/login/")
 
@@ -170,14 +170,20 @@ class LoginPage(webapp.RequestHandler):
         # self.redirect("/")
     
     if frob:
-      permanent = flickr.get_token(frob)
+      try:
+        permanent = flickr.get_token(frob)
+      except:
+        return error_page(self, session, "The authentication token was out of date. Please try again.")
       if permanent:
         session['flickr'] = permanent
         got_token = True
         # self.redirect("/")
 
-    if got_token and session.has_key('flickr') and session.has_key('dopplr'):
-      return self.redirect("/")
+    try:
+      if got_token and session['flickr'] and session['dopplr']:
+        return self.redirect("/")
+    except:
+      logging.info("Not yet ready to visit trip list")
 
     template_values = {
       'dopplr_url': dopplr_url,
