@@ -189,9 +189,9 @@ div#main.trip h2 {
   font: 200 16px Arial, Helvetica, sans-serif;
 }
 
-/* h3.photos {
-  margin-bottom: 4px;
-} */
+h3.photos {
+  margin-bottom: 8px;
+} 
 
 div#photos {
   width:512px;
