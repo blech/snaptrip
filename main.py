@@ -34,6 +34,9 @@ class IndexPage(webapp.RequestHandler):
 
     stats           = {}
     trips_info      = get_trips_info(permanent, who)
+    if trips_info.has_key('error'):
+      return error_page(self, session, trips_info['error'])
+
     if trips_info:
       stats         = build_stats(trips_info)
     
@@ -51,9 +54,11 @@ class IndexPage(webapp.RequestHandler):
     self.response.out.write(template.render(template_values))
 
 class TripPage(webapp.RequestHandler):
-  def get(self, trip_id):
+  def get(self, trip_id, type="tag", page="1"):
     permanent = ''
     session = get_session()
+
+    logging.info("got type "+type+"and page "+page);
 
     # get trip id and hence info from Dopplr
     if not trip_id:
@@ -65,6 +70,8 @@ class TripPage(webapp.RequestHandler):
       return self.redirect("/login/")
 
     trip_info = get_trip_info(permanent, trip_id)
+    if trip_info.has_key('error'):
+      return error_page(self, session, trip_info['error'])
 
     # initialise template data before we call Flickr
     template_values = {
@@ -85,17 +92,21 @@ class TripPage(webapp.RequestHandler):
         keys = get_keys(self.request.host)
         flickr = get_flickr(keys, token)      
 
-        if self.request.get('by') == 'date':  
-          template_values['photos'] = get_flickr_photos_by_date(flickr, trip_info)
-          template_values['method'] = "date"
+        template_values['nextpage'] = int(page)+1
 
+        if type == 'date':  
+          template_values['photos'] = get_flickr_photos_by_date(flickr, trip_info, page)
+          template_values['method'] = "date"
+        elif type == 'tag':
+          template_values['photos'] = get_flickr_photos_by_machinetag(flickr, trip_info, page)
+          template_values['method'] = "tag"
         else:
-          photos = get_flickr_photos_by_machinetag(flickr, trip_info)
+          photos = get_flickr_photos_by_machinetag(flickr, trip_info, page)
           if photos and photos['total']:
             template_values['photos'] = photos
-            template_values['method'] = "machinetag"
+            template_values['method'] = "tag"
           else:
-            template_values['photos'] = get_flickr_photos_by_date(flickr, trip_info)
+            template_values['photos'] = get_flickr_photos_by_date(flickr, trip_info, page)
             template_values['method'] = "date"
 
       else:
@@ -117,17 +128,19 @@ class LoginPage(webapp.RequestHandler):
     flickr = get_flickr(keys)      
     flickr_url = flickr.web_login_url('write')
     
-    error = ""
-    permanent = ""
+    got_token = False
     token = self.request.get('token') # from Dopplr
     frob  = self.request.get('frob')  # from Flickr
 
     # get blog
-    atom = urlfetch.fetch("http://blech.vox.com/library/posts/tags/snaptrip/atom-full.xml")
-    feed = feedparser.parse(atom.content)
-    for entry in feed['entries']:
-      entry['published_date'] = datetime( *entry.published_parsed[:-3] )
-      entry['link']           = re.sub('\?.*$', '', entry['link'])
+    try:
+      atom = urlfetch.fetch("http://blech.vox.com/library/posts/tags/snaptrip/atom-full.xml")
+      feed = feedparser.parse(atom.content)
+      for entry in feed['entries']:
+        entry['published_date'] = datetime( *entry.published_parsed[:-3] )
+        entry['link']           = re.sub('\?.*$', '', entry['link'])
+    except:
+      feed = ""
 
     if token:
       response = urlfetch.fetch(
@@ -140,26 +153,29 @@ class LoginPage(webapp.RequestHandler):
  
         # use this to store the traveller info
         dopplr_info = get_traveller_info(permanent)
- 
+        if dopplr_info.has_key('error'):
+          return error_page(self, session, dopplr_info['error'])
+
         session['dopplr'] = permanent
         session['name'] = dopplr_info['name']        
         session['nick'] = dopplr_info['nick']        
-
-        self.redirect("/")
-
+        got_token = True
+        # self.redirect("/")
     
     if frob:
       permanent = flickr.get_token(frob)
       if permanent:
         session['flickr'] = permanent
-        self.redirect("/")
+        got_token = True
+        # self.redirect("/")
+
+    if got_token and session.has_key('flickr') and session.has_key('dopplr'):
+      return self.redirect("/")
 
     template_values = {
       'dopplr_url': dopplr_url,
       'flickr_url': flickr_url,
-      'error':      error,
       'frob':       frob,
-      'permanent':  permanent,
       'session':    session,
       'keys':       keys,
       'feed':       feed,
@@ -319,16 +335,21 @@ def get_traveller_info(token, who=""):
   url = "https://www.dopplr.com/api/traveller_info.js"
   if who:
     url += "?traveller="+who
-  response = urlfetch.fetch(
-               url = url,
-               headers = {'Authorization': 'AuthSub token="'+token+'"'},
-             )
+
+  try:
+    response = urlfetch.fetch(
+                 url = url,
+                 headers = {'Authorization': 'AuthSub token="'+token+'"'},
+               )
+  except:
+    return {'error': "Couldn't download traveller info from Dopplr."}
+
   traveller_info = {}
   try:
     traveller_info = simplejson.loads(response.content)
     traveller_info = traveller_info['traveller']
   except ValueError:
-    logging.warn("Didn't get a JSON response from traveller_info")
+    return {'error': "Didn't get a JSON response from Dopplr's traveller_info API"}
 
   return traveller_info
 
@@ -337,18 +358,24 @@ def get_trips_info(token, who=""):
   url = "https://www.dopplr.com/api/trips_info.js"
   if who:
     url += "?traveller="+who
-  response = urlfetch.fetch(
-               url = url,
-               headers = {'Authorization': 'AuthSub token="'+token+'"'},
-             )
+
+  try:
+    response = urlfetch.fetch(
+                 url = url,
+                 headers = {'Authorization': 'AuthSub token="'+token+'"'},
+               )
+  except:
+    return {'error': "Couldn't download info about trips from Dopplr."}
+
   trips_info = {}
   try:
     trips_info = simplejson.loads(response.content)
     trips_info = trips_info['trip']
     # trips_info = prettify_trips(trips_info)
   except ValueError:
-    logging.warn("Didn't get a JSON response from traveller_info")
+    return {'error': "Didn't get a JSON response from Dopplr's trips_info API"}
 
+  ## postprocessing. do stats here too?
   if trips_info:
     prettify_trips(trips_info)
 
@@ -356,21 +383,25 @@ def get_trips_info(token, who=""):
 
 def get_trip_info(token, trip_id):
   url = "https://www.dopplr.com/api/trip_info.js?trip_id="+trip_id
-  response = urlfetch.fetch(
-               url = url,
-               headers = {'Authorization': 'AuthSub token="'+token+'"'},
-             )
+  try:
+    response = urlfetch.fetch(
+                 url = url,
+                 headers = {'Authorization': 'AuthSub token="'+token+'"'},
+               )
+  except:
+    return {'error': "Couldn't download trip info from Dopplr."}
+
   trip_info = {}
   try:
     trip_info = simplejson.loads(response.content)
   except ValueError:
-    logging.warn("Didn't get a JSON response from trip_info")
+    return {'error': "Didn't get a JSON response from Dopplr's trip_info API"}
     
   if trip_info.get('error'):
     # not good. show to user?
-    logging.error(trip_info['error'])
-    return self.redirect("/")
+    return {'error': trip_info['error']}
 
+  ## postprocessing - time consuming?
   # get who info
   match = re.search('trip/(.*?)/', trip_info["trip"]["url"])
   if (match):
@@ -415,7 +446,7 @@ def get_flickr_nsid(flickr):
 
   return nsid
 
-def get_flickr_photos_by_machinetag(flickr, trip_info):
+def get_flickr_photos_by_machinetag(flickr, trip_info, page):
   logging.debug("Attempting photo search by date")
 
   nsid  = get_flickr_nsid(flickr)
@@ -431,6 +462,7 @@ def get_flickr_photos_by_machinetag(flickr, trip_info):
                tags=machine_tag,
                sort="date-taken-asc",
                per_page="24",
+               page=page,
                extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
 #                privacy_filter="1",
              )
@@ -440,7 +472,7 @@ def get_flickr_photos_by_machinetag(flickr, trip_info):
 
     return photos['photos']
 
-def get_flickr_photos_by_date(flickr, trip_info):
+def get_flickr_photos_by_date(flickr, trip_info, page):
   logging.debug("Attempting photo search by date")
   nsid  = get_flickr_nsid(flickr)
 
@@ -458,6 +490,7 @@ def get_flickr_photos_by_date(flickr, trip_info):
                max_taken_date=max_taken,
                sort="date-taken-asc",
                per_page="24",
+               page=page,
                extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
 #                privacy_filter="1",
              )
@@ -499,6 +532,10 @@ def get_flickr_tagtotal(photos, trip_id):
   return photos
 
 # == utilities
+
+def error_page(self, session, error):
+  path = os.path.join(os.path.dirname(__file__), 'templates/error.html')
+  self.response.out.write(template.render(path, {'error':error, 'session':session, }))
 
 def prettify_trips(trip_list):
   # parse dates to datetime objects
@@ -623,6 +660,8 @@ application = webapp.WSGIApplication(
                   [('/', IndexPage),
                    ('/where/(\w*)', IndexPage),
                    ('/trip/(\d*)', TripPage),
+                   ('/trip/(\d*)/by/(\w+)', TripPage),
+                   ('/trip/(\d*)/by/(\w+)/(\d+)', TripPage),
                    ('/login/', LoginPage),
                    ('/form/', FormPage),
                    ('/ajax/photos.more', MoreJSON),
