@@ -172,6 +172,8 @@
             </div>
           {% else %}
             <h3>No Flickr photos found for this trip.</h3>
+            
+            {% if photos.error %}<p style="color:red">{{ photos.error }}</p>{% endif %}
           {% endif %}
         {% endif %}
         
@@ -199,6 +201,7 @@
       </ul>
       
       <p>snaptrip can help by making sure that your machine tags are correct, and by setting them if you don't have them already.</p>
+
     </div>
   </div>
   
