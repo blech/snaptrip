@@ -73,7 +73,7 @@
       <ul id="trips">
       {% for trip in trips | reverse %}
         <li class="{{ trip.status|lower }}"><span class="block" style="background:#{{trip.city.rgb}}">&nbsp</span>
-          <a href="{{ trip.city.url }}">{{ trip.city.name }}</a>
+          {{ trip.city.name }}
     
           {# reusable block? #}
           {% if trip.startdate.year == trip.finishdate.year %}
@@ -128,9 +128,9 @@
         <a href="#" onclick="javascript: return show_trips('Future');">future</a> or 
         <a href="#" onclick="javascript: return show_trips('Past');">past</a> trips.</p>
 
+      <p><tt>{{ memcache }}</tt></p>
+
     </div>
   </div>
-
-  {% include "includes/footer.html" %}
 </body>
 </html>
