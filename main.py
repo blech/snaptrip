@@ -143,9 +143,12 @@ class LoginPage(webapp.RequestHandler):
     try:
       atom = urlfetch.fetch("http://blech.vox.com/library/posts/tags/snaptrip/atom-full.xml")
       feed = feedparser.parse(atom.content)
+      # trim to just two
+      feed['entries'] = feed['entries'][0:2]
       for entry in feed['entries']:
         entry['published_date'] = datetime( *entry.published_parsed[:-3] )
         entry['link']           = re.sub('\?.*$', '', entry['link'])
+
     except:
       feed = ""
 
