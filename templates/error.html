@@ -1,0 +1,43 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+	<title>snaptrip - error</title>
+  <link rel="stylesheet" href="/style/core.css" title="core" type="text/css" media="all"> 
+</head>
+<body>
+  {% include "includes/header.html" %}
+  
+  <div id="content">
+    <div id="main">
+      <h2>An error occured.</h2>
+      
+      <p style="color:red">{{ error }}</p>
+      
+      <h3>What now?</h3>
+      
+      <p>It's quite possible the error was a temporary one; for example, Dopplr or Flickr might be a little too busy to respond to an API call, or the data might be taking too long to load.</p>
+      
+      <p>If this is the case, just reload the page and see if it works.</p>
+      
+      <p>If the error persists, please get in touch.</p>
+      
+<!-- 
+      <h3>How do I get in touch?</h3>
+  
+      <p>To find out more, report bugs, leave a suggestion, or just say hi, use <a href="/form/">the form</a>.</p>
+       
+ -->
+    </div>
+
+    <div id="side">
+      <h2>&nbsp;</h2>
+   
+    </div>
+
+  </div>
+
+  {% include "includes/footer.html" %}
+</body>
+</html>
