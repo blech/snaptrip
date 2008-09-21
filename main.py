@@ -14,6 +14,7 @@ from jinja2 import FileSystemLoader, Environment
 from utilities import sessions
 
 from google.appengine.api import mail
+from google.appengine.api import memcache
 from google.appengine.api import urlfetch
 
 from google.appengine.ext import webapp
@@ -27,6 +28,8 @@ class IndexPage(webapp.RequestHandler):
   def get(self, who=""):
     permanent = ''
     session = get_session()
+
+    # session objects don't support has_key. bah.
     try:
       permanent = session['dopplr']
     except KeyError, e:
@@ -37,15 +40,17 @@ class IndexPage(webapp.RequestHandler):
     if trips_info.has_key('error'):
       return error_page(self, session, trips_info['error'])
 
+    # TODO ajax/memcache
     if trips_info:
-      stats         = build_stats(trips_info)
+      stats         = build_stats(trips_info['trip'])
     
     template_values = {
       'session':    session,
       'permanent':  permanent,
       'traveller':  get_traveller_info(permanent, who),
-      'trips':      trips_info,
+      'trips':      trips_info['trip'],
       'stats':      stats,
+      'memcache':   memcache.get_stats(),
     }
     
     path = os.path.join(os.path.dirname(__file__), 'templates/index.html')
@@ -58,7 +63,7 @@ class TripPage(webapp.RequestHandler):
     permanent = ''
     session = get_session()
 
-    logging.info("got type "+type+"and page "+page);
+    logging.info("got type "+type+" and page "+page);
 
     # get trip id and hence info from Dopplr
     if not trip_id:
@@ -111,6 +116,8 @@ class TripPage(webapp.RequestHandler):
 
       else:
         template_values['url'] = get_flickr_auth_url(self.request.host);
+
+    template_values['memcache'] = memcache.get_stats(),
 
     path = os.path.join(os.path.dirname(__file__), 'templates/trip.html')
     self.response.out.write(template.render(path, template_values))    
@@ -331,7 +338,14 @@ class TagJSON(webapp.RequestHandler):
 # == Dopplr
 
 def get_traveller_info(token, who=""):
-  # get traveller info (todo cache?)
+  key = "dopplr="+token+":info=traveller"
+  if who:
+    key += ":who="+who
+  
+  traveller_info = memcache.get(key)
+  if traveller_info:
+    return traveller_info
+  
   url = "https://www.dopplr.com/api/traveller_info.js"
   if who:
     url += "?traveller="+who
@@ -351,10 +365,20 @@ def get_traveller_info(token, who=""):
   except ValueError:
     return {'error': "Didn't get a JSON response from Dopplr's traveller_info API"}
 
+  if not memcache.add(key, traveller_info):
+    logging.error("set for traveller_info failed")
+
   return traveller_info
 
 def get_trips_info(token, who=""):
-  # get trip info
+  key = "dopplr="+token+":info=trips"
+  if who:
+    key += ":who="+who
+
+  trips_info = memcache.get(key)
+  if trips_info:
+    return trips_info
+
   url = "https://www.dopplr.com/api/trips_info.js"
   if who:
     url += "?traveller="+who
@@ -370,18 +394,25 @@ def get_trips_info(token, who=""):
   trips_info = {}
   try:
     trips_info = simplejson.loads(response.content)
-    trips_info = trips_info['trip']
-    # trips_info = prettify_trips(trips_info)
   except ValueError:
     return {'error': "Didn't get a JSON response from Dopplr's trips_info API"}
 
   ## postprocessing. do stats here too?
   if trips_info:
-    prettify_trips(trips_info)
+    trips_info['trip'] = prettify_trips(trips_info['trip'])
+
+  if not memcache.add(key, trips_info):
+    logging.error("set for trips_info failed")
 
   return trips_info
 
 def get_trip_info(token, trip_id):
+  key = "dopplr="+token+":info=trip:tripid="+trip_id
+
+  trips_info = memcache.get(key)
+  if trips_info:
+    return trips_info
+
   url = "https://www.dopplr.com/api/trip_info.js?trip_id="+trip_id
   try:
     response = urlfetch.fetch(
@@ -401,7 +432,7 @@ def get_trip_info(token, trip_id):
     # not good. show to user?
     return {'error': trip_info['error']}
 
-  ## postprocessing - time consuming?
+  ## postprocessing - time consuming? seperate routine?
   # get who info
   match = re.search('trip/(.*?)/', trip_info["trip"]["url"])
   if (match):
@@ -423,6 +454,9 @@ def get_trip_info(token, trip_id):
       trip_info["trip"]["status"] = "Past"
   else:
     trip_info["trip"]["status"] = "Future"
+
+  if not memcache.add(key, trip_info):
+    logging.error("set for trip_info failed")
     
   return trip_info
 
@@ -430,7 +464,10 @@ def get_trip_info(token, trip_id):
 
 def get_flickr_nsid(flickr):
   logging.debug("Attempting to fetch Flickr NSID (check token)")
-  nsid  = ""
+
+  nsid  = memcache.get(repr(flickr))
+  if nsid is not None:
+    return nsid
 
   # check token (and get nsid)
   auth = flickr.auth_checkToken(
@@ -438,16 +475,31 @@ def get_flickr_nsid(flickr):
             nojsoncallback="1",
          )
 
-  auth = simplejson.loads(auth)
+  try:
+    auth = simplejson.loads(auth)
+  except:
+    logging.info("Could not parse '"+auth+"'")
+    return None
+
   if auth.get("auth"):
     nsid = auth['auth']['user']['nsid']
     # username = auth.user.
     logging.info("Got Flickr user NSID "+nsid)
 
-  return nsid
+    if not memcache.add(repr(flickr), nsid):
+      logging.error("Memcache set for NSID failed")
+
+    return nsid
+  else:
+    return None
 
 def get_flickr_photos_by_machinetag(flickr, trip_info, page):
-  logging.debug("Attempting photo search by date")
+  key = repr(flickr)+":tripid="+str(trip_info["trip"]["id"])+":page="+page+":type=tag"
+  photos = memcache.get(key)
+  if photos:
+    return photos
+    
+  logging.debug("Attempting photo search by tag (no cache)")
 
   nsid  = get_flickr_nsid(flickr)
 
@@ -466,22 +518,35 @@ def get_flickr_photos_by_machinetag(flickr, trip_info, page):
                extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
 #                privacy_filter="1",
              )
-    photos = simplejson.loads(photos)
+    try:
+      photos = simplejson.loads(photos)
+    except:
+      return {'error': 'Could not get photos from Flickr using machine tag search.'}
     photos = get_flickr_geototal(photos)
     photos = get_flickr_tagtotal(photos, trip_info["trip"]["id"])
 
+    if not memcache.add(key, photos['photos']):
+      logging.error("Memcache set for photos by tag failed")
+
     return photos['photos']
+  else:
+    return {'error': 'Could not contact Flickr to check authentication token.'}
 
 def get_flickr_photos_by_date(flickr, trip_info, page):
-  logging.debug("Attempting photo search by date")
+  key = repr(flickr)+":tripid="+str(trip_info["trip"]["id"])+":page="+page+":type=date"
+  photos = memcache.get(key)
+  if photos:
+    return photos
+    
+  logging.debug("Attempting photo search by date (no cache)")
   nsid  = get_flickr_nsid(flickr)
 
-  # TODO right thing with times
+  # TODO right thing with times (which is...?)
   if nsid:
     min_taken = trip_info["trip"]["startdate"].strftime("%Y-%m-%d 00:00:01")
     max_taken = trip_info["trip"]["finishdate"].strftime("%Y-%m-%d 23:59:59")
   
-    # TODO dtrt with day ends
+    # TODO dtrt with day ends (what did I mean here?)
     photos = flickr.photos_search(
                format='json',
                nojsoncallback="1",
@@ -494,11 +559,20 @@ def get_flickr_photos_by_date(flickr, trip_info, page):
                extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
 #                privacy_filter="1",
              )
-    photos = simplejson.loads(photos)
+    try:
+      photos = simplejson.loads(photos)
+    except:
+      return {'error': 'Could not get photos from Flickr using date taken search.'}
+
     photos = get_flickr_geototal(photos)
     photos = get_flickr_tagtotal(photos, trip_info["trip"]["id"])
 
+    if not memcache.add(key, photos['photos']):
+      logging.error("Memcache set for photos by date failed")
+
     return photos['photos']
+  else:
+    return {'error': 'Could not contact Flickr to check authentication token.'}
 
 def get_flickr_auth_url(host):
   keys = get_keys(host)
