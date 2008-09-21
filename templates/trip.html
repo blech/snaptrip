@@ -17,10 +17,10 @@
   var tag_index = 0;
   var photos_to_tag = new Array();
 
-  function loadmore() {
+  function loadmore() { // DEPRECATED and not in sync with the template anyway...
     page++;
 
-  {% ifequal method 'machinetag' %}
+  {% ifequal method 'tag' %}
     $.getJSON("/ajax/photos.more?page="+page+"&token={{ session.flickr }}&nsid={{ photos.photo.0.owner }}&tripid={{ trip.trip.id }}",
               function(json) { 
                 page = json.photos.page;
@@ -66,10 +66,9 @@
   function tag(type) {
     if (type == 'dopplr') {
       $('div#photos img').each(function(i) {
-        console.log(this.attr('class'));
-//         if (this.class() != "dopplr") {
-//           photos_to_tag.push(this.id);
-//         }
+        if (!$(this).hasClass('dopplr')) {
+          photos_to_tag.push(this.id);
+        }
       })
   
       $('p#tag').text("You are adding a Dopplr tag to all these photos at Flickr. Please wait.");
@@ -83,16 +82,20 @@
   }
 
   function _do_tag(photo_id) {
-    $.getJSON("/ajax/photos.tag?photo_id="+photo_id+"&trip_id={{ trip.trip.id }}&token={{ session.flickr }}",
+    $.getJSON("/ajax/photos.tag?photo_id="+photo_id+"&trip_id={{ trip.trip.id }}&woeid={{ trip.trip.city.woeid }}&token={{ session.flickr }}",
               function(json) {
                 if (json.stat != "ok") {
                   // Flickr returns empty JSON on success, so...
-                  alert("There was an error: "+json)
+                  var choice = confirm("There was an error: "+json.error+" Try again?")
+                  if (!choice) { 
+                    $('p#tag').html("You cancelled tagging your photos due to an error. Sorry.");
+                    return;
+                  }
                 } else {
                   $('img#'+photo_id).css({ border:"2px solid #{{ trip.trip.city.rgb }}"});
+                  tag_index++;
                 }
                 
-                tag_index++;
                 if (photos_to_tag[tag_index]) {
                   _do_tag(photos_to_tag[tag_index]);
                 } else {
@@ -105,6 +108,73 @@
 
   </script>
 
+  <script type="text/javascript"
+  src="http://www.google.com/jsapi?key={{ keys.gmap }}"></script>
+  <script type="text/javascript">
+    google.load("maps", "2");
+    var map;    
+
+    function initialize() {
+        map = new google.maps.Map2(document.getElementById("map"));
+        map.setCenter(new GLatLng({{trip.trip.city.latitude}},{{trip.trip.city.longitude}}), 4);
+        map.setMapType(G_PHYSICAL_MAP);
+        map.addControl(new GSmallMapControl());
+
+        // add trip markers
+        var dep_p = new GLatLng({{trip.trip.departure.latitude}},{{trip.trip.departure.longitude}});
+        var dep_m = new GMarker(dep_p, {zIndexProcess:orderOfCreation, icon:get_small_icon('green')});
+        map.addOverlay(dep_m);
+
+        var dest_p = new GLatLng({{trip.trip.city.latitude}},{{trip.trip.city.longitude}});
+
+        var polyOptions = {geodesic:true};
+        var polyline = new GPolyline([
+          dep_p,
+          dest_p
+          ], "#{{ trip.trip.city.rgb }}", 1, 1, polyOptions);
+        map.addOverlay(polyline);
+
+    {% for photo in photos.photo %}
+      {% if photo.latitude and photo.longitude %}
+        ll = new GLatLng({{ photo.latitude }}, {{ photo.longitude }});
+        marker = new GMarker(ll, {zIndexProcess:orderOfCreation, icon:get_small_icon('red')});
+        map.addOverlay(marker);
+      {% endif %}
+    {% endfor %}
+
+        // add this last to put it on top
+        var dest_m = new GMarker(dest_p, {zIndexProcess:orderOfCreation, icon:get_small_icon('white')});
+        map.addOverlay(dest_m);
+        
+    }
+    
+    function get_small_icon(colour) {
+      // Create our "tiny" marker icon
+      var icon = new GIcon();
+      icon.image = "http://labs.google.com/ridefinder/images/mm_20_"+colour+".png";
+      icon.shadow = "http://labs.google.com/ridefinder/images/mm_20_shadow.png";
+      icon.iconSize = new GSize(12, 20);
+      icon.shadowSize = new GSize(22, 20);
+      icon.iconAnchor = new GPoint(6, 20);
+      icon.infoWindowAnchor = new GPoint(5, 1);
+
+      return icon;
+    }
+    
+    function centermap(latitude, longitude, accuracy) {
+      var ll  = new GLatLng(latitude, longitude);
+      var pm  = new GMarker(ll, get_small_icon('red'));
+      map.addOverlay(pm);
+      map.panTo(ll);
+    }
+    
+    function orderOfCreation(marker,b) { 
+      return 1; 
+    } 
+    
+    google.setOnLoadCallback(initialize);
+  </script>
+  
 </head>
 <body>
   {% include "includes/header.html" %}
@@ -115,9 +185,8 @@
       
       {# TODO polyline from start point #}
       {# TODO slippymap? #}
-      <p><img src="http://maps.google.com/staticmap?center={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }}&zoom=4&size=500x188&maptype=terrain&markers={{ trip.trip.city.latitude }},{{ trip.trip.city.longitude }},smallwhite&key={{ keys.gmap }}" 
-              style="border: 5px solid #{{ trip.trip.city.rgb }}; height:188px; width:500px;"></p>
-    
+      <div id="map" style="width:500px; height:188px; border: 5px solid #{{ trip.trip.city.rgb }};"></div>
+
     {% ifequal trip.trip.status "Future" %}
       <p>This trip hasn't happened yet, so no Flickr photos are available.</p>
       
@@ -135,7 +204,7 @@
               {% for photo in photos.photo %}
                 <span class="image">
                   <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/" class="img"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" alt="{{ photo.title }}"{% if photo.dopplr %} class="dopplr"{% endif %} title="View '{{ photo.title }}' at Flickr." id="{{ photo.id }}"></a>
-                  {% if photo.latitude %}<span class="geo"><a href="javascript:alert('{{ photo.latitude }}, {{ photo.longitude }}, {{ photo.accuracy }}')" title="This photo has a location."><img src="/images/pushpin-whitesmall.png" class="pin"></a></span>{% endif %}
+                  {% if photo.latitude %}<span class="geo"><a href="#" onclick="javascript:return centermap({{ photo.latitude }}, {{ photo.longitude }}, {{ photo.accuracy }})" title="This photo has a location."><img src="/images/pushpin-whitesmall.png" class="pin"></a></span>{% endif %}
                 </span>
               {% endfor %}
 
@@ -155,12 +224,13 @@
               <p id="tag">Dopplr will use this tag to show your pubic photos, if you have associated your account. However, there may be more photos from this trip. Would you like to <a href="/trip/{{ trip.trip.id }}/by/date">search by date</a> instead?</p>
 <!-- 'showing' text: by date -->
             {% else %}
-              taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}.{% ifnotequal photos.pages photos.page %} <a href="#" onclick="/trip/{{ trip.id }}/by/date/{{ nextpage }} id="more">See more?</a>{% endifnotequal %}</p>
+              taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}.{% ifnotequal photos.pages photos.page %} <a href="/trip/{{ trip.trip.id }}/by/date/{{ nextpage }}" id="more">See more?</a>{% endifnotequal %}</p>
 
-            <p id="tag"{% ifnotequal photos.pages 1 %} style="display:none"{% endifnotequal %}>You can {% ifnotequal photos.totag photos.total %}
-              <a href="#" onclick="javascript:return tag('dopplr')">add a Dopplr tag</a> to {{ photos.totag }} photos at Flickr that don't currently have them.</p>
+            <p id="tag">You can <a href="#" onclick="javascript:return tag('dopplr')">add a Dopplr tag</a> to 
+              {% ifnotequal photos.totag photos.total %}
+                {{ photos.totag }} photo{% ifnotequal photos.totag 1 %}s{% endifnotequal %} at Flickr that don't currently have them.</p>
               {% else %}
-              <a href="#" onclick="javascript:return tag('dopplr')">add a Dopplr tag</a> to the all these photos at Flickr.</p>
+                all these photos at Flickr.</p>
               {% endifnotequal %}
             {% endifequal %}
  

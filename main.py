@@ -59,20 +59,18 @@ class IndexPage(webapp.RequestHandler):
     self.response.out.write(template.render(template_values))
 
 class TripPage(webapp.RequestHandler):
-  def get(self, trip_id, type="tag", page="1"):
+  def get(self, trip_id, type="", page="1"):
     session = get_session()
-
-    logging.info("got type "+type+" and page "+page);
-
-    # get trip id and hence info from Dopplr
-    if not trip_id:
-      return self.redirect("/")
 
     try:
       permanent = session['dopplr']
       token     = session['flickr']
     except KeyError, e:
       return self.redirect("/login/")
+
+    # get trip id and hence info from Dopplr
+    if not trip_id or trip_id == "undefined":
+      return self.redirect("/")
 
     trip_info = get_trip_info(permanent, trip_id)
     if trip_info.has_key('error'):
@@ -320,6 +318,7 @@ class TagJSON(webapp.RequestHandler):
 
     photo_id = self.request.get("photo_id")
     trip_id = self.request.get("trip_id")
+    woe_id = self.request.get("woe_id")
 
     logging.info("Got token "+token+", photo_id "+photo_id+" and trip id '"+trip_id+"'")
 
@@ -331,14 +330,16 @@ class TagJSON(webapp.RequestHandler):
     flickr = get_flickr(keys, token, True)
     logging.info(flickr.cache)
 
-    json = flickr.photos_addTags(
-               format='json',
-               nojsoncallback="1",
-               photo_id=photo_id,
-               tags="dopplr:trip="+trip_id+" dopplr:tagged=snaptrip",
-              )
-
-    # DownloadError: ApplicationError: 3
+    try:
+      json = flickr.photos_addTags(
+                 format='json',
+                 nojsoncallback="1",
+                 photo_id=photo_id,
+                 tags="dopplr:trip="+trip_id+" dopplr:woeid="+woe_id+" dopplr:tagged=snaptrip",
+                )
+      test = simplejson.loads(json) # check it's valid JSON
+    except:
+      json = {'error': 'There was a problem contacting Flickr.'}
               
     logging.info("got json "+repr(json));
 
