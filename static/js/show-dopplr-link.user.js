@@ -6,7 +6,7 @@
 // @exclude        http://*flickr.com/photos/organize*
 // ==/UserScript==
 
-// Version 1.02
+// Version 1.05
 // Copyright (c) Paul Mison
 // GPL licenced: http://www.gnu.org/copyleft/gpl.html
 
@@ -27,6 +27,8 @@
 var api_key    = "58b056f621f6476ebf144f9f72a4d05c"
 var flickr_url = "http://api.flickr.com/services/rest/?method=flickr.places.resolvePlaceId&api_key="+api_key+"&format=json&nojsoncallback=1&"
 
+var trip_id;   // TODO not global (hem)
+
 display = function display() {
   var placename = "on Dopplr";
 
@@ -40,10 +42,10 @@ display = function display() {
     }
   }
 
-  var html =  '<br/><a href="http://dopplr.com/trip/id/'+this.number+'">';
+  var html =  '<br/><a href="http://dopplr.com/trip/id/'+trip_id+'">';
   html += '<img align="left" alt="Taken during a Dopplr trip" src="http://snaptrip.appspot.com/images/dopplr.png"/>';
   html += '</a> Taken during a ';
-  html += '<a class="Plain" href="http://dopplr.com/trip/id/'+this.number+'">trip '+placename+'</a>.<br/>';
+  html += '<a class="Plain" href="http://dopplr.com/trip/id/'+trip_id+'">trip '+placename+'</a>.<br/>';
 
   var privacy = document.evaluate(
                    "//p[@class='Privacy']",
@@ -67,17 +69,16 @@ function find_in_list(links, regex) {
 }
 
 // main
-
-console.log("running Dopplr trip ID finder");
+// console.log("running Dopplr trip ID finder");
 
 var machinetags = document.getElementById('themachinetags')
 var links = machinetags.getElementsByTagName('a');
 
 if (links.length > 0) {
   // first find trip id: we can use this without a location if necessary
-  this.number = find_in_list(links, 'dopplr%3Atrip%3D(\\d+)');
+  trip_id = find_in_list(links, 'dopplr%3Atrip%3D(\\d+)');
 
-  if (this.number) {
+  if (trip_id) {
     // get location. This woeid should be the same as the one in dopplr.
     this.woeid = find_in_list(links, 'dopplr%3Awoeid%3D(\\d+)');
     if (!this.woeid) {
