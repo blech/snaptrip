@@ -414,7 +414,7 @@ def get_traveller_info(token, who=""):
   except ValueError:
     return {'error': "Didn't get a JSON response from Dopplr's traveller_info API"}
 
-  if not memcache.add(key, traveller_info):
+  if not memcache.add(key, traveller_info, 3600):
     logging.error("set for traveller_info failed")
 
   return traveller_info
@@ -450,7 +450,7 @@ def get_trips_info(token, who=""):
   if trips_info:
     trips_info['trip'] = prettify_trips(trips_info['trip'])
 
-  if not memcache.add(key, trips_info):
+  if not memcache.add(key, trips_info, 3600):
     logging.error("set for trips_info failed")
 
   return trips_info
@@ -504,7 +504,7 @@ def get_trip_info(token, trip_id):
   else:
     trip_info["trip"]["status"] = "Future"
 
-  if not memcache.add(key, trip_info):
+  if not memcache.add(key, trip_info, 3600):
     logging.error("set for trip_info failed")
     
   return trip_info
@@ -574,7 +574,7 @@ def get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page):
   photos = get_flickr_geototal(photos)
   photos = get_flickr_tagtotal(photos, trip_info["trip"]["id"])
 
-  if not memcache.add(key, photos['photos']):
+  if not memcache.add(key, photos['photos'], 3600):
     logging.error("Memcache set for photos by tag failed")
 
   return photos['photos']
@@ -612,7 +612,7 @@ def get_flickr_photos_by_date(flickr, nsid, trip_info, page):
   photos = get_flickr_geototal(photos)
   photos = get_flickr_tagtotal(photos, trip_info["trip"]["id"])
 
-  if not memcache.add(key, photos['photos']):
+  if not memcache.add(key, photos['photos'], 3600):
     logging.error("Memcache set for photos by date failed")
 
   return photos['photos']
