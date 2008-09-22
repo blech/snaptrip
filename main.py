@@ -618,8 +618,10 @@ def get_flickr_photos_by_date(flickr, nsid, trip_info, page):
   return photos['photos']
 
 def get_flickr_geototal(photos):
+  photos['photos']['subtotal'] = 0
   photos['photos']['geototal'] = 0
   for photo in photos['photos']['photo']:
+    photos['photos']['subtotal'] = photos['photos']['subtotal'] +1
     if photo['latitude'] and photo['longitude']:
       photos['photos']['geototal'] = photos['photos']['geototal']+1
 
@@ -637,9 +639,9 @@ def get_flickr_tagtotal(photos, trip_id):
       photo['dopplr'] = True;
 
   if photos['photos']['tagtotal']:
-    photos['photos']['totag']    = str(int(photos['photos']['perpage'])-photos['photos']['tagtotal'])
+    photos['photos']['totag']    = str(int(photos['photos']['subtotal'])-photos['photos']['tagtotal'])
   else:
-    photos['photos']['totag']    = photos['photos']['perpage']
+    photos['photos']['totag']    = photos['photos']['subtotal']
   photos['photos']['tagtotal'] = str(photos['photos']['tagtotal'])
 
   return photos

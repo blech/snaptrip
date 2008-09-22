@@ -276,7 +276,7 @@
 <!-- 'showing' text -->
             <p id="phototext">Showing 
             {% ifnotequal photos.pages 1 %}
-              <span class="count">{{ photos.perpage }} of {{ photos.total }} photos (page {{ photos.page }} of {{ photos.pages }})</span>
+              <span class="count">{{ photos.subtotal }} of {{ photos.total }} photos (page {{ photos.page }} of {{ photos.pages }})</span>
             {% else %}
               all {{ photos.total }} photos       
             {% endifnotequal %}
@@ -303,7 +303,7 @@
             {% endifequal %}
  
 <!-- location info -->
-            <p id="geotag">{% ifequal photos.geototal 0 %}None{% else %}{% ifequal photos.geototal photos.perpage %}All{% else %}{{ photos.geototal }}{% endifequal %}{% endifequal %} of these photo{% ifnotequal photos.geototal 1 %}s are{% else %}s is{% endifnotequal %} already tagged with {% ifequal photos.geototal 1 %}its{% else %}their{% endifequal %} location in Flickr.{% ifnotequal photos.perpage photos.geototal %}
+            <p id="geotag">{% ifequal photos.geototal 0 %}None{% else %}{% ifequal photos.geototal photos.subtotal %}All{% else %}{{ photos.geototal }}{% endifequal %}{% endifequal %} of these photo{% ifnotequal photos.geototal 1 %}s are{% else %}s is{% endifnotequal %} already tagged with {% ifequal photos.geototal 1 %}its{% else %}their{% endifequal %} location in Flickr.{% ifnotequal photos.subtotal photos.geototal %}
               You can <a href="#" onclick="javascript:return tag('geo')">add a location</a> based on your trip to {% ifequal photos.geototal 0 %}all these photos{% else %}the photos that don't already have one{% endifequal %}.
             {% endifnotequal %}</p>
             
