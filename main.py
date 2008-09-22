@@ -101,7 +101,7 @@ class TripPage(webapp.RequestHandler):
             template_values['method'] = "tag"
           else:
             photos = get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page)
-            if photos and photos['total']:
+            if photos and photos.has_key('total') and photos['total']:
               template_values['photos'] = photos
               template_values['method'] = "tag"
             else:
