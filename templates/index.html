@@ -70,6 +70,10 @@
     
       <h3><span id="type">Past</span> trips{% if traveller.name != session.name %} for {{ traveller.name }}{% endif %}.</h3>
     
+      {% if not trips %}
+      <p>There are no trips in Dopplr to show.</p>
+      {% endif %}
+
       <ul id="trips">
       {% for trip in trips | reverse %}
         <li class="{{ trip.status|lower }}"><span class="block" style="background:#{{trip.city.rgb}}">&nbsp</span>
@@ -96,11 +100,14 @@
         </li>
       {% endfor %}
       </ul>
+      
     </div>
 
     <div id="side">
 
       <h3>Where?</h3>
+      
+      {% if stats.ordered.years %}
       
       <p>{% if traveller.name == session.name %}You've{% else %}{{ traveller.name }} has {% endif %} been on trips in {{ stats.countries|length }} countries, spending the most time in {{ stats.countries[stats.ordered.countries[0]].inline }}. Here's all the countries you've visited.</p>
       
@@ -129,6 +136,10 @@
         <a href="#" onclick="javascript: return show_trips('All');">all trips</a>, or only
         <a href="#" onclick="javascript: return show_trips('Future');">future</a> or 
         <a href="#" onclick="javascript: return show_trips('Past');">past</a> trips.</p>
+
+      {% else %}
+        <p>According to Dopplr, nowhere.</p>
+      {% endif %}
 
     </div>
   </div>
