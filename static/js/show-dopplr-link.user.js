@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name           Show Dopplr Trip Links
-// @namespace      http://husk.org/code/
+// @namespace      http://snaptrip.appspot.com/
 // @description    Use Dopplr machine tags to show a link on Flickr photos
 // @include        http://*flickr.com/photos/*/*
 // @exclude        http://*flickr.com/photos/organize*
 // ==/UserScript==
 
-// Version 1.01
+// Version 1.02
 // Copyright (c) Paul Mison
 // GPL licenced: http://www.gnu.org/copyleft/gpl.html
 
@@ -41,7 +41,7 @@ display = function display() {
   }
 
   var html =  '<br/><a href="http://dopplr.com/trip/id/'+this.number+'">';
-  html += '<img align="left" alt="Taken during a Dopplr trip" src="http://husk.org/misc/dopplr.png"/>';
+  html += '<img align="left" alt="Taken during a Dopplr trip" src="http://snaptrip.appspot.com/images/dopplr.png"/>';
   html += '</a> Taken during a ';
   html += '<a class="Plain" href="http://dopplr.com/trip/id/'+this.number+'">trip '+placename+'</a>.<br/>';
 
@@ -77,14 +77,14 @@ if (links.length > 0) {
   // first find trip id: we can use this without a location if necessary
   this.number = find_in_list(links, 'dopplr%3Atrip%3D(\\d+)');
 
-  // get location. This woeid should be the same as the one in dopplr.
-  this.woeid = find_in_list(links, 'dopplr%3Awoeid%3D(\\d+)');
-  if (!this.woeid) {
-    this.woeid = find_in_list(links, 'woe%3Aid%3D(\\d+)');
-  }
-  
-  // get name of location
   if (this.number) {
+    // get location. This woeid should be the same as the one in dopplr.
+    this.woeid = find_in_list(links, 'dopplr%3Awoeid%3D(\\d+)');
+    if (!this.woeid) {
+      this.woeid = find_in_list(links, 'woe%3Aid%3D(\\d+)');
+    }
+  
+    // get name of location
     if (this.woeid) {
       GM_xmlhttpRequest({ method: 'GET',
                           url:    flickr_url + 'place_id='+this.woeid,
