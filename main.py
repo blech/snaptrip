@@ -556,18 +556,18 @@ def get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page):
   machine_tag = "dopplr:trip="+str(trip_info["trip"]["id"])
   logging.info("Got trip ID to search on: "+machine_tag);
  
-  photos = flickr.photos_search(
-             format='json',
-             nojsoncallback="1",
-             user_id=nsid,
-             tags=machine_tag,
-             sort="date-taken-asc",
-             per_page="24",
-             page=page,
-             extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
-#                privacy_filter="1",
-           )
   try:
+    photos = flickr.photos_search(
+               format='json',
+               nojsoncallback="1",
+               user_id=nsid,
+               tags=machine_tag,
+               sort="date-taken-asc",
+               per_page="24",
+               page=page,
+               extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
+  #                privacy_filter="1",
+             )
     photos = simplejson.loads(photos)
   except:
     return {'error': 'Could not get photos from Flickr using machine tag search.'}
@@ -592,19 +592,19 @@ def get_flickr_photos_by_date(flickr, nsid, trip_info, page):
   max_taken = trip_info["trip"]["finishdate"].strftime("%Y-%m-%d 23:59:59")
 
   # TODO dtrt with day ends (what did I mean here?)
-  photos = flickr.photos_search(
-             format='json',
-             nojsoncallback="1",
-             user_id=nsid,
-             min_taken_date=min_taken,
-             max_taken_date=max_taken,
-             sort="date-taken-asc",
-             per_page="24",
-             page=page,
-             extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
-#                privacy_filter="1",
-           )
   try:
+    photos = flickr.photos_search(
+               format='json',
+               nojsoncallback="1",
+               user_id=nsid,
+               min_taken_date=min_taken,
+               max_taken_date=max_taken,
+               sort="date-taken-asc",
+               per_page="24",
+               page=page,
+               extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
+  #                privacy_filter="1",
+             )
     photos = simplejson.loads(photos)
   except:
     return {'error': 'Could not get photos from Flickr using date taken search.'}
@@ -623,7 +623,8 @@ def get_flickr_geototal(photos):
     if photo['latitude'] and photo['longitude']:
       photos['photos']['geototal'] = photos['photos']['geototal']+1
 
-  photos['photos']['geototal'] = str(photos['photos']['geototal'])
+  # if we want this as a string (we don't)
+  # photos['photos']['geototal'] = str(photos['photos']['geototal'])
 
   return photos
 
@@ -636,9 +637,9 @@ def get_flickr_tagtotal(photos, trip_id):
       photo['dopplr'] = True;
 
   if photos['photos']['tagtotal']:
-    photos['photos']['totag']    = str(int(photos['photos']['total'])-photos['photos']['tagtotal'])
+    photos['photos']['totag']    = str(int(photos['photos']['perpage'])-photos['photos']['tagtotal'])
   else:
-    photos['photos']['totag']    = photos['photos']['total']
+    photos['photos']['totag']    = photos['photos']['perpage']
   photos['photos']['tagtotal'] = str(photos['photos']['tagtotal'])
 
   return photos
@@ -687,7 +688,7 @@ def build_stats(trip_list):
     inline  = country
 
     # special casing!
-    if not country.find("United"):
+    if not country.find("United"): # TODO there's something wrong here...
       inline = "the "+country
       
     # more special casing! TODO hash

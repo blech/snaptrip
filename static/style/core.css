@@ -225,8 +225,12 @@ div#photos span.image a.img {
 div#photos span.image img {
 }
 
+div#photos span.image a.img img {
+  border:2px solid white; /* for untagged images */
+}
+
 div#photos span.image a.img img.dopplr {
-  border:2px solid black;
+  border:2px solid black; /* this should end up overridden */
 }
 
 div#photos span.image a img.pin {

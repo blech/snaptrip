@@ -98,7 +98,7 @@
   }
 
   function _do_tag(photo_id) {
-    var ajax_url = "/ajax/photos.tag?photo_id="+photo_id+"&trip_id={{ trip.trip.id }}&woeid={{ trip.trip.city.woeid }}&token={{ session.flickr }}";
+    var ajax_url = "/ajax/photos.tag?photo_id="+photo_id+"&trip_id={{ trip.trip.id }}&woe_id={{ trip.trip.city.woeid }}&token={{ session.flickr }}";
     if (!tag_index) { // first time through, memcache invalidate
       ajax_url += "&page={{ photos.page }}&method={{method}}&nsid={{ photos.photo.0.owner }}";
     }
@@ -125,7 +125,7 @@
                 if (photos_to_tag[tag_index]) {
                   _do_tag(photos_to_tag[tag_index]);
                 } else {
-                  $('p#tag').html("Your photos have been tagged with <a href='http://flickr.com/photos/tags/dopplr:trip={{trip.trip.id}}'>'dopplr:trip={{ trip.trip.id }}'<'+'/a>. Thanks.");
+                  $('p#tag').html("Your photos have been tagged with <a href='http://flickr.com/photos/tags/dopplr:trip={{trip.trip.id}}'>'dopplr:trip={{ trip.trip.id }}'<"+"/a>. Thanks.");
                   // alert("Tagged all photos.");
                 }
               }
@@ -183,11 +183,12 @@
         map.addControl(new GSmallMapControl());
 
         // add trip markers
+        var dest_p = new GLatLng({{trip.trip.city.latitude}},{{trip.trip.city.longitude}});
+
+        /* // geodesics. suppressed, for now.
         var dep_p = new GLatLng({{trip.trip.departure.latitude}},{{trip.trip.departure.longitude}});
         var dep_m = new GMarker(dep_p, {zIndexProcess:orderOfCreation, icon:get_small_icon('green')});
         map.addOverlay(dep_m);
-
-        var dest_p = new GLatLng({{trip.trip.city.latitude}},{{trip.trip.city.longitude}});
 
         var polyOptions = {geodesic:true};
         var polyline = new GPolyline([
@@ -195,6 +196,7 @@
           dest_p
           ], "#{{ trip.trip.city.rgb }}", 1, 1, polyOptions);
         map.addOverlay(polyline);
+        */
 
     {% for photo in photos.photo %}
       {% if photo.latitude and photo.longitude %}
@@ -287,18 +289,22 @@
 <!-- 'showing' text: by date -->
             {% else %}
               taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}.{% ifnotequal photos.pages photos.page %} <a href="/trip/{{ trip.trip.id }}/by/date/{{ nextpage }}" id="more">See more?</a>{% endifnotequal %}</p>
-
-            <p id="tag">You can <a href="#" onclick="javascript:return tag('dopplr')">add a Dopplr tag</a> to 
+              
+           
+<!-- tag info -->
+            <p id="tag">{% ifequal photos.totag "0" %}All these photos are tagged at Dopplr.{% else %}
+              You can <a href="#" onclick="javascript:return tag('dopplr')">add a Dopplr tag</a> to 
               {% ifnotequal photos.totag photos.total %}
-                {{ photos.totag }} photo{% ifnotequal photos.totag 1 %}s{% endifnotequal %} at Flickr that don't currently have them.</p>
+                {{ photos.totag }} photo{% ifnotequal photos.totag "1" %}s{% endifnotequal %} at Flickr that {% ifnotequal photos.totag "1" %}aren't{% else %}isn't{% endifnotequal %} currently tagged.</p>
               {% else %}
                 all these photos at Flickr.</p>
               {% endifnotequal %}
             {% endifequal %}
+            {% endifequal %}
  
 <!-- location info -->
-            <p id="geotag">{% ifequal photos.geototal "0" %}None{% else %}{% ifequal photos.geototal photos.total %}All{% else %}{{ photos.geototal }}{% endifequal %}{% endifequal %} of these photo{% ifnotequal photos.geototal "1" %}s are{% else %}s is{% endifnotequal %} already tagged with {% ifequal photos.geototal "1" %}their{% else %}its{% endifequal %} location in Flickr.{% ifnotequal photos.total photos.geototal %}
-              You can <a href="#" onclick="javascript:return tag('geo')">add a location</a> based on your trip to {% ifequal photos.geototal "0" %}all these photos{% else %}the photos that don't already have one{% endifequal %}.
+            <p id="geotag">{% ifequal photos.geototal 0 %}None{% else %}{% ifequal photos.geototal photos.perpage %}All{% else %}{{ photos.geototal }}{% endifequal %}{% endifequal %} of these photo{% ifnotequal photos.geototal 1 %}s are{% else %}s is{% endifnotequal %} already tagged with {% ifequal photos.geototal 1 %}its{% else %}their{% endifequal %} location in Flickr.{% ifnotequal photos.perpage photos.geototal %}
+              You can <a href="#" onclick="javascript:return tag('geo')">add a location</a> based on your trip to {% ifequal photos.geototal 0 %}all these photos{% else %}the photos that don't already have one{% endifequal %}.
             {% endifnotequal %}</p>
             
             </div>
