@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name           Show Dopplr Trip Links
-// @namespace      http://snaptrip.appspot.com/
+// @namespace      http://husk.org/code/
 // @description    Use Dopplr machine tags to show a link on Flickr photos
 // @include        http://*flickr.com/photos/*/*
 // @exclude        http://*flickr.com/photos/organize*
 // ==/UserScript==
 
-// Version 1.00
+// Version 1.01
 // Copyright (c) Paul Mison
 // GPL licenced: http://www.gnu.org/copyleft/gpl.html
 
@@ -67,7 +67,8 @@ function find_in_list(links, regex) {
 }
 
 // main
-// console.log("running Dopplr trip ID finder");
+
+console.log("running Dopplr trip ID finder");
 
 var machinetags = document.getElementById('themachinetags')
 var links = machinetags.getElementsByTagName('a');
@@ -83,12 +84,14 @@ if (links.length > 0) {
   }
   
   // get name of location
-  if (this.woeid) {
-    GM_xmlhttpRequest({ method: 'GET',
-                        url:    flickr_url + 'place_id='+this.woeid,
-                        onload: display,
-                     });
-  } else {
-    display();
+  if (this.number) {
+    if (this.woeid) {
+      GM_xmlhttpRequest({ method: 'GET',
+                          url:    flickr_url + 'place_id='+this.woeid,
+                          onload: display,
+                       });
+    } else {
+      display();
+    }
   }
 }
