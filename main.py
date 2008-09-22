@@ -624,6 +624,8 @@ def get_flickr_geototal(photos):
     photos['photos']['subtotal'] = photos['photos']['subtotal'] +1
     if photo['latitude'] and photo['longitude']:
       photos['photos']['geototal'] = photos['photos']['geototal']+1
+      if int(photo['accuracy']) > 9:
+        photo['accurate'] = True
 
   # if we want this as a string (we don't)
   # photos['photos']['geototal'] = str(photos['photos']['geototal'])

@@ -199,7 +199,7 @@
         */
 
     {% for photo in photos.photo %}
-      {% if photo.latitude and photo.longitude %}
+      {% if photo.accurate %}
         ll = new GLatLng({{ photo.latitude }}, {{ photo.longitude }});
         marker = new GMarker(ll, {zIndexProcess:orderOfCreation, icon:get_small_icon('red')});
         map.addOverlay(marker);
@@ -230,6 +230,8 @@
       var pm  = new GMarker(ll, get_small_icon('red'));
       map.addOverlay(pm);
       map.panTo(ll);
+      
+      return false;
     }
     
     function orderOfCreation(marker,b) { 
@@ -331,7 +333,7 @@
     <div id="side">
       <h3>About photos on Dopplr.</h3>
       
-      <p>Dopplr's trip pages can include photos you've taken on a trip. Firstly, you'll need to <a href="http://www.dopplr.com/account/flickr">associate your Flickr and Dopplr accounts</a>. Once this is done, Dopplr will look for your photos in two ways:</p>
+      <p>Dopplr's trip pages can include photos from Flickr that you've taken on a trip. Firstly, you'll need to <a href="http://www.dopplr.com/account/flickr">associate your Flickr and Dopplr accounts</a>. Once this is done, Dopplr will look for your photos in two ways:</p>
       
       <ul class="trip">
         <li>Using a <a href="http://www.flickr.com/groups/api/discuss/72157594497877875/">machine tag</a> for a given trip</li>
@@ -339,6 +341,12 @@
       </ul>
       
       <p>snaptrip can help by making sure that your machine tags are correct, and by setting them if you don't have them already.</p>
+
+      <h3>About photos on Dopplr.</h3>
+    
+      <p>snaptrip adds machine tags to photos at Flickr. If you want to see the tag, you'll need to open the disclosure triangle in the right hand side labelled "Show machine tags".</p>
+      
+      <p>If you're using <a href="https://addons.mozilla.org/en-US/firefox/addon/748" title="Install Greasemonkey">Greasemonkey</a> on Firefox, you can install a <a href="/js/show-dopplr-link.user.js">user script</a> that will use the machine tags to add a graphical link to the trip page at Dopplr.</p>
 
     </div>
   </div>
