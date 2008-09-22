@@ -82,12 +82,6 @@ class TripPage(webapp.RequestHandler):
       'trip':       trip_info,
       'keys':       get_keys(self.request.host),
     }
-
-    token = ''
-    try:
-      token = session['flickr']
-    except KeyError:
-      logging.warn("No Flickr token")
   
     if session["nick"] == trip_info["trip"]["nick"]:
       if token and not trip_info["trip"]["status"] == "Future":
@@ -95,25 +89,24 @@ class TripPage(webapp.RequestHandler):
         keys = get_keys(self.request.host)
         flickr = get_flickr(keys, token)      
 
-        template_values['nextpage'] = int(page)+1
-
-        if type == 'date':  
-          template_values['photos'] = get_flickr_photos_by_date(flickr, trip_info, page)
-          template_values['method'] = "date"
-        elif type == 'tag':
-          template_values['photos'] = get_flickr_photos_by_machinetag(flickr, trip_info, page)
-          template_values['method'] = "tag"
-        else:
-          photos = get_flickr_photos_by_machinetag(flickr, trip_info, page)
-          if photos and photos['total']:
-            template_values['photos'] = photos
+        nsid = get_flickr_nsid(flickr, token)
+        if nsid:
+          template_values['nextpage'] = int(page)+1
+  
+          if type == 'date':  
+            template_values['photos'] = get_flickr_photos_by_date(flickr, nsid, trip_info, page)
+            template_values['method'] = "date"
+          elif type == 'tag':
+            template_values['photos'] = get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page)
             template_values['method'] = "tag"
           else:
-            template_values['photos'] = get_flickr_photos_by_date(flickr, trip_info, page)
-            template_values['method'] = "date"
-
-      else:
-        template_values['url'] = get_flickr_auth_url(self.request.host);
+            photos = get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page)
+            if photos and photos['total']:
+              template_values['photos'] = photos
+              template_values['method'] = "tag"
+            else:
+              template_values['photos'] = get_flickr_photos_by_date(flickr, nsid, trip_info, page)
+              template_values['method'] = "date"
 
     template_values['memcache'] = memcache.get_stats(),
 
@@ -214,8 +207,6 @@ class FormPage(webapp.RequestHandler):
     name = self.request.get("name")
     text = self.request.get("text")
 
-    logging.info("Got name '"+name+"' and text '"+text+"'")
-
     sent = False
     error = ''
 
@@ -256,17 +247,17 @@ class FormPage(webapp.RequestHandler):
 
 class MoreJSON(webapp.RequestHandler):
   def get(self):
+    logging.error("deprecated")
+
     token = self.request.get("token")
     nsid = self.request.get("nsid")
     page = self.request.get("page")
 
     if not token or not nsid:
-      return self.response.out.write('')
+      return self.response.out.write({'error': 'There was no Flickr token.'})
 
     keys = get_keys(self.request.host)
     flickr = get_flickr(keys, token)
-
-    logging.info("'"+token+"', '"+nsid+"', '"+page+"'")    
 
     if self.request.get("tripid", ""):
       machine_tag = "dopplr:trip="+self.request.get("tripid")
@@ -310,11 +301,10 @@ class MoreJSON(webapp.RequestHandler):
 
 class TagJSON(webapp.RequestHandler):
   def get(self):
-    logging.info("in TagJSON")
     token = self.request.get("token")
 
     if not token:
-      return self.response.out.write('')
+      return self.response.out.write({'error': 'There was no Flickr token.'})
 
     photo_id = self.request.get("photo_id")
     trip_id = self.request.get("trip_id")
@@ -322,13 +312,12 @@ class TagJSON(webapp.RequestHandler):
 
     logging.info("Got token "+token+", photo_id "+photo_id+" and trip id '"+trip_id+"'")
 
-    if not photo_id or not trip_id:
-      logging.warn("No photo_id or trip_id!")
-      return self.response.out.write('')
+    if not photo_id or not trip_id or not woe_id:
+      logging.warn("Missing photo_id, trip_id or woe_id")
+      return self.response.out.write({'error': 'There were missing parameters.'})
 
     keys = get_keys(self.request.host)
     flickr = get_flickr(keys, token, True)
-    logging.info(flickr.cache)
 
     try:
       json = flickr.photos_addTags(
@@ -338,9 +327,59 @@ class TagJSON(webapp.RequestHandler):
                  tags="dopplr:trip="+trip_id+" dopplr:woeid="+woe_id+" dopplr:tagged=snaptrip",
                 )
       test = simplejson.loads(json) # check it's valid JSON
+
+      if (self.request.get("nsid")):
+        key = repr(flickr)+":nsid="+self.request.get("nsid")+":tripid="+str(trip_id)+":page="+self.request.get("page")+":type="+self.request.get("method")
+        if memcache.delete(key) != 2:
+          logging.info("Key deletion failed; either network error or key missing");
+    except:
+      json = {'error': 'There was a problem contacting Flickr.'} # TODO 'message' not 'error' key
+              
+    logging.info("got json "+repr(json));
+
+    self.response.out.write(json)
+
+class GeoTagJSON(webapp.RequestHandler):
+  def get(self):
+    logging.info("in GeoTagJSON")
+    token = self.request.get("token")
+
+    if not token:
+      return self.response.out.write({'error': 'There was no Flickr token.'})
+
+    photo_id = self.request.get("photo_id")
+    latitude = self.request.get("latitude")
+    longitude = self.request.get("longitude")
+
+    logging.info("Got token "+token+", latitude "+latitude+" and longitude "+longitude)
+
+    if not photo_id or not latitude or not longitude:
+      logging.warn("No photo_id or trip_id!")
+      return self.response.out.write({'error': 'There were missing parameters.'})
+
+    keys = get_keys(self.request.host)
+    flickr = get_flickr(keys, token, True)
+
+    try:
+      json = flickr.photos_geo_setLocation(
+                 format='json',
+                 nojsoncallback="1",
+                 photo_id=photo_id,
+                 lat=latitude,
+                 lon=longitude,
+                 accuracy=9,   # 'city'
+                )
+      test = simplejson.loads(json) # check it's valid JSON
+      
+      # remove memcache
+      if (self.request.get("nsid")):
+        key = repr(flickr)+":nsid="+self.request.get("nsid")+":tripid="+self.request.get("trip_id")+":page="+self.request.get("page")+":type="+self.request.get("method")
+        logging.info("key:: "+key)
+        if memcache.delete(key) != 2:
+          logging.info("Key deletion failed; either network error or key missing");
     except:
       json = {'error': 'There was a problem contacting Flickr.'}
-              
+
     logging.info("got json "+repr(json));
 
     self.response.out.write(json)
@@ -472,10 +511,11 @@ def get_trip_info(token, trip_id):
 
 # == Flickr
 
-def get_flickr_nsid(flickr):
+def get_flickr_nsid(flickr, token):
   logging.debug("Attempting to fetch Flickr NSID (check token)")
 
-  nsid  = memcache.get(repr(flickr))
+  key = repr(flickr)+":token="+token
+  nsid  = memcache.get(key)
   if nsid is not None:
     return nsid
 
@@ -496,98 +536,86 @@ def get_flickr_nsid(flickr):
     # username = auth.user.
     logging.info("Got Flickr user NSID "+nsid)
 
-    if not memcache.add(repr(flickr), nsid):
+    if not memcache.add(key, nsid):
       logging.error("Memcache set for NSID failed")
 
     return nsid
   else:
     return None
 
-def get_flickr_photos_by_machinetag(flickr, trip_info, page):
-  key = repr(flickr)+":tripid="+str(trip_info["trip"]["id"])+":page="+page+":type=tag"
+def get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page):
+  key = repr(flickr)+":nsid="+nsid+":tripid="+str(trip_info["trip"]["id"])+":page="+page+":type=tag"
+  logging.info("memcache key is "+key);
   photos = memcache.get(key)
   if photos:
+    logging.info("memcache hit")
     return photos
     
   logging.debug("Attempting photo search by tag (no cache)")
 
-  nsid  = get_flickr_nsid(flickr)
-
-  if nsid:
-    machine_tag = "dopplr:trip="+str(trip_info["trip"]["id"])
-    logging.info("Got trip ID to search on: "+machine_tag);
-   
-    photos = flickr.photos_search(
-               format='json',
-               nojsoncallback="1",
-               user_id=nsid,
-               tags=machine_tag,
-               sort="date-taken-asc",
-               per_page="24",
-               page=page,
-               extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
+  machine_tag = "dopplr:trip="+str(trip_info["trip"]["id"])
+  logging.info("Got trip ID to search on: "+machine_tag);
+ 
+  photos = flickr.photos_search(
+             format='json',
+             nojsoncallback="1",
+             user_id=nsid,
+             tags=machine_tag,
+             sort="date-taken-asc",
+             per_page="24",
+             page=page,
+             extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
 #                privacy_filter="1",
-             )
-    try:
-      photos = simplejson.loads(photos)
-    except:
-      return {'error': 'Could not get photos from Flickr using machine tag search.'}
-    photos = get_flickr_geototal(photos)
-    photos = get_flickr_tagtotal(photos, trip_info["trip"]["id"])
+           )
+  try:
+    photos = simplejson.loads(photos)
+  except:
+    return {'error': 'Could not get photos from Flickr using machine tag search.'}
+  photos = get_flickr_geototal(photos)
+  photos = get_flickr_tagtotal(photos, trip_info["trip"]["id"])
 
-    if not memcache.add(key, photos['photos']):
-      logging.error("Memcache set for photos by tag failed")
+  if not memcache.add(key, photos['photos']):
+    logging.error("Memcache set for photos by tag failed")
 
-    return photos['photos']
-  else:
-    return {'error': 'Could not contact Flickr to check authentication token.'}
+  return photos['photos']
 
-def get_flickr_photos_by_date(flickr, trip_info, page):
-  key = repr(flickr)+":tripid="+str(trip_info["trip"]["id"])+":page="+page+":type=date"
+def get_flickr_photos_by_date(flickr, nsid, trip_info, page):
+  key = repr(flickr)+":nsid="+nsid+":tripid="+str(trip_info["trip"]["id"])+":page="+page+":type=date"
   photos = memcache.get(key)
   if photos:
     return photos
     
   logging.debug("Attempting photo search by date (no cache)")
-  nsid  = get_flickr_nsid(flickr)
 
   # TODO right thing with times (which is...?)
-  if nsid:
-    min_taken = trip_info["trip"]["startdate"].strftime("%Y-%m-%d 00:00:01")
-    max_taken = trip_info["trip"]["finishdate"].strftime("%Y-%m-%d 23:59:59")
-  
-    # TODO dtrt with day ends (what did I mean here?)
-    photos = flickr.photos_search(
-               format='json',
-               nojsoncallback="1",
-               user_id=nsid,
-               min_taken_date=min_taken,
-               max_taken_date=max_taken,
-               sort="date-taken-asc",
-               per_page="24",
-               page=page,
-               extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
+  min_taken = trip_info["trip"]["startdate"].strftime("%Y-%m-%d 00:00:01")
+  max_taken = trip_info["trip"]["finishdate"].strftime("%Y-%m-%d 23:59:59")
+
+  # TODO dtrt with day ends (what did I mean here?)
+  photos = flickr.photos_search(
+             format='json',
+             nojsoncallback="1",
+             user_id=nsid,
+             min_taken_date=min_taken,
+             max_taken_date=max_taken,
+             sort="date-taken-asc",
+             per_page="24",
+             page=page,
+             extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
 #                privacy_filter="1",
-             )
-    try:
-      photos = simplejson.loads(photos)
-    except:
-      return {'error': 'Could not get photos from Flickr using date taken search.'}
+           )
+  try:
+    photos = simplejson.loads(photos)
+  except:
+    return {'error': 'Could not get photos from Flickr using date taken search.'}
 
-    photos = get_flickr_geototal(photos)
-    photos = get_flickr_tagtotal(photos, trip_info["trip"]["id"])
+  photos = get_flickr_geototal(photos)
+  photos = get_flickr_tagtotal(photos, trip_info["trip"]["id"])
 
-    if not memcache.add(key, photos['photos']):
-      logging.error("Memcache set for photos by date failed")
+  if not memcache.add(key, photos['photos']):
+    logging.error("Memcache set for photos by date failed")
 
-    return photos['photos']
-  else:
-    return {'error': 'Could not contact Flickr to check authentication token.'}
-
-def get_flickr_auth_url(host):
-  keys = get_keys(host)
-  flickr = get_flickr(keys)      
-  return flickr.web_login_url('write')
+  return photos['photos']
 
 def get_flickr_geototal(photos):
   photos['photos']['geototal'] = 0
@@ -602,7 +630,7 @@ def get_flickr_geototal(photos):
 def get_flickr_tagtotal(photos, trip_id):
   photos['photos']['tagtotal'] = 0
   for photo in photos['photos']['photo']:
-    logging.info("got tags "+photo['tags'])
+
     if photo['tags'].find('dopplr:trip='+str(trip_id)) > 0:
       photos['photos']['tagtotal'] = photos['photos']['tagtotal']+1
       photo['dopplr'] = True;
@@ -750,6 +778,7 @@ application = webapp.WSGIApplication(
                    ('/form/', FormPage),
                    ('/ajax/photos.more', MoreJSON),
                    ('/ajax/photos.tag', TagJSON),
+                   ('/ajax/photos.geotag', GeoTagJSON),
                   ],
                   debug=True)
 

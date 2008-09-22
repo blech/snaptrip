@@ -63,10 +63,12 @@
     return false;
   }
 
+  // TODO this is, insanely, duplicated. Don't do that.
   function tag(type) {
     if (type == 'dopplr') {
-      $('div#photos img').each(function(i) {
-        if (!$(this).hasClass('dopplr')) {
+      $('div#photos a.img img').each(function(i) {
+        // TODO fix up single method of checking for photo having a property
+        if (!$(this).hasClass('dopplr') && this.id) {
           photos_to_tag.push(this.id);
         }
       })
@@ -74,24 +76,48 @@
       $('p#tag').text("You are adding a Dopplr tag to all these photos at Flickr. Please wait.");
       // $('p#tag').css({ background:'#ffc' });
       _do_tag(photos_to_tag[tag_index]);
-    } else {
-      alert("Sorry, but tagging of type '"+type+"' isn't enabled yet.");
+      return false;
     }
     
+    if (type == 'geo') {
+      $('div#photos a.img img').each(function(i) {
+        // TODO fix up single method of checking for photo having a property
+        if (!$('img#'+this.id).parent().next().length) {
+          photos_to_tag.push(this.id);
+        }
+      })
+
+      $('p#geotag').text("You are adding location data to all these photos at Flickr. Please wait.");
+      // $('p#tag').css({ background:'#ffc' });
+      _do_geotag(photos_to_tag[tag_index]);
+      return false;
+    }
+    
+    alert("Sorry, but tagging of type '"+type+"' isn't enabled yet.");
     return false;
   }
 
   function _do_tag(photo_id) {
-    $.getJSON("/ajax/photos.tag?photo_id="+photo_id+"&trip_id={{ trip.trip.id }}&woeid={{ trip.trip.city.woeid }}&token={{ session.flickr }}",
+    var ajax_url = "/ajax/photos.tag?photo_id="+photo_id+"&trip_id={{ trip.trip.id }}&woeid={{ trip.trip.city.woeid }}&token={{ session.flickr }}";
+    if (!tag_index) { // first time through, memcache invalidate
+      ajax_url += "&page={{ photos.page }}&method={{method}}&nsid={{ photos.photo.0.owner }}";
+    }
+    $.getJSON(ajax_url,
               function(json) {
                 if (json.stat != "ok") {
+                  if (json.error) {
+                    error = json.error;
+                  } else if (json.message) {
+                    error = json.message+".";
+                  }
                   // Flickr returns empty JSON on success, so...
-                  var choice = confirm("There was an error: "+json.error+" Try again?")
+                  var choice = confirm("There was an error: "+error+" Try again?")
                   if (!choice) { 
                     $('p#tag').html("You cancelled tagging your photos due to an error. Sorry.");
                     return;
                   }
                 } else {
+                  // TODO display method
                   $('img#'+photo_id).css({ border:"2px solid #{{ trip.trip.city.rgb }}"});
                   tag_index++;
                 }
@@ -105,6 +131,42 @@
               }
              );
    }
+
+  function _do_geotag(photo_id) {
+    var ajax_url = "/ajax/photos.geotag?photo_id="+photo_id+"&latitude={{ trip.trip.city.latitude }}&longitude={{ trip.trip.city.longitude }}&token={{ session.flickr }}";
+    if (!tag_index) { // first time through, add cache invalidate headers
+      ajax_url += "&page={{ photos.page }}&method={{method}}&nsid={{ photos.photo.0.owner }}&trip_id={{trip.trip.id}}";
+    }
+    $.getJSON(ajax_url,
+              function(json) {
+                if (json.stat != "ok") {
+                  // Flickr returns empty JSON on success, so...
+                  if (json.error) {
+                    error = json.error;
+                  } else if (json.message) {
+                    error = json.message+".";
+                  }
+                  
+                  var choice = confirm("There was an error: "+error+" Try again?")
+                  if (!choice) { 
+                    $('p#geotag').html("You cancelled geotagging your photos due to an error. Sorry.");
+                    return;
+                  }
+                } else {
+                  // TODO display method
+                  $('img#'+photo_id).parent().append('<span class="geo"><img src="/images/pushpin-whitesmall.png" class="pin" title="This photo has a location."><'+'/span>');
+                  tag_index++;
+                }
+                
+                if (photos_to_tag[tag_index]) {
+                  _do_geotag(photos_to_tag[tag_index]);
+                } else {
+                  $('p#geotag').html("Your photos have been geotagged at Flickr. Thanks.");
+                  // alert("Tagged all photos.");
+                }
+              }
+             );
+  }
 
   </script>
 
@@ -185,7 +247,7 @@
       
       {# TODO polyline from start point #}
       {# TODO slippymap? #}
-      <div id="map" style="width:500px; height:188px; border: 5px solid #{{ trip.trip.city.rgb }};"></div>
+      <div id="map" style="width:500px; height:188px; border: 2px solid #{{ trip.trip.city.rgb }};"></div>
 
     {% ifequal trip.trip.status "Future" %}
       <p>This trip hasn't happened yet, so no Flickr photos are available.</p>
@@ -235,7 +297,7 @@
             {% endifequal %}
  
 <!-- location info -->
-            <p>{% ifequal photos.geototal "0" %}None{% else %}{% ifequal photos.geototal photos.total %}All{% else %}{{ photos.geototal }}{% endifequal %}{% endifequal %} of these photo{% ifnotequal photos.geototal 1 %}s{% endifnotequal %} are already tagged with their location in Flickr.{% ifnotequal photos.total photos.geototal %}
+            <p id="geotag">{% ifequal photos.geototal "0" %}None{% else %}{% ifequal photos.geototal photos.total %}All{% else %}{{ photos.geototal }}{% endifequal %}{% endifequal %} of these photo{% ifnotequal photos.geototal "1" %}s are{% else %}s is{% endifnotequal %} already tagged with {% ifequal photos.geototal "1" %}their{% else %}its{% endifequal %} location in Flickr.{% ifnotequal photos.total photos.geototal %}
               You can <a href="#" onclick="javascript:return tag('geo')">add a location</a> based on your trip to {% ifequal photos.geototal "0" %}all these photos{% else %}the photos that don't already have one{% endifequal %}.
             {% endifnotequal %}</p>
             
@@ -247,8 +309,8 @@
           {% endif %}
         {% endif %}
         
-        {% if not photos %}
-            <p>Please <a href="{{ url }}">authenticate with Flickr</a> to see and tag your photos from this trip.</p>
+        {% if not photos %}{# this shouldn't be able to happen any more #}
+            <p>There were no photos for this trip. (If you're viewing someone else's trips, you can't seen any photos.).</p>
         {% endif %}
       {% endifnotequal %}
     {% endifequal %}

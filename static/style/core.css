@@ -197,9 +197,9 @@ div#photos {
   width:512px;
 }
 
-div#photos p {
+/*div#photos p {
   margin-left:3px;
-}
+}*/
 
 div#photos span.image {
   display:block;
