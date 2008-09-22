@@ -102,10 +102,10 @@
 
       <h3>Where?</h3>
       
-      <p>{% if traveller.name == session.name %}You've{% else %}{{ traveller.name }} has {% endif %} been on trips in {{ stats.countries|length }} countries, spending the most time in...</p>
+      <p>{% if traveller.name == session.name %}You've{% else %}{{ traveller.name }} has {% endif %} been on trips in {{ stats.countries|length }} countries, spending the most time in {{ stats.countries[stats.ordered.countries[0]].inline }}. Here's all the countries you've visited.</p>
       
       <ul id="where">
-      {% for country in stats.countries %}
+      {% for country in stats.ordered.countries %}
         <li><span class="country">{{ stats.countries[country].display }}</span> - 
             {{ stats.countries[country].trips }} trip{% if stats.countries[country].trips != 1 %}s{% endif %}, 
             {{ stats.countries[country].duration }} day{% if stats.countries[country].duration != 1 %}s{% endif %}</li>
@@ -114,8 +114,10 @@
     
       <h3>When?</h3>
       
+      <p>You've added trips back to {{ stats.ordered.years[-1] }}. Here's how many days you've been travelling in each of them.</p>
+      
       <ul id="when">
-      {% for year in stats.years %}
+      {% for year in stats.ordered.years %}
         <li>{{ year }} - {{ stats.years[year] }} days</li>
       {% endfor %}
       </ul>
@@ -127,8 +129,6 @@
         <a href="#" onclick="javascript: return show_trips('All');">all trips</a>, or only
         <a href="#" onclick="javascript: return show_trips('Future');">future</a> or 
         <a href="#" onclick="javascript: return show_trips('Past');">past</a> trips.</p>
-
-      <p><tt>{{ memcache }}</tt></p>
 
     </div>
   </div>

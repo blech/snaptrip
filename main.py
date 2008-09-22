@@ -671,7 +671,7 @@ def prettify_trips(trip_list):
 def build_stats(trip_list):
   stats = {'countries': {},
            'years':     {}, 
-           'ordered':   [], }
+           'ordered':   {}, }
   
   for trip in trip_list:
     # skip if not a past trip
@@ -684,18 +684,21 @@ def build_stats(trip_list):
     # build country data
     country = trip['city']['country']
     display = country
+    inline  = country
 
     # special casing!
-    # if not country.find("United"):
-    #   display = "the "+country
+    if not country.find("United"):
+      inline = "the "+country
       
     # more special casing! TODO hash
     if not country.find("Hong Kong"):
       display = "Hong Kong"
+      inline  = "Hong Kong"
     
     # stuff info into the data structure
     if not country in stats['countries']:
-      stats['countries'][country] = { 'duration': 0, 'trips': 0, 'display':display,}
+      stats['countries'][country] = { 'duration': 0, 'trips': 0, 
+                                      'display':display, 'inline':inline, }
 
     stats['countries'][country]['duration'] += duration.days
     stats['countries'][country]['trips']    += 1
@@ -727,8 +730,11 @@ def build_stats(trip_list):
   # order countries by trips for various things
 #   countries = sorted(stats['countries'], key = lambda (k,v): (v,k))
   
-#   stats['ordered'] = countries
-
+  stats['ordered']['years'] = sorted(stats['years'])
+  stats['ordered']['years'].reverse()
+  
+  stats['ordered']['countries'] = sorted(stats['countries'], lambda x, y: (stats['countries'][y]['duration'])-(stats['countries'][x]['duration']))
+  
   return stats
 
 def get_keys(host):
