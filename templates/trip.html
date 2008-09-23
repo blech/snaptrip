@@ -342,11 +342,31 @@
       
       <p>snaptrip can help by making sure that your machine tags are correct, and by setting them if you don't have them already.</p>
 
-      <h3>About photos on Dopplr.</h3>
+      <h3>About photos on Flickr.</h3>
     
       <p>snaptrip adds machine tags to photos at Flickr. If you want to see the tag, you'll need to open the disclosure triangle in the right hand side labelled "Show machine tags".</p>
       
       <p>If you're using <a href="https://addons.mozilla.org/en-US/firefox/addon/748" title="Install Greasemonkey">Greasemonkey</a> on Firefox, you can install a <a href="/js/show-dopplr-link.user.js">user script</a> that will use the machine tags to add a graphical link to the trip page at Dopplr.</p>
+
+      <h3>More trips.</h3>
+      
+      {% if links.prev %}
+      <p>The previous trip was to <a href="/trip/{{ links.prev.id }}">{{ links.prev.city }}</a>.</p>
+      {% endif %}
+
+      {% if links.next %}
+      <p>The next trip was to <a href="/trip/{{ links.next.id }}">{{ links.next.city }}</a>.</p>
+      {% endif %}
+
+<!-- 
+      {% if links.city_prev %}
+      <p>Previous trip to <a href="/trip/{{ links.city_prev.id }}">{{ trip.trip.city.name }}</a>.</p>
+      {% endif %}
+
+      {% if links.city_next %}
+      <p>Next trip to <a href="/trip/{{ links.city_next.id }}">{{ trip.trip.city.name }}</a>.</p>
+      {% endif %}
+ -->
 
     </div>
   </div>

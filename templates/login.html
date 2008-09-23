@@ -63,7 +63,7 @@
       
       {{ entry.description|truncatewords:60 }}</div> {# TODO fix #}
       
-      <p><a href="{{ entry.link }}">Read more of this entry</a>, which was posted on {{ entry.published_date|date:"d F Y" }}.</p>
+      <p><a href="{{ entry.link }}">Read more of this entry</a>, which was posted on {{ entry.published_date|date:"dS F Y" }}.</p>
       
     {% endfor %}
 

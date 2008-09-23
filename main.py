@@ -37,6 +37,41 @@ class IndexPage(webapp.RequestHandler):
 
     stats           = {}
     trips_info      = get_trips_info(permanent, who)
+    if not trips_info:
+      return error_page(self, session, "Your past trips could not be loaded.")
+    if trips_info.has_key('error'):
+      return error_page(self, session, trips_info['error'])
+
+    # TODO ajax/memcache
+    stats           = build_stats(trips_info['trip'])
+    
+    template_values = {
+      'session':    session,
+      'permanent':  permanent,
+      'traveller':  get_traveller_info(permanent, who),
+      'trips':      trips_info['trip'],
+      'stats':      stats,
+      'memcache':   memcache.get_stats(),
+    }
+    
+    path = os.path.join(os.path.dirname(__file__), 'templates/index.html')
+    template = env.get_template('index.html')
+    
+    self.response.out.write(template.render(template_values))
+
+class StatsPage(webapp.RequestHandler):
+  def get(self, who=""):
+    session = get_session()
+
+    # session objects don't support has_key. bah.
+    try:
+      permanent = session['dopplr']
+      token     = session['flickr']
+    except KeyError, e:
+      return self.redirect("/login/")
+
+    stats           = {}
+    trips_info      = get_trips_info(permanent, who)
     if trips_info.has_key('error'):
       return error_page(self, session, trips_info['error'])
 
@@ -53,7 +88,7 @@ class IndexPage(webapp.RequestHandler):
       'memcache':   memcache.get_stats(),
     }
     
-    path = os.path.join(os.path.dirname(__file__), 'templates/index.html')
+    path = os.path.join(os.path.dirname(__file__), 'templates/stats.html')
     template = env.get_template('index.html')
     
     self.response.out.write(template.render(template_values))
@@ -76,10 +111,21 @@ class TripPage(webapp.RequestHandler):
     if trip_info.has_key('error'):
       return error_page(self, session, trip_info['error'])
 
+    who = ""
+    if session["nick"] == trip_info["trip"]["nick"]:
+      who = trip_info["trip"]["nick"]
+      
+    trips_info = get_trips_info(permanent, who)
+    if trips_info.has_key('error'):
+      return error_page(self, session, trips_info['error'])
+
+    links = links_for_trip(trips_info, trip_id)
+
     # initialise template data before we call Flickr
     template_values = {
       'session':    session,
       'trip':       trip_info,
+      'links':      links,
       'keys':       get_keys(self.request.host),
     }
   
@@ -673,17 +719,70 @@ def prettify_trips(trip_list):
       
   return trip_list
   
+def links_for_trip(trips_list, trip_id):
+  # todo memcache (although this is relatively cheap)
+  index = 0
+  trip_index = 0
+  city_index = 0
+
+  ids = []
+  cities = []
+  for trip in trips_list['trip']:
+    ids.append(trip['id'])    
+    cities.append(trip['city']['name'])
+    if int(trip['id']) == int(trip_id):
+      trip_index = index
+      trip_city  = trip['city']['name']
+    index = index+1
+
+  index = 0
+  city_ids = []
+  for city in cities:
+    if city == trip_city:
+      id = ids[index]
+      city_ids.append(id)
+    index = index+1
+
+  index = 0
+  for id in city_ids:
+    if int(id) == int(trip_id):
+      city_index = index
+    index = index+1
+
+  logging.info(city_index)
+  logging.info(trip_index)
+  
+  links = {}
+
+  if (trip_index > 0):
+    links['prev'] = {'id':ids[trip_index-1], 'city':cities[trip_index-1]}
+  if (trip_index < len(ids) and len(ids) > 1):
+    links['next'] = {'id':ids[trip_index+1], 'city':cities[trip_index+1]}
+  if (city_index > 0):
+    links['city_prev'] = {'id':city_ids[city_index-1]}
+  if (city_index < len(city_ids) and len(city_ids) > 1):
+    links['city_next'] = {'id':city_ids[city_index+1]}
+  links['city_ids'] = city_ids
+
+  return links
+  
 def build_stats(trip_list):
   stats = {'countries': {},
-           'years':     {}, 
+           'cities':    {},
+           'years':     {},
+           'future':    0,
            'ordered':   {}, }
   
   for trip in trip_list:
     # skip if not a past trip
     if trip['status'] != "Past":
+      if trip['status'] == "Ongoing":
+        stats['current'] = trip['city']['name']
+      else:
+        stats['future'] += 1
       continue
       
-    # how long (simple version...)
+    # how long (simple version...) # TODO never double count date
     duration = trip['finishdate'] - trip['startdate']
     
     # build country data
@@ -693,9 +792,7 @@ def build_stats(trip_list):
 
     # special casing!
     if not country.find("United"): # TODO there's something wrong here...
-      inline = "the "+country
-      
-    # more special casing! TODO hash
+      inline = "the "+country      # TODO and this should be a hash anyway
     if not country.find("Hong Kong"):
       display = "Hong Kong"
       inline  = "Hong Kong"
@@ -707,6 +804,17 @@ def build_stats(trip_list):
 
     stats['countries'][country]['duration'] += duration.days
     stats['countries'][country]['trips']    += 1
+
+    # build city data
+    city = trip['city']['name']
+    rgb  = trip['city']['rgb']
+
+    if not city in stats['cities']:
+      stats['cities'][city] = { 'duration': 0, 'trips': 0, 
+                                'rgb':rgb, 'country':country}
+
+    stats['cities'][city]['duration'] += duration.days
+    stats['cities'][city]['trips']    += 1
     
     # build year data
     year = trip['startdate'].year
@@ -718,7 +826,8 @@ def build_stats(trip_list):
       if trip['finishdate'].year - year == 1:
         # spans a single year boundary, and is therefore Sane
         # if there's *anyone* who has a trip spanning two, they can bloody
-        # well write this themselves. Otherwise...
+        # well write this themselves. Otherwise, assume they mean they're
+        # living there now. Onwards...
 
         year_end = datetime(year, 12, 31)
         
@@ -732,13 +841,14 @@ def build_stats(trip_list):
 
     # do we want to supply full-blown cross-cut stats? maybe later...
 
-  # order countries by trips for various things
-#   countries = sorted(stats['countries'], key = lambda (k,v): (v,k))
-  
+  # reorder final stats
   stats['ordered']['years'] = sorted(stats['years'])
   stats['ordered']['years'].reverse()
+
+  stats['ordered']['years_by_trip'] = sorted(stats['years'],  lambda x, y: (stats['years'][y])-(stats['years'][x]))
   
-  stats['ordered']['countries'] = sorted(stats['countries'], lambda x, y: (stats['countries'][y]['duration'])-(stats['countries'][x]['duration']))
+  stats['ordered']['countries'] = sorted(stats['countries'],  lambda x, y: (stats['countries'][y]['duration'])-(stats['countries'][x]['duration']))
+  stats['ordered']['cities']    = sorted(stats['cities'],     lambda x, y: (stats['cities'][y]['duration'])-(stats['cities'][x]['duration']))
   
   return stats
 
@@ -782,6 +892,8 @@ def get_session():
 application = webapp.WSGIApplication(
                   [('/', IndexPage),
                    ('/where/(\w*)', IndexPage),
+                   ('/overview/', StatsPage),
+                   ('/overview/(\w*)', StatsPage),
                    ('/trip/(\d*)', TripPage),
                    ('/trip/(\d*)/by/(\w+)', TripPage),
                    ('/trip/(\d*)/by/(\w+)/(\d+)', TripPage),

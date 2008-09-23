@@ -106,11 +106,34 @@
     <div id="side">
 
       <h3>Where?</h3>
+
+    {% if stats.current %}
+      <p>{% if traveller.name == session.name %}You are{% else %}{{ traveller.name }} is{% endif %} currently on a trip to {{ stats.current }}.</p>
+    {% endif %}
       
-      {% if stats.ordered.years %}
+    {% if stats.ordered.years %}
       
-      <p>{% if traveller.name == session.name %}You've{% else %}{{ traveller.name }} has {% endif %} been on trips in {{ stats.countries|length }} countries, spending the most time in {{ stats.countries[stats.ordered.countries[0]].inline }}. Here's all the countries you've visited.</p>
-      
+      <p>{% if traveller.name == session.name %}You've{% else %}{% if stats.current %}They have{% else %}{{ traveller.name }} has {% endif %}{% endif %} been on trips in {{ stats.countries|length }}{# TODO jinja ordinal? #} countries, spending the most time in {{ stats.countries[stats.ordered.countries[0]].inline }}.</p>
+
+<!-- 
+      {{ stats.ordered.countries[0] }} equal? {{ stats.cities[stats.ordered.cities[0]].country }}
+ -->
+
+      <p>{% if stats.ordered.countries[0] == stats.cities[stats.ordered.cities[0]].country %}
+           Within that country, 
+           {% if traveller.name == session.name %}you've{% else %}they've{% endif %} 
+           spent most time in {{ stats.ordered.cities[0] }}, 
+           with a total time there of {{ stats.cities[stats.ordered.cities[0]].duration }} 
+           days.
+         {% else %}
+           However, the city 
+           {% if traveller.name == session.name %}you've{% else %}they've{% endif %} 
+           spent most time in is {{ stats.ordered.cities[0] }}, 
+           in {{ stats.countries[stats.cities[stats.ordered.cities[0]].country].inline }}, {# countries ( cities ( most visited city ) ) inline #}
+           with a total time there of {{ stats.cities[stats.ordered.cities[0]].duration }} days.
+         {% endif %}</p>
+            
+<!-- 
       <ul id="where">
       {% for country in stats.ordered.countries %}
         <li><span class="country">{{ stats.countries[country].display }}</span> - 
@@ -118,28 +141,32 @@
             {{ stats.countries[country].duration }} day{% if stats.countries[country].duration != 1 %}s{% endif %}</li>
       {% endfor %}
       </ul>
+ -->
     
       <h3>When?</h3>
       
-      <p>You've added trips back to {{ stats.ordered.years[-1] }}. Here's how many days you've been travelling in each of them.</p>
+      <p>{% if traveller.name == session.name %}You've{% else %}They've{% endif %}  added trips back to {{ stats.ordered.years[-1] }}, with the most trips in {{ stats.ordered.years_by_trip[0] }}: a total of {{ stats.years[stats.ordered.years_by_trip[0]] }} days.</p>
       
+<!-- 
       <ul id="when">
       {% for year in stats.ordered.years %}
         <li>{{ year }} - {{ stats.years[year] }} days</li>
       {% endfor %}
       </ul>
+ -->
 
-      <p>(These statistics are for past trips only, even if you're looking at all trips.)</p>
-    
-      {# TODO disable if no future/past trips #}
+      {% if stats.future %}
       <p id="trip_selector">Show 
-        <a href="#" onclick="javascript: return show_trips('All');">all trips</a>, or only
-        <a href="#" onclick="javascript: return show_trips('Future');">future</a> or 
-        <a href="#" onclick="javascript: return show_trips('Past');">past</a> trips.</p>
-
-      {% else %}
-        <p>According to Dopplr, nowhere.</p>
+        <a href="#" onclick="javascript: return show_trips('Future');">{{ stats.future }} future trips</a>,
+        <span style="background:#def;">{{ trips|length - stats.future }} past trips</span>, or 
+        <a href="#" onclick="javascript: return show_trips('All');">all {{ trips|length }} trips</a>.</p>
       {% endif %}
+
+    {% else %}
+      <p>According to Dopplr, nowhere.</p>
+    {% endif %}
+
+      <p><tt style="font:9px monaco;">{{ stats }}</tt></p>
 
     </div>
   </div>
