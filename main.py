@@ -54,7 +54,6 @@ class IndexPage(webapp.RequestHandler):
       'memcache':   memcache.get_stats(),
     }
     
-    path = os.path.join(os.path.dirname(__file__), 'templates/index.html')
     template = env.get_template('index.html')
     
     self.response.out.write(template.render(template_values))
@@ -88,8 +87,7 @@ class StatsPage(webapp.RequestHandler):
       'memcache':   memcache.get_stats(),
     }
     
-    path = os.path.join(os.path.dirname(__file__), 'templates/stats.html')
-    template = env.get_template('index.html')
+    template = env.get_template('stats.html')
     
     self.response.out.write(template.render(template_values))
 
@@ -800,7 +798,8 @@ def build_stats(trip_list):
     # stuff info into the data structure
     if not country in stats['countries']:
       stats['countries'][country] = { 'duration': 0, 'trips': 0, 
-                                      'display':display, 'inline':inline, }
+                                      'display':display, 'inline':inline,
+                                      'code':trip['city']['country_code'], }
 
     stats['countries'][country]['duration'] += duration.days
     stats['countries'][country]['trips']    += 1

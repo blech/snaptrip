@@ -1,0 +1,76 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+	<title>snaptrip - all your trips</title>
+  <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
+  <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+  <script type="text/javascript">
+    google.load("visualization", "1", {packages:["intensitymap"]});
+    google.setOnLoadCallback(drawChart);
+    function drawChart() {
+      var data = new google.visualization.DataTable();
+      data.addColumn('string', '', 'Country');
+      data.addColumn('number', 'Population (mil)', 'a');
+      data.addRows({{ stats.countries|length }});
+    
+    {% for country in stats.countries %}
+      data.setValue({{ loop.index0 }}, 0, '{{ stats.countries[country].code }}');
+      data.setValue({{ loop.index0 }}, 1, {{ stats.countries[country].duration }});
+    {% endfor %}
+
+      var chart = new google.visualization.IntensityMap(document.getElementById('chart_div'));
+      chart.draw(data, {width:440,height:190,});
+      $('div.google-visualization-intensitymap-legend').hide();
+    }
+
+    $(document).ready(function () {
+      console.log("ready");
+    })
+  </script>
+</head>
+<body>
+  {% include "includes/header.html" %}
+  
+  <div id="content">
+    <div id="main">
+    
+      <h3>Trip overview{% if traveller.name != session.name %} for {{ traveller.name }}{% endif %}.</h3>
+    
+      {% if not trips %}
+      <p>There are no trips in Dopplr to show.</p>
+      {% else %}
+
+        <img src="http://chart.apis.google.com/chart?cht=t&chs=440x220&chd=s:_&chtm=world" width="440" height="220">
+
+        <div id="chart_div"></div>
+
+  {% for item in stats.ordered.countries %}
+    {{ loop.index0 }} {{ item }}<br>
+  {% endfor %}
+
+  {% for country in stats.countries %}
+    {{ forloop }}{{ loop.counter }}<br>
+    data.setValue({{ loop.index0 }}, 0, '{{ stats.countries[country].code }}');<br>
+    data.setValue({{ loop.index0 }}, 1, {{ stats.countries[country].duration }});<br>
+  {% endfor %}
+
+      {% endif %}
+
+
+    </div>
+
+    <div id="side">
+
+      <h3>Data.</h3>
+
+      <p><tt style="font:9px monaco;">{{ stats }}</tt></p>
+
+      <p><tt style="font:9px monaco;">{{ trips }}</tt></p>
+
+    </div>
+  </div>
+</body>
+</html>
