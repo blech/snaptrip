@@ -10,7 +10,8 @@
 """
 import sys
 from itertools import chain, imap
-from jinja2.utils import Markup, partial, soft_unicode, escape, missing, concat
+from jinja2.utils import Markup, partial, soft_unicode, escape, missing, \
+     concat, MethodType, FunctionType
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError
 
 
@@ -20,12 +21,8 @@ __all__ = ['LoopContext', 'Context', 'TemplateReference', 'Macro', 'Markup',
            'markup_join', 'unicode_join']
 
 
-#: get the types we support for context functions.  We do not use types because
-#: IronPython doesn't provide that module out of the box.
-class _C(object):
-    meth = lambda: None
-_context_function_types = (type(lambda: None), type(_C.meth))
-del _C
+#: the types we support for context functions
+_context_function_types = (FunctionType, MethodType)
 
 
 def markup_join(seq):
@@ -64,7 +61,7 @@ class Context(object):
     :class:`Undefined` object for missing variables.
     """
     __slots__ = ('parent', 'vars', 'environment', 'exported_vars', 'name',
-                 'blocks')
+                 'blocks', '__weakref__')
 
     def __init__(self, environment, parent, name, blocks):
         self.parent = parent
@@ -82,15 +79,13 @@ class Context(object):
         """Render a parent block."""
         try:
             blocks = self.blocks[name]
-            block = blocks[blocks.index(current) + 1]
+            index = blocks.index(current) + 1
+            blocks[index]
         except LookupError:
             return self.environment.undefined('there is no parent block '
                                               'called %r.' % name,
                                               name='super')
-        wrap = self.environment.autoescape and Markup or (lambda x: x)
-        render = lambda: wrap(concat(block(self)))
-        render.__name__ = render.name = name
-        return render
+        return BlockReference(name, self, blocks, index)
 
     def get(self, key, default=None):
         """Returns an item from the template context, if it doesn't exist
@@ -185,18 +180,42 @@ class TemplateReference(object):
         self.__context = context
 
     def __getitem__(self, name):
-        func = self.__context.blocks[name][0]
+        blocks = self.__context.blocks[name]
         wrap = self.__context.environment.autoescape and \
                Markup or (lambda x: x)
-        render = lambda: wrap(concat(func(self.__context)))
-        render.__name__ = render.name = name
-        return render
+        return BlockReference(name, self.__context, blocks, 0)
 
     def __repr__(self):
         return '<%s %r>' % (
             self.__class__.__name__,
-            self._context.name
+            self.__context.name
         )
+
+
+class BlockReference(object):
+    """One block on a template reference."""
+
+    def __init__(self, name, context, stack, depth):
+        self.name = name
+        self._context = context
+        self._stack = stack
+        self._depth = depth
+
+    @property
+    def super(self):
+        """Super the block."""
+        if self._depth + 1 >= len(self._stack):
+            return self._context.environment. \
+                undefined('there is no parent block called %r.' %
+                          self.name, name='super')
+        return BlockReference(self.name, self._context, self._stack,
+                              self._depth + 1)
+
+    def __call__(self):
+        rv = concat(self._stack[self._depth](self._context))
+        if self._context.environment.autoescape:
+            rv = Markup(rv)
+        return rv
 
 
 class LoopContext(object):

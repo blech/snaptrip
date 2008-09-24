@@ -24,9 +24,9 @@ _spontaneous_environments = LRUCache(10)
 
 
 def get_spontaneous_environment(*args):
-    """Return a new spontaneus environment.  A spontaneus environment is an
-    unnamed and unaccessable (in theory) environment that is used for
-    template generated from a string and not from the file system.
+    """Return a new spontaneous environment.  A spontaneous environment is an
+    unnamed and unaccessible (in theory) environment that is used for
+    templates generated from a string and not from the file system.
     """
     try:
         env = _spontaneous_environments.get(args)
@@ -135,6 +135,8 @@ class Environment(object):
 
         `autoescape`
             If set to true the XML/HTML autoescaping feature is enabled.
+            For more details about auto escaping see
+            :class:`~jinja2.utils.Markup`.
 
         `loader`
             The template loader for this environment.
@@ -153,6 +155,13 @@ class Environment(object):
             requested the loader checks if the source changed and if yes, it
             will reload the template.  For higher performance it's possible to
             disable that.
+
+        `bytecode_cache`
+            If set to a bytecode cache object, this object will provide a
+            cache for the internal Jinja bytecode so that templates don't
+            have to be parsed if they were not changed.
+
+            See :ref:`bytecode-cache` for more information.
     """
 
     #: if this environment is sandboxed.  Modifying this variable won't make
@@ -187,7 +196,8 @@ class Environment(object):
                  autoescape=False,
                  loader=None,
                  cache_size=50,
-                 auto_reload=True):
+                 auto_reload=True,
+                 bytecode_cache=None):
         # !!Important notice!!
         #   The constructor accepts quite a few arguments that should be
         #   passed by keyword rather than position.  However it's important to
@@ -223,7 +233,9 @@ class Environment(object):
 
         # set the loader provided
         self.loader = loader
+        self.bytecode_cache = None
         self.cache = create_cache(cache_size)
+        self.bytecode_cache = bytecode_cache
         self.auto_reload = auto_reload
 
         # load extensions
@@ -246,7 +258,8 @@ class Environment(object):
                 line_statement_prefix=missing, trim_blocks=missing,
                 extensions=missing, optimized=missing, undefined=missing,
                 finalize=missing, autoescape=missing, loader=missing,
-                cache_size=missing, auto_reload=missing):
+                cache_size=missing, auto_reload=missing,
+                bytecode_cache=missing):
         """Create a new overlay environment that shares all the data with the
         current environment except of cache and the overriden attributes.
         Extensions cannot be removed for a overlayed environment.  A overlayed
@@ -407,7 +420,7 @@ class Environment(object):
         If the `parent` parameter is not `None`, :meth:`join_path` is called
         to get the real template name before loading.
 
-        The `globals` parameter can be used to provide temlate wide globals.
+        The `globals` parameter can be used to provide template wide globals.
         These variables are available in the context at render time.
 
         If the template does not exist a :exc:`TemplateNotFound` exception is
@@ -495,7 +508,7 @@ class Template(object):
             variable_end_string, comment_start_string, comment_end_string,
             line_statement_prefix, trim_blocks, newline_sequence,
             frozenset(extensions), optimized, undefined, finalize,
-            autoescape, None, 0, False)
+            autoescape, None, 0, False, None)
         return env.from_string(source, template_class=cls)
 
     @classmethod
@@ -515,7 +528,7 @@ class Template(object):
         t.filename = code.co_filename
         t.blocks = namespace['blocks']
 
-        # render function and module 
+        # render function and module
         t.root_render_func = namespace['root']
         t._module = None
 

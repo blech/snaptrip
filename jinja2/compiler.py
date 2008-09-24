@@ -138,6 +138,10 @@ class Frame(object):
         # situations.
         self.rootlevel = False
 
+        # in some dynamic inheritance situations the compiler needs to add
+        # write tests around output statements.
+        self.require_output_check = parent and parent.require_output_check
+
         # inside some tags we are using a buffer rather than yield statements.
         # this for example affects {% filter %} or {% macro %}.  If a frame
         # is buffered this variable points to the name of the list used as
@@ -403,13 +407,15 @@ class CodeGenerator(NodeVisitor):
         self.write(s)
         self.end_write(frame)
 
-    def blockvisit(self, nodes, frame, force_generator=True):
+    def blockvisit(self, nodes, frame):
         """Visit a list of nodes as block in a frame.  If the current frame
         is no buffer a dummy ``if 0: yield None`` is written automatically
         unless the force_generator parameter is set to False.
         """
-        if frame.buffer is None and force_generator:
+        if frame.buffer is None:
             self.writeline('if 0: yield None')
+        else:
+            self.writeline('pass')
         try:
             for node in nodes:
                 self.visit(node, frame)
@@ -676,6 +682,7 @@ class CodeGenerator(NodeVisitor):
         frame = Frame()
         frame.inspect(node.body)
         frame.toplevel = frame.rootlevel = True
+        frame.require_output_check = have_extends and not self.has_known_extends
         self.indent()
         if have_extends:
             self.writeline('parent_template = None')
@@ -766,12 +773,12 @@ class CodeGenerator(NodeVisitor):
                 self.indent()
             self.writeline('raise TemplateRuntimeError(%r)' %
                            'extended multiple times')
+            self.outdent()
 
             # if we have a known extends already we don't need that code here
             # as we know that the template execution will end here.
             if self.has_known_extends:
                 raise CompilerExit()
-            self.outdent()
 
         self.writeline('parent_template = environment.get_template(', node)
         self.visit(node.template, frame)
@@ -975,7 +982,7 @@ class CodeGenerator(NodeVisitor):
             self.outdent(2)
 
         self.indent()
-        self.blockvisit(node.body, loop_frame, force_generator=True)
+        self.blockvisit(node.body, loop_frame)
         if node.else_:
             self.writeline('%s = 0' % iteration_indicator)
         self.outdent()
@@ -983,7 +990,7 @@ class CodeGenerator(NodeVisitor):
         if node.else_:
             self.writeline('if %s:' % iteration_indicator)
             self.indent()
-            self.blockvisit(node.else_, loop_frame, force_generator=False)
+            self.blockvisit(node.else_, loop_frame)
             self.outdent()
 
         # reset the aliases if there are any.
@@ -1039,7 +1046,7 @@ class CodeGenerator(NodeVisitor):
         aliases = self.collect_shadowed(filter_frame)
         self.pull_locals(filter_frame)
         self.buffer(filter_frame)
-        self.blockvisit(node.body, filter_frame, force_generator=False)
+        self.blockvisit(node.body, filter_frame)
         self.start_write(frame, node)
         self.visit_Filter(node.filter, filter_frame)
         self.end_write(frame)
@@ -1051,7 +1058,8 @@ class CodeGenerator(NodeVisitor):
 
     def visit_Output(self, node, frame):
         # if we have a known extends statement, we don't output anything
-        if self.has_known_extends and frame.toplevel:
+        # if we are in a require_output_check section
+        if self.has_known_extends and frame.require_output_check:
             return
 
         if self.environment.finalize:
@@ -1061,11 +1069,9 @@ class CodeGenerator(NodeVisitor):
 
         self.newline(node)
 
-        # if we are in the toplevel scope and there was already an extends
-        # statement we have to add a check that disables our yield(s) here
-        # so that they don't appear in the output.
+        # if we are inside a frame that requires output checking, we do so
         outdent_later = False
-        if frame.toplevel and self.extends_so_far != 0:
+        if frame.require_output_check:
             self.writeline('if parent_template is None:')
             self.indent()
             outdent_later = True
@@ -1299,11 +1305,8 @@ class CodeGenerator(NodeVisitor):
         self.write(', %r)' % node.attr)
 
     def visit_Getitem(self, node, frame):
-        # slices or integer subscriptions bypass the getitem
-        # method if we can determine that at compile time.
-        if isinstance(node.arg, nodes.Slice) or \
-           (isinstance(node.arg, nodes.Const) and
-            isinstance(node.arg.value, (int, long))):
+        # slices bypass the environment getitem method.
+        if isinstance(node.arg, nodes.Slice):
             self.visit(node.node, frame)
             self.write('[')
             self.visit(node.arg, frame)
