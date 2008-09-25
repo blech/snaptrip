@@ -77,22 +77,22 @@
       <ul id="trips">
       {% for trip in trips | reverse %}
         <li class="{{ trip.status|lower }}"><span class="block" style="background:#{{trip.city.rgb}}">&nbsp</span>
-          {{ trip.city.name }}
+          <span class="city">{{ trip.city.name }}</span>
     
           {# reusable block? #}
           {% if trip.startdate.year == trip.finishdate.year %}
             {% if trip.startdate.month == trip.finishdate.month %}
-              in <abbr style="color:#333;">{{ trip.startdate.strftime("%B %Y") }}</abbr>
+              in <abbr>{{ trip.startdate.strftime("%B %Y") }}</abbr>
             {% else %}
-              from <abbr style="color:#333;">{{ trip.startdate.strftime("%B") }}</abbr>
-                to <abbr style="color:#333;">{{ trip.finishdate.strftime("%B %Y") }}</abbr>
+              from <abbr>{{ trip.startdate.strftime("%B") }}</abbr>
+                to <abbr>{{ trip.finishdate.strftime("%B %Y") }}</abbr>
             {% endif %}
           {% else %}
-            from <abbr style="color:#333;">{{ trip.startdate.strftime("%B %Y") }}</abbr>
-              to <abbr style="color:#333;">{{ trip.finishdate.strftime("%B %Y") }}</abbr>
+            from <abbr>{{ trip.startdate.strftime("%B %Y") }}</abbr>
+              to <abbr>{{ trip.finishdate.strftime("%B %Y") }}</abbr>
           {% endif %}
           
-          <span class="status" style="color:#ccc;">{{ trip.status }}</span>
+          <span class="status" style="color:#ccc;">{% if trip.status != "Past" %}{{ trip.status }}{% endif %}</span>
     
           <span class="internal"><a href="/trip/{{ trip.id }}">More on this trip</a></span>
           <!-- <span class="external"><a href="http://www.dopplr.com/trip/{{ traveller.nick }}/{{ trip.id }}">View this trip at Dopplr</a></span> -->
@@ -160,13 +160,20 @@
         <a href="#" onclick="javascript: return show_trips('Future');">{{ stats.future }} future trips</a>,
         <span style="background:#def;">{{ trips|length - stats.future }} past trips</span>, or 
         <a href="#" onclick="javascript: return show_trips('All');">all {{ trips|length }} trips</a>.</p>
+
+      <p>(The statistics shown here only cover past trips.)</p>
+
       {% endif %}
+
+  <!--
+      <h3>More?</h3>
+      
+      <p>You can see more information about {% if traveller.name == session.name %}your{% else %}{{ traveller.name }}their{% endif %} trips on the <a href="/overview/{{ traveller.nick }}">statistics page</a>.</p>
+  -->
 
     {% else %}
       <p>According to Dopplr, nowhere.</p>
     {% endif %}
-
-      <p><tt style="font:9px monaco;">{{ stats }}</tt></p>
 
     </div>
   </div>
