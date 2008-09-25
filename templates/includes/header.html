@@ -1,10 +1,10 @@
   <div id="header">
-    <h1>snaptrip</h1>
+    <h1>snaptrip{% if session.name %} <span class="name">for {{ session.name }}</span>{% endif %}</h1>
     
   {% if session.dopplr %}{# lowercase? #}
-    <span class="dopplr">authenticated via Dopplr as <a href="http://dopplr.com/traveller/{{ session.nick }}/">{{ session.name }}</a></span>
+    <span class="dopplr">authenticated via <a href="http://dopplr.com/traveller/{{ session.nick }}/">Dopplr</a></span>
     {% if session.flickr %}{# lowercase? #}
-    <span class="flickr">authenticated via Flickr</span>
+    <span class="flickr">authenticated via <a href="http://flickr.com/people/me/">Flickr</a></span>
     {% else %}
 <!-- 
     <span class="flickr"></span>
