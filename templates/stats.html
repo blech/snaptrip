@@ -9,7 +9,7 @@
   <script type="text/javascript" src="http://www.google.com/jsapi"></script>
   <script type="text/javascript">
     google.load("visualization", "1", {packages:["intensitymap"]});
-    google.setOnLoadCallback(drawChart);
+    // google.setOnLoadCallback(drawChart);
     function drawChart() {
       var data = new google.visualization.DataTable();
       data.addColumn('string', '', 'Country');
@@ -25,10 +25,6 @@
       chart.draw(data, {width:440,height:190,});
       $('div.google-visualization-intensitymap-legend').hide();
     }
-
-    $(document).ready(function () {
-      console.log("ready");
-    })
   </script>
 </head>
 <body>
@@ -43,32 +39,74 @@
       <p>There are no trips in Dopplr to show.</p>
       {% else %}
 
-        <img src="http://chart.apis.google.com/chart?cht=t&chs=440x220&chd=s:_&chtm=world" width="440" height="220">
+      <div class="label">1.</div>
+      
+      <div class="onecol">Countries visited.<br><img src="http://chart.apis.google.com/chart?cht=t&chs=440x190&chtm=world&chco=d7d7d7,a0a0a0,{{ stats.rgb }}&chld={% for country in stats.countries %}{{ stats.countries[country].code }}{% endfor %}&chd=t:{% for country in stats.countries %}{{ stats.countries[country].scaled }}{% if not loop.last %},{% endif %}{% endfor %}" width="440" height="190" style="margin:5px 0px;"></div>
 
-        <div id="chart_div"></div>
+      <br style="clear:both;">
+      
+      <div class="label">2.</div>
+      
+      <div class="threecol">Trips abroad.<br>
 
-  {% for item in stats.ordered.countries %}
-    {{ loop.index0 }} {{ item }}<br>
-  {% endfor %}
+        <img src="http://chart.apis.google.com/chart?cht=p3&chs=140x95&chco=d7d7d7,{{ stats.rgb }}&chd=t:{{ stats.home.trips }},{{ stats.away.trips }}" width="140" height="95"><br>
+      
+<!-- 
+      <a href="#" class="switch" onclick="javascript: return abroad('trip')">chart by trip count</a>.<br>
+      <a href="#" class="switch" onclick="javascript: return abroad('duration')">chart by duration</a>.
+ -->
+      </div>
 
-  {% for country in stats.countries %}
-    {{ forloop }}{{ loop.counter }}<br>
-    data.setValue({{ loop.index0 }}, 0, '{{ stats.countries[country].code }}');<br>
-    data.setValue({{ loop.index0 }}, 1, {{ stats.countries[country].duration }});<br>
-  {% endfor %}
+      <div class="label">3.</div>
+      
+      <div class="threecol">Trips by type.<br><br>
+
+      <table cellpadding="0" cellspacing="0" border="0">
+      {% for type in stats.ordered.types %}
+        <tr>
+          <td><img src="/images/{{ type }}.gif" width="20" height="20" alt="" style="margin-bottom:4px; margin-right:4px;"></td>
+          <td><div style="background:#{{ stats.rgb }}; display:block; width:{{ stats.types[type].scaled }}px; height:20px; margin-bottom:4px; color:#fff;"></div></td>
+        </tr>
+      {% endfor %}
+      </table></div>
+
+      <div class="label">4.</div>
+      
+      <div class="threecol">Days on trips, {{ stats.ordered.years_by_trip[0] }}.<br>
+      
+        <img src="http://chart.apis.google.com/chart?cht=p3&chs=140x95&chco=d7d7d7,{{ stats.rgb }}&chd=t:{{ stats.home.days }},{{ stats.away.days }}" width="140" height="95">
+      </div>
 
       {% endif %}
-
-
     </div>
 
     <div id="side">
 
-      <h3>Data.</h3>
+    {% if stats.ordered.years %}
 
-      <p><tt style="font:9px monaco;">{{ stats }}</tt></p>
+      <h3>Key.</h3>
+ 
+      <dl>
+        <dt><span>1.</span> Countries visited.</dt>
+        
+        <dd>The map shows all the countries that {% if traveller.nick == session.nick %}you{% else %}{{ traveller.name }}{% endif %} has visited. The colouring reflects the total number of days spent in the country.</dt>
+        
+        <dt><span>2.</span> Trips abroad.</dt>
+        
+        <dd>The chart shows the proportion of trips taken that are outside the current home country (coloured) against those within that country.</dd>
+        
+        <dt><span>3.</span> Trips by type.</dt>
+        
+        <dd>Each trip taken contributes to this listing of trips, ordered by the type of transport.</dd>
 
-      <p><tt style="font:9px monaco;">{{ trips }}</tt></p>
+        <dt><span>4.</span> Days on trips.</dt>
+        
+        <dd>Every day spent on a trip in {{ stats.ordered.years_by_trip[0] }} contributes to the coloured region of this chart.</dd>
+      </dl>
+
+     <p>This page shows selected statistics about past trips.</p> 
+
+     {% endif %}
 
     </div>
   </div>

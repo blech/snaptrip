@@ -36,19 +36,27 @@ class IndexPage(webapp.RequestHandler):
       return self.redirect("/login/")
 
     stats           = {}
+    
+    # TODO deboilerplate
     trips_info      = get_trips_info(permanent, who)
     if not trips_info:
       return error_page(self, session, "Your past trips could not be loaded.")
     if trips_info.has_key('error'):
       return error_page(self, session, trips_info['error'])
 
+    traveller_info  = get_traveller_info(permanent, who)
+    if not traveller_info:
+      return error_page(self, session, "Your past trips could not be loaded.")
+    if traveller_info.has_key('error'):
+      return error_page(self, session, traveller_info['error'])
+
     # TODO ajax/memcache
-    stats           = build_stats(trips_info['trip'])
+    stats           = build_stats(trips_info['trip'], traveller_info)
     
     template_values = {
       'session':    session,
       'permanent':  permanent,
-      'traveller':  get_traveller_info(permanent, who),
+      'traveller':  traveller_info,
       'trips':      trips_info['trip'],
       'stats':      stats,
       'memcache':   memcache.get_stats(),
@@ -70,20 +78,35 @@ class StatsPage(webapp.RequestHandler):
       return self.redirect("/login/")
 
     stats           = {}
+    
+    # TODO deboilerplate
     trips_info      = get_trips_info(permanent, who)
+    if not trips_info:
+      return error_page(self, session, "Your past trips could not be loaded.")
     if trips_info.has_key('error'):
       return error_page(self, session, trips_info['error'])
 
+    traveller_info  = get_traveller_info(permanent, who)
+    if not traveller_info:
+      return error_page(self, session, "Your past trips could not be loaded.")
+    if traveller_info.has_key('error'):
+      return error_page(self, session, traveller_info['error'])
+
     # TODO ajax/memcache
-    if trips_info:
-      stats         = build_stats(trips_info['trip'])
+    stats           = build_stats(trips_info['trip'], traveller_info)
+    
+    icons = { 'plane': { 'url':'20_airtransportation_thumb.gif',    },
+              'train': { 'url':'25_railtransportation_thumb.gif',   },
+              'car':   { 'url':'27_carrental_thumb.gif',            },
+              'bus':   { 'url':'23_bus_thumb.gif',                  },}
     
     template_values = {
       'session':    session,
       'permanent':  permanent,
-      'traveller':  get_traveller_info(permanent, who),
+      'traveller':  traveller_info,
       'trips':      trips_info['trip'],
       'stats':      stats,
+      'icons':      icons,
       'memcache':   memcache.get_stats(),
     }
     
@@ -764,12 +787,19 @@ def links_for_trip(trips_list, trip_id):
 
   return links
   
-def build_stats(trip_list):
+def build_stats(trip_list, traveller_info):
+  # TODO break this apart and/or do similar things in subroutines
+
   stats = {'countries': {},
            'cities':    {},
            'years':     {},
+           'home':      { 'trips': 0, 'duration':0, },
+           'away':      { 'trips': 0, 'duration':0, },
            'future':    0,
+           'types':     {},
            'ordered':   {}, }
+           
+  home_country = traveller_info['home_city']['country']
   
   for trip in trip_list:
     # skip if not a past trip
@@ -799,10 +829,26 @@ def build_stats(trip_list):
     if not country in stats['countries']:
       stats['countries'][country] = { 'duration': 0, 'trips': 0, 
                                       'display':display, 'inline':inline,
-                                      'code':trip['city']['country_code'], }
+                                      'code':trip['city']['country_code'], 
+                                      'rgb':md5.new(country).hexdigest()[0:6]}
 
     stats['countries'][country]['duration'] += duration.days
     stats['countries'][country]['trips']    += 1
+
+    if not trip['return_transport_type'] in stats['types']:
+      stats['types'][trip['return_transport_type']] = {'trips':0}
+    stats['types'][trip['return_transport_type']]['trips'] += 0.5
+      
+    if not trip['outgoing_transport_type'] in stats['types']:
+      stats['types'][trip['outgoing_transport_type']] = {'trips':0}
+    stats['types'][trip['outgoing_transport_type']]['trips'] += 0.5
+ 
+    if (country == home_country):
+      stats['home']['trips'] += 1;
+      stats['home']['duration'] += duration.days
+    else:
+      stats['away']['trips'] += 1;
+      stats['away']['duration'] += duration.days
 
     # build city data
     city = trip['city']['name']
@@ -844,10 +890,31 @@ def build_stats(trip_list):
   stats['ordered']['years'] = sorted(stats['years'])
   stats['ordered']['years'].reverse()
 
+  stats['ordered']['types'] = sorted(stats['types'],          lambda x, y: (int(stats['types'][y]['trips']))-(int(stats['types'][x]['trips'])))
+
   stats['ordered']['years_by_trip'] = sorted(stats['years'],  lambda x, y: (stats['years'][y])-(stats['years'][x]))
   
   stats['ordered']['countries'] = sorted(stats['countries'],  lambda x, y: (stats['countries'][y]['duration'])-(stats['countries'][x]['duration']))
   stats['ordered']['cities']    = sorted(stats['cities'],     lambda x, y: (stats['cities'][y]['duration'])-(stats['cities'][x]['duration']))
+
+  stats['rgb'] = stats['countries'][stats['ordered']['countries'][0]]['rgb']
+
+  # scale country stats for map
+  topcountry  = stats['ordered']['countries'][0]
+  topduration = stats['countries'][topcountry]['duration']
+  for country in stats['countries'].keys():
+    stats['countries'][country]['scaled'] = 100*stats['countries'][country]['duration']/topduration
+  
+  # scale transport types
+  toptype = stats['ordered']['types'][0]
+  toptrip = int(stats['types'][toptype]['trips'])
+  for type in stats['types'].keys():
+    stats['types'][type]['scaled'] = 100*int(stats['types'][type]['trips'])/toptrip
+  
+  # scale days on trips
+  stats['topyear'] = stats['ordered']['years_by_trip'][0]
+  stats['away']['days'] = (stats['years'][stats['topyear']])/3.66
+  stats['home']['days'] = (366-stats['years'][stats['topyear']])/3.66
   
   return stats
 
