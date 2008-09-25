@@ -37,6 +37,10 @@ h3 {
   font: 200 16px Arial, Helvetica, sans-serif;
 }
 
+h3 {
+  font: 200 16px Arial, Helvetica, sans-serif;
+}
+
 /* general classes */
 
 a {
@@ -86,6 +90,13 @@ div#header h1 {
   border-right: 1px dotted #ccc;
   padding-right: 5px;
   margin-right: 5px;
+}
+
+div#header h1 span {
+  font-weight: normal;
+  border-right: 0px;
+  padding-right: 0px;
+  margin-right: 0px;
 }
 
 div#header span {
@@ -158,6 +169,14 @@ ul#trips li span.status {
   text-align: right;
   position: absolute;
   right: 115px;
+}
+
+ul#trips abbr {
+  color:#333;
+}
+
+ul#trips span.city {
+  color:#333;
 }
 
 ul#where {
@@ -310,4 +329,60 @@ div#login {
   padding: 0px 20px 0px 20px;
   margin: 0px;
   border-bottom: 1px dotted #ccc;
+}
+
+/* stats page */
+
+div.label {
+  float:left;
+  width:25px;
+  margin: 0px;
+  padding: 0px;
+}
+
+div.onecol {
+  float:left;
+  width: 490px;
+  margin: 0px;
+  padding: 0px;
+}
+
+div.twocol {
+  float:left;
+  width: 240px;
+  margin: 0px;
+  padding: 0px;
+}
+
+div.threecol {
+  float:left;
+  width:145px;
+  margin: 0px;
+  padding: 0px;
+}
+
+.switch {
+  font-size: 12px;
+}
+
+dl {
+  padding: 0px;
+  margin: 0px;
+}
+
+dl dt {
+  padding: 0px;
+  margin: 0px;
+}
+
+dl dt span {
+  display:block;
+  float:left;
+  width:15px;
+}
+
+dl dd {
+  padding-left: 0px;
+  margin-left: 15px;
+  margin-bottom: 16px;
 }
