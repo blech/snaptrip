@@ -64,8 +64,8 @@
       <table cellpadding="0" cellspacing="0" border="0">
       {% for type in stats.ordered.types %}
         <tr>
-          <td><img src="/images/{{ type }}.gif" width="20" height="20" alt="" style="margin-bottom:4px; margin-right:4px;"></td>
-          <td><div style="background:#{{ stats.rgb }}; display:block; width:{{ stats.types[type].scaled }}px; height:20px; margin-bottom:4px; color:#fff;"></div></td>
+          <td><img src="/images/{{ type }}.gif" width="25" height="25" alt=""></td>
+          <td><div style="background:#{{ stats.rgb }}; display:block; width:{{ stats.types[type].scaled }}px; height:20px; margin-bottom:5px; color:#fff;"></div></td>
         </tr>
       {% endfor %}
       </table></div>
@@ -75,6 +75,42 @@
       <div class="threecol">Days on trips, {{ stats.ordered.years_by_trip[0] }}.<br>
       
         <img src="http://chart.apis.google.com/chart?cht=p3&chs=140x95&chco=d7d7d7,{{ stats.rgb }}&chd=t:{{ stats.home.days }},{{ stats.away.days }}" width="140" height="95">
+      </div>
+
+      <br clear="all" style="margin-bottom:5px;">
+
+      <div class="label">5.</div>
+      
+      <div class="twocol">Countries visited.<br>
+      
+        <ul id="countries" class="dotted">
+        {% for country in stats.ordered.countries %}
+          <li><span class="block" style="background:#{{ stats.countries[country].rgb_scaled}}">&nbsp</span>
+              <span class="country">{{ stats.countries[country].display }}</span> 
+              <span class="details">
+                {{ stats.countries[country].trips }} trip{% if stats.countries[country].trips != 1 %}s{% endif %}, 
+                {{ stats.countries[country].duration }} day{% if stats.countries[country].duration != 1 %}s{% endif %}
+              </span>
+           </li>
+        {% endfor %}
+        </ul>
+      </div>
+
+      <div class="label">6.</div>
+      
+      <div class="twocol">Cities visited.<br>
+      
+        <ul id="cities" class="dotted">
+        {% for city in stats.ordered.cities %}
+          <li><span class="block" style="background:#{{ stats.cities[city].rgb}}">&nbsp</span>
+              <span class="city">{{ city }}</span> 
+              <span class="details">
+              {{ stats.cities[city].trips }} trip{% if stats.cities[city].trips != 1 %}s{% endif %}, 
+              {{ stats.cities[city].duration }} day{% if stats.cities[city].duration != 1 %}s{% endif %}
+              </span>
+           </li>
+        {% endfor %}
+        </ul>
       </div>
 
       {% endif %}
@@ -102,6 +138,14 @@
         <dt><span>4.</span> Days on trips.</dt>
         
         <dd>Every day spent on a trip in {{ stats.ordered.years_by_trip[0] }} contributes to the coloured region of this chart.</dd>
+
+        <dt><span>5.</span> Countries visited.</dt>
+        
+        <dd>More details on the countries that have been visited.</dd>
+
+        <dt><span>6.</span> Cities visited.</dt>
+        
+        <dd>Total time and trip information for each city visited..</dd>
       </dl>
 
      <p>This page shows selected statistics about past trips.</p> 

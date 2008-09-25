@@ -789,6 +789,7 @@ def links_for_trip(trips_list, trip_id):
   
 def build_stats(trip_list, traveller_info):
   # TODO break this apart and/or do similar things in subroutines
+  # TODO build more year metadata
 
   stats = {'countries': {},
            'cities':    {},
@@ -908,8 +909,11 @@ def build_stats(trip_list, traveller_info):
   # scale transport types
   toptype = stats['ordered']['types'][0]
   toptrip = int(stats['types'][toptype]['trips'])
+  
   for type in stats['types'].keys():
     stats['types'][type]['scaled'] = 100*int(stats['types'][type]['trips'])/toptrip
+    
+    
   
   # scale days on trips
   stats['topyear'] = stats['ordered']['years_by_trip'][0]

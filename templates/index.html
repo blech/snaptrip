@@ -74,7 +74,7 @@
       <p>There are no trips in Dopplr to show.</p>
       {% endif %}
 
-      <ul id="trips">
+      <ul id="trips" class="dotted">
       {% for trip in trips | reverse %}
         <li class="{{ trip.status|lower }}"><span class="block" style="background:#{{trip.city.rgb}}">&nbsp</span>
           <span class="city">{{ trip.city.name }}</span>
