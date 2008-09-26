@@ -46,6 +46,8 @@
       <p>There are no trips in Dopplr to show.</p>
       {% else %}
 
+      <!-- TODO turn into a list (!!) -->
+
       <div class="label">1.</div>
       
       <div class="onecol">Countries visited.
@@ -57,7 +59,9 @@
       <div class="label">2.</div>
       
       <div class="threecol">Trips abroad.<br>
+<!-- 
         <img src="http://chart.apis.google.com/chart?cht=p&chs=100x100&chco={{ stats.rgb_start }},{{ stats.rgb }}&chd=t:{{ stats.home.trips }},{{ stats.away.trips }}" width="100" height="100"><br>
+ -->
       </div>
 
       <div class="label">3.</div>
@@ -120,8 +124,8 @@
         
         <p id="cities_info" class="switch" style="display:none;">{{ stats.cities|length }} {% if stats.cities|length == 1 %}city{% else %}cities{% endif %} visited over {{ trips|length }} trips.</p>
 
-        <p id="showall"><a href="#" onclick="javascript:return showall()" class="switch">Show all cities visited.</a></p>
-
+        <p id="showall" class="switch">{{ stats.cities|length }} {% if stats.cities|length == 1 %}city{% else %}cities{% endif %} visited over {{ trips|length }} trips.
+          <a href="#" onclick="javascript:return showall()">Show all?</a></p>
 
       </div>
 
