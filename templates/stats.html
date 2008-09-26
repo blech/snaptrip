@@ -61,7 +61,7 @@
       <div class="threecol">Trips by year.<br><br>{# TODO two <br>s? How declassee... #}
 
       {% for year in stats.ordered.years_by_trip %}
-        <div class="trips_by_year" style="position:relative; height:25px;{% if stats.ordered.types|length < loop.index %} display:none;{% endif %}">
+        <div class="trips_by_year" style="position:relative; height:25px;{#{% if stats.ordered.types|length < loop.index %} display:none;{% endif %}#}">
           {% if stats.years[year].trips_scaled < 35 %}
           <div style="position:absolute; top:0px; left:0px; height:20px; line-height:20px; padding-left:5px;">{{ year }}</div>
           {% endif %}
@@ -70,16 +70,6 @@
         </div>
       {% endfor %}
 
-{#      <table cellpadding="0" cellspacing="0" border="0">
-      {% for year in stats.ordered.years_by_trip %}
-        <tr{% if stats.ordered.types|length < loop.index %} style="display:none;"{% endif %}>
-          <td><div style="background:#{{ stats.rgb_start }}; display:block; width:{{ stats.years[year].trips_scaled }}px; height:20px; line-height:20px; padding:0px 0px 0px 5px; margin-bottom:5px; color:#fff;">{{ year }}</div></td> 
-        </tr>
-      {% endfor %}
-      </table> #}
-<!-- 
-        <img src="http://chart.apis.google.com/chart?cht=p&chs=100x100&chco={{ stats.rgb_start }},{{ stats.rgb }}&chd=t:{{ stats.home.trips }},{{ stats.away.trips }}" width="100" height="100"><br>
- -->
       </div>
 
       <div class="label">3.</div>

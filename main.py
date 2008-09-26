@@ -841,13 +841,15 @@ def build_stats(trip_list, traveller_info):
     stats['countries'][country]['duration'] += duration.days
     stats['countries'][country]['trips']    += 1
 
-    if not trip['return_transport_type'] in stats['types']:
-      stats['types'][trip['return_transport_type']] = {'trips':0}
-    stats['types'][trip['return_transport_type']]['trips'] += 0.5
+    if trip.has_key('return_transport_type'): # TODO remove
+      if not trip['return_transport_type'] in stats['types']:
+        stats['types'][trip['return_transport_type']] = {'trips':0}
+      stats['types'][trip['return_transport_type']]['trips'] += 0.5
       
-    if not trip['outgoing_transport_type'] in stats['types']:
-      stats['types'][trip['outgoing_transport_type']] = {'trips':0}
-    stats['types'][trip['outgoing_transport_type']]['trips'] += 0.5
+    if trip.has_key('return_transport_type'): # TODO remove
+      if not trip['outgoing_transport_type'] in stats['types']:
+        stats['types'][trip['outgoing_transport_type']] = {'trips':0}
+      stats['types'][trip['outgoing_transport_type']]['trips'] += 0.5
  
     if (country == home_country):
       stats['home']['trips'] += 1;
@@ -929,10 +931,11 @@ def build_stats(trip_list, traveller_info):
     stats['countries'][country]['rgb_scaled'] = "%02x%02x%02x" % (sr, sg, sb)
   
   # scale transport types
-  top_type = stats['ordered']['types'][0]
-  top_trip = int(stats['types'][top_type]['trips'])
-  for type in stats['types'].keys():
-    stats['types'][type]['scaled'] = 100*int(stats['types'][type]['trips'])/top_trip
+  if len(stats['types'].keys()):  # TODO remove
+    top_type = stats['ordered']['types'][0]
+    top_trip = int(stats['types'][top_type]['trips'])
+    for type in stats['types'].keys():
+      stats['types'][type]['scaled'] = 100*int(stats['types'][type]['trips'])/top_trip
       
   # scale years
   top_year_by_days = stats['ordered']['years_by_days'][0]
