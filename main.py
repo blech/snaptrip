@@ -511,11 +511,14 @@ def get_trips_info(token, who=""):
   try:
     trips_info = simplejson.loads(response.content)
   except ValueError:
-    return {'error': "Didn't get a JSON response from Dopplr's trips_info API"}
+    return {'error': "Didn't get a JSON response from Dopplr's trips_info API."}
 
   ## postprocessing. do stats here too?
-  if trips_info:
+  if trips_info and trips_info.has_key('trip'):
     trips_info['trip'] = prettify_trips(trips_info['trip'])
+  else:
+    # TODO raise
+    return {'error': "Could not get information about past trips (user permission?)."}
 
   if not memcache.add(key, trips_info, 3600):
     logging.error("set for trips_info failed")
@@ -898,23 +901,30 @@ def build_stats(trip_list, traveller_info):
   stats['ordered']['countries'] = sorted(stats['countries'],  lambda x, y: (stats['countries'][y]['duration'])-(stats['countries'][x]['duration']))
   stats['ordered']['cities']    = sorted(stats['cities'],     lambda x, y: (stats['cities'][y]['duration'])-(stats['cities'][x]['duration']))
 
+  start = 160
   stats['rgb'] = stats['countries'][stats['ordered']['countries'][0]]['rgb']
+  stats['rgb_start']  = "%x%x%x" % (start, start, start)
 
-  # scale country stats for map
+  # scale country stats for map (including colours)
   topcountry  = stats['ordered']['countries'][0]
   topduration = stats['countries'][topcountry]['duration']
+  r = stats['rgb'][0:2]; g = stats['rgb'][2:4]; b = stats['rgb'][4:6]
   for country in stats['countries'].keys():
-    stats['countries'][country]['scaled'] = 100*stats['countries'][country]['duration']/topduration
+    scaled = 100*stats['countries'][country]['duration']/topduration
+
+    sr = (scaled*(int(r, 16)-start)/100)+start
+    sg = (scaled*(int(g, 16)-start)/100)+start
+    sb = (scaled*(int(b, 16)-start)/100)+start
+
+    stats['countries'][country]['scaled'] = scaled
+    stats['countries'][country]['rgb_scaled'] = "%x%x%x" % (sr, sg, sb)
   
   # scale transport types
   toptype = stats['ordered']['types'][0]
   toptrip = int(stats['types'][toptype]['trips'])
-  
   for type in stats['types'].keys():
     stats['types'][type]['scaled'] = 100*int(stats['types'][type]['trips'])/toptrip
-    
-    
-  
+      
   # scale days on trips
   stats['topyear'] = stats['ordered']['years_by_trip'][0]
   stats['away']['days'] = (stats['years'][stats['topyear']])/3.66

@@ -31,7 +31,7 @@
   {% include "includes/header.html" %}
   
   <div id="content">
-    <div id="main">
+    <div id="main" class="stats">
     
       <h3>Trip overview{% if traveller.name != session.name %} for {{ traveller.name }}{% endif %}.</h3>
     
@@ -41,15 +41,15 @@
 
       <div class="label">1.</div>
       
-      <div class="onecol">Countries visited.<br><img src="http://chart.apis.google.com/chart?cht=t&chs=440x190&chtm=world&chco=d7d7d7,a0a0a0,{{ stats.rgb }}&chld={% for country in stats.countries %}{{ stats.countries[country].code }}{% endfor %}&chd=t:{% for country in stats.countries %}{{ stats.countries[country].scaled }}{% if not loop.last %},{% endif %}{% endfor %}" width="440" height="190" style="margin:5px 0px;"></div>
+      <div class="onecol">Countries visited.<br><img src="http://chart.apis.google.com/chart?cht=t&chs=440x190&chtm=world&chco=d7d7d7,{{ stats.rgb_start }},{{ stats.rgb }}&chld={% for country in stats.countries %}{{ stats.countries[country].code }}{% endfor %}&chd=t:{% for country in stats.countries %}{{ stats.countries[country].scaled }}{% if not loop.last %},{% endif %}{% endfor %}" width="440" height="190" style="margin:5px 0px;"></div>
 
-      <br style="clear:both;">
+      <br>
       
       <div class="label">2.</div>
       
       <div class="threecol">Trips abroad.<br>
 
-        <img src="http://chart.apis.google.com/chart?cht=p3&chs=140x95&chco=d7d7d7,{{ stats.rgb }}&chd=t:{{ stats.home.trips }},{{ stats.away.trips }}" width="140" height="95"><br>
+        <img src="http://chart.apis.google.com/chart?cht=p&chs=140x95&chco=d7d7d7,{{ stats.rgb }}&chd=t:{{ stats.home.trips }},{{ stats.away.trips }}" width="140" height="95"><br>
       
 <!-- 
       <a href="#" class="switch" onclick="javascript: return abroad('trip')">chart by trip count</a>.<br>
@@ -74,7 +74,7 @@
       
       <div class="threecol">Days on trips, {{ stats.ordered.years_by_trip[0] }}.<br>
       
-        <img src="http://chart.apis.google.com/chart?cht=p3&chs=140x95&chco=d7d7d7,{{ stats.rgb }}&chd=t:{{ stats.home.days }},{{ stats.away.days }}" width="140" height="95">
+        <img src="http://chart.apis.google.com/chart?cht=p&chs=140x95&chco=d7d7d7,{{ stats.rgb }}&chd=t:{{ stats.home.days }},{{ stats.away.days }}" width="140" height="95">
       </div>
 
       <br clear="all" style="margin-bottom:5px;">
