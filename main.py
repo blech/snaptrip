@@ -140,13 +140,11 @@ class TripPage(webapp.RequestHandler):
     if trips_info.has_key('error'):
       return error_page(self, session, trips_info['error'])
 
-    links = links_for_trip(trips_info, trip_id)
-
     # initialise template data before we call Flickr
     template_values = {
       'session':    session,
       'trip':       trip_info,
-      'links':      links,
+      'links':      links_for_trip(trips_info, trip_id),
       'keys':       get_keys(self.request.host),
     }
   
@@ -744,6 +742,7 @@ def prettify_trips(trip_list):
   return trip_list
   
 def links_for_trip(trips_list, trip_id):
+  logging.debug("links_for_trip")
   # todo memcache (although this is relatively cheap)
   index = 0
   trip_index = 0
@@ -751,13 +750,19 @@ def links_for_trip(trips_list, trip_id):
 
   ids = []
   cities = []
+  status = []
   for trip in trips_list['trip']:
     ids.append(trip['id'])    
     cities.append(trip['city']['name'])
+    status.append(trip['status'])
+    
     if int(trip['id']) == int(trip_id):
       trip_index = index
       trip_city  = trip['city']['name']
     index = index+1
+
+  logging.debug("status")
+  logging.debug(status)
 
   index = 0
   city_ids = []
@@ -779,13 +784,13 @@ def links_for_trip(trips_list, trip_id):
   links = {}
 
   if (trip_index > 0):
-    links['prev'] = {'id':ids[trip_index-1], 'city':cities[trip_index-1]}
-  if (trip_index < len(ids) and len(ids) > 1):
-    links['next'] = {'id':ids[trip_index+1], 'city':cities[trip_index+1]}
+    links['prev'] = {'id':ids[trip_index-1], 'status':status[trip_index-1], 'city':cities[trip_index-1]}
+  if (trip_index < len(ids)-1 and len(ids) > 1):
+    links['next'] = {'id':ids[trip_index+1], 'status':status[trip_index+1], 'city':cities[trip_index+1]}
   if (city_index > 0):
-    links['city_prev'] = {'id':city_ids[city_index-1]}
-  if (city_index < len(city_ids) and len(city_ids) > 1):
-    links['city_next'] = {'id':city_ids[city_index+1]}
+    links['city_prev'] = {'id':city_ids[city_index-1], 'status':status[city_index-1],}
+  if (city_index < len(city_ids)-1 and len(city_ids) > 1):
+    links['city_next'] = {'id':city_ids[city_index+1], 'status':status[city_index-1],}
   links['city_ids'] = city_ids
 
   return links
@@ -867,10 +872,13 @@ def build_stats(trip_list, traveller_info):
     
     # build year data
     year = trip['startdate'].year
+
+    # initialise data structure's
     if not year in stats['years']:
-      stats['years'][year] = 0
+      stats['years'][year] = { 'duration': 0, 'trips': 0 }
     if year == trip['finishdate'].year:
-      stats['years'][year] += duration.days
+      stats['years'][year]['duration'] += duration.days
+      stats['years'][year]['trips'] += 1
     else:
       if trip['finishdate'].year - year == 1:
         # spans a single year boundary, and is therefore Sane
@@ -880,23 +888,27 @@ def build_stats(trip_list, traveller_info):
 
         year_end = datetime(year, 12, 31)
         
-        stats['years'][year] += (year_end-trip['startdate']).days
+        stats['years'][year]['duration'] += (year_end-trip['startdate']).days
+        stats['years'][year]['trips']    += 1
   
         year = trip['finishdate'].year
         year_start = datetime(year, 1, 1)
         if not year in stats['years']:
-          stats['years'][year] = 0
-        stats['years'][year] += (trip['finishdate']-year_start).days
+          stats['years'][year] = { 'duration': 0, 'trips': 0 }
+        stats['years'][year]['duration'] += (trip['finishdate']-year_start).days
+        # for now we don't count trips in both years. change?
 
     # do we want to supply full-blown cross-cut stats? maybe later...
-
+    # END TRIP LOOP
+    
   # reorder final stats
   stats['ordered']['years'] = sorted(stats['years'])
   stats['ordered']['years'].reverse()
 
   stats['ordered']['types'] = sorted(stats['types'],          lambda x, y: (int(stats['types'][y]['trips']))-(int(stats['types'][x]['trips'])))
 
-  stats['ordered']['years_by_trip'] = sorted(stats['years'],  lambda x, y: (stats['years'][y])-(stats['years'][x]))
+  stats['ordered']['years_by_trip'] = sorted(stats['years'],  lambda x, y: (stats['years'][y]['trips'])-(stats['years'][x]['trips']))
+  stats['ordered']['years_by_days'] = sorted(stats['years'],  lambda x, y: (stats['years'][y]['duration'])-(stats['years'][x]['duration']))
   
   stats['ordered']['countries'] = sorted(stats['countries'],  lambda x, y: (stats['countries'][y]['duration'])-(stats['countries'][x]['duration']))
   stats['ordered']['cities']    = sorted(stats['cities'],     lambda x, y: (stats['cities'][y]['duration'])-(stats['cities'][x]['duration']))
@@ -917,7 +929,7 @@ def build_stats(trip_list, traveller_info):
     sb = (scaled*(int(b, 16)-start)/100)+start
 
     stats['countries'][country]['scaled'] = scaled
-    stats['countries'][country]['rgb_scaled'] = "%x%x%x" % (sr, sg, sb)
+    stats['countries'][country]['rgb_scaled'] = "%02x%02x%02x" % (sr, sg, sb)
   
   # scale transport types
   toptype = stats['ordered']['types'][0]
@@ -927,10 +939,16 @@ def build_stats(trip_list, traveller_info):
       
   # scale days on trips
   stats['topyear'] = stats['ordered']['years_by_trip'][0]
-  stats['away']['days'] = (stats['years'][stats['topyear']])/3.66
-  stats['home']['days'] = (366-stats['years'][stats['topyear']])/3.66
+  stats['away']['days'] = (stats['years'][stats['topyear']]['duration'])/3.66
+  stats['home']['days'] = (366-stats['years'][stats['topyear']]['duration'])/3.66
   
   return stats
+
+def get_display_names():
+  return {
+          'United States': { 'display': "the United States" },
+          'United Kingdom': { 'display': "the United Kingdom" },
+         }
 
 def get_keys(host):
   keys = {}

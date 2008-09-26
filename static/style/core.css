@@ -93,7 +93,7 @@ ul.dotted li span.internal {
 }
 
 ul.dotted abbr {
-  color:#333;
+  color:#666;
 }
 
 ul.dotted li span.block {
@@ -169,7 +169,7 @@ ul#trips li {
   padding: 5px 0px 5px 0px;
   margin-right: 0px;
   border-bottom: 1px dotted #ccc;
-  color: #666;
+  color: #999;
   font: 14px Arial, Helvetica, sans-serif;
   line-height: 16px;
 }
@@ -202,9 +202,9 @@ ul#trips li span.status {
   right: 115px;
 }
 
-ul#trip span.city {
+ul#trips li span.city {
   color:#333;
-} 
+}
 
 ul#where {
   padding: 0px;
@@ -367,6 +367,11 @@ div.label {
   padding: 0px;
 }
 
+div.stats div.br {
+  clear: both;
+  padding-top: 20px;
+}
+
 div.onecol {
   float:left;
   width: 490px;
@@ -386,6 +391,10 @@ div.threecol {
   width:145px;
   margin: 0px;
   padding: 0px;
+}
+
+div.map {
+  padding-top:5px;
 }
 
 .switch {
@@ -409,25 +418,19 @@ dl dt span {
 }
 
 dl dd {
+  font-size: 13px;
+  line-height: 15px;
   padding-left: 0px;
   margin-left: 15px;
   margin-bottom: 16px;
 }
 
-ul#cities li {
+ul.small li {
   font-size: 13px;
+  overflow: hidden;
 }
 
-ul#cities span.details {
-  float:right;
-  display:block;
-}
-
-ul#countries li {
-  font-size: 13px;
-}
-
-ul#countries span.details {
+ul.small span.details {
   float:right;
   display:block;
 }

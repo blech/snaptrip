@@ -25,6 +25,12 @@
       chart.draw(data, {width:440,height:190,});
       $('div.google-visualization-intensitymap-legend').hide();
     }
+    
+    function showall() {
+      $('li').show();
+      $('p#showall').hide();
+      return false;
+    }
   </script>
 </head>
 <body>
@@ -41,15 +47,17 @@
 
       <div class="label">1.</div>
       
-      <div class="onecol">Countries visited.<br><img src="http://chart.apis.google.com/chart?cht=t&chs=440x190&chtm=world&chco=d7d7d7,{{ stats.rgb_start }},{{ stats.rgb }}&chld={% for country in stats.countries %}{{ stats.countries[country].code }}{% endfor %}&chd=t:{% for country in stats.countries %}{{ stats.countries[country].scaled }}{% if not loop.last %},{% endif %}{% endfor %}" width="440" height="190" style="margin:5px 0px;"></div>
+      <div class="onecol">Countries visited.
+        <div class="map"><img src="http://chart.apis.google.com/chart?cht=t&chs=440x190&chtm=world&chco=d7d7d7,{{ stats.rgb_start }},{{ stats.rgb }}&chld={% for country in stats.countries %}{{ stats.countries[country].code }}{% endfor %}&chd=t:{% for country in stats.countries %}{{ stats.countries[country].scaled }}{% if not loop.last %},{% endif %}{% endfor %}" width="440" height="190"></div>
+      </div>
 
-      <br>
+      <div class="br"></div>
       
       <div class="label">2.</div>
       
       <div class="threecol">Trips abroad.<br>
 
-        <img src="http://chart.apis.google.com/chart?cht=p&chs=140x95&chco=d7d7d7,{{ stats.rgb }}&chd=t:{{ stats.home.trips }},{{ stats.away.trips }}" width="140" height="95"><br>
+        <img src="http://chart.apis.google.com/chart?cht=p&chs=100x100&chco={{ stats.rgb_start }},{{ stats.rgb }}&chd=t:{{ stats.home.trips }},{{ stats.away.trips }}" width="100" height="100"><br>
       
 <!-- 
       <a href="#" class="switch" onclick="javascript: return abroad('trip')">chart by trip count</a>.<br>
@@ -74,16 +82,16 @@
       
       <div class="threecol">Days on trips, {{ stats.ordered.years_by_trip[0] }}.<br>
       
-        <img src="http://chart.apis.google.com/chart?cht=p&chs=140x95&chco=d7d7d7,{{ stats.rgb }}&chd=t:{{ stats.home.days }},{{ stats.away.days }}" width="140" height="95">
+        <img src="http://chart.apis.google.com/chart?cht=p&chs=100x100&chco={{ stats.rgb_start }},{{ stats.rgb }}&chd=t:{{ stats.home.days }},{{ stats.away.days }}" width="100" height="100">
       </div>
 
-      <br clear="all" style="margin-bottom:5px;">
+      <div class="br"></div>
 
       <div class="label">5.</div>
       
       <div class="twocol">Countries visited.<br>
       
-        <ul id="countries" class="dotted">
+        <ul id="countries" class="dotted small">
         {% for country in stats.ordered.countries %}
           <li><span class="block" style="background:#{{ stats.countries[country].rgb_scaled}}">&nbsp</span>
               <span class="country">{{ stats.countries[country].display }}</span> 
@@ -100,9 +108,10 @@
       
       <div class="twocol">Cities visited.<br>
       
-        <ul id="cities" class="dotted">
+        <ul id="cities" class="dotted small">
         {% for city in stats.ordered.cities %}
-          <li><span class="block" style="background:#{{ stats.cities[city].rgb}}">&nbsp</span>
+          <li{% if stats.ordered.countries|length < loop.index %} style="display:none;"{% endif %}>
+              <span class="block" style="background:#{{ stats.cities[city].rgb}}">&nbsp</span>
               <span class="city">{{ city }}</span> 
               <span class="details">
               {{ stats.cities[city].trips }} trip{% if stats.cities[city].trips != 1 %}s{% endif %}, 
@@ -111,9 +120,14 @@
            </li>
         {% endfor %}
         </ul>
+        
+        <p id="showall"><a href="#" onclick="javascript:return showall()" class="switch">Show all cities visited.</a></p>
       </div>
 
       {% endif %}
+
+      <p><a href="/where/{{ traveller.nick }}">&larr; Return to the listing of all trips</a>.</p>
+
     </div>
 
     <div id="side">
@@ -129,7 +143,7 @@
         
         <dt><span>2.</span> Trips abroad.</dt>
         
-        <dd>The chart shows the proportion of trips taken that are outside the current home country (coloured) against those within that country.</dd>
+        <dd>The chart shows the proportion of trips taken that are outside {% if traveller.nick == session.nick %}your{% else %}their{% endif %} current home country compared to those taken within it.</dd>
         
         <dt><span>3.</span> Trips by type.</dt>
         
@@ -145,11 +159,9 @@
 
         <dt><span>6.</span> Cities visited.</dt>
         
-        <dd>Total time and trip information for each city visited..</dd>
+        <dd>Total time and trip information for each city visited.</dd>
       </dl>
-
-     <p>This page shows selected statistics about past trips.</p> 
-
+      
      {% endif %}
 
     </div>

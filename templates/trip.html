@@ -350,13 +350,26 @@
 
       <h3>More trips.</h3>
       
-      {% if links.prev %}
-      <p>The previous trip was to <a href="/trip/{{ links.prev.id }}">{{ links.prev.city }}</a>.</p>
-      {% endif %}
-
-      {% if links.next %}
-      <p>The next trip was to <a href="/trip/{{ links.next.id }}">{{ links.next.city }}</a>.</p>
-      {% endif %}
+      <p>{% if links.prev %}
+        {% ifequal trip.trip.nick session.nick %}Your{% else %}Their{% endifequal %} 
+        previous trip 
+        {% ifequal links.prev.status "Past" %}was{% else %}is{% endifequal %}
+        to <a href="/trip/{{ links.prev.id }}">{{ links.prev.city }}</a> {{ links.past.status }}
+        
+        {% if links.next %}
+        and {% ifequal trip.trip.nick session.nick %}your{% else %}their{% endifequal %} next trip
+        {% ifequal links.next.status "Past" %}was{% else %}is{% endifequal %}
+        to <a href="/trip/{{ links.next.id }}">{{ links.next.city }}</a>.
+        {% endif %}
+      {% else %}
+        {% if links.next %}
+          {% ifequal trip.trip.nick session.nick %}Your{% else %}Their{% endifequal %}
+          next trip {% ifequal links.next.status "Past" %}was{% else %}is{% endifequal %}
+          to <a href="/trip/{{ links.next.id }}">{{ links.next.city }}</a>.
+        {% else %}
+          This is the only trip listed in Dopplr.
+        {% endif %}
+      {% endif %}</p>
 
 <!-- 
       {% if links.city_prev %}
@@ -367,6 +380,8 @@
       <p>Next trip to <a href="/trip/{{ links.city_next.id }}">{{ trip.trip.city.name }}</a>.</p>
       {% endif %}
  -->
+
+    <p><tt style="font:9px monaco;">{{ links }}</tt></p>
 
     </div>
   </div>

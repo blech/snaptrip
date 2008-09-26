@@ -145,7 +145,7 @@
     
       <h3>When?</h3>
       
-      <p>{% if traveller.name == session.name %}You've{% else %}They've{% endif %}  added trips back to {{ stats.ordered.years[-1] }}, with the most trips in {{ stats.ordered.years_by_trip[0] }}: a total of {{ stats.years[stats.ordered.years_by_trip[0]] }} days.</p>
+      <p>{% if traveller.name == session.name %}You've{% else %}They've{% endif %}  added trips back to {{ stats.ordered.years[-1] }}, with the most trips in {{ stats.ordered.years_by_trip[0] }}: a total of {{ stats.years[stats.ordered.years_by_trip[0]].duration }} days.</p>
       
 <!-- 
       <ul id="when">
