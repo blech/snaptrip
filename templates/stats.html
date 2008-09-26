@@ -28,6 +28,7 @@
     
     function showall() {
       $('li').show();
+      $('p#cities_info').show();
       $('p#showall').hide();
       return false;
     }
@@ -56,13 +57,7 @@
       <div class="label">2.</div>
       
       <div class="threecol">Trips abroad.<br>
-
         <img src="http://chart.apis.google.com/chart?cht=p&chs=100x100&chco={{ stats.rgb_start }},{{ stats.rgb }}&chd=t:{{ stats.home.trips }},{{ stats.away.trips }}" width="100" height="100"><br>
-      
-<!-- 
-      <a href="#" class="switch" onclick="javascript: return abroad('trip')">chart by trip count</a>.<br>
-      <a href="#" class="switch" onclick="javascript: return abroad('duration')">chart by duration</a>.
- -->
       </div>
 
       <div class="label">3.</div>
@@ -81,7 +76,6 @@
       <div class="label">4.</div>
       
       <div class="threecol">Days on trips, {{ stats.ordered.years_by_trip[0] }}.<br>
-      
         <img src="http://chart.apis.google.com/chart?cht=p&chs=100x100&chco={{ stats.rgb_start }},{{ stats.rgb }}&chd=t:{{ stats.home.days }},{{ stats.away.days }}" width="100" height="100">
       </div>
 
@@ -102,6 +96,9 @@
            </li>
         {% endfor %}
         </ul>
+  
+        <p class="switch">{{ stats.ordered.countries|length }} countries visited over {{ trips|length }} trips.</p>
+
       </div>
 
       <div class="label">6.</div>
@@ -121,7 +118,11 @@
         {% endfor %}
         </ul>
         
+        <p id="cities_info" class="switch" style="display:none;">{{ stats.cities|length }} {% if stats.cities|length == 1 %}city{% else %}cities{% endif %} visited over {{ trips|length }} trips.</p>
+
         <p id="showall"><a href="#" onclick="javascript:return showall()" class="switch">Show all cities visited.</a></p>
+
+
       </div>
 
       {% endif %}
