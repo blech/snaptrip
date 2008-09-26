@@ -95,18 +95,12 @@ class StatsPage(webapp.RequestHandler):
     # TODO ajax/memcache
     stats           = build_stats(trips_info['trip'], traveller_info)
     
-    icons = { 'plane': { 'url':'20_airtransportation_thumb.gif',    },
-              'train': { 'url':'25_railtransportation_thumb.gif',   },
-              'car':   { 'url':'27_carrental_thumb.gif',            },
-              'bus':   { 'url':'23_bus_thumb.gif',                  },}
-    
     template_values = {
       'session':    session,
       'permanent':  permanent,
       'traveller':  traveller_info,
       'trips':      trips_info['trip'],
       'stats':      stats,
-      'icons':      icons,
       'memcache':   memcache.get_stats(),
     }
     
@@ -807,6 +801,9 @@ def build_stats(trip_list, traveller_info):
            'future':    0,
            'types':     {},
            'ordered':   {}, }
+
+  if not trip_list:
+    return stats
            
   home_country = traveller_info['home_city']['country']
   
