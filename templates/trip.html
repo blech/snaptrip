@@ -201,13 +201,13 @@
     {% for photo in photos.photo %}
       {% if photo.accurate %}
         ll = new GLatLng({{ photo.latitude }}, {{ photo.longitude }});
-        marker = new GMarker(ll, {zIndexProcess:orderOfCreation, icon:get_small_icon('red')});
+        marker = new GMarker(ll, {zIndexProcess:orderOfCreation, icon:get_small_icon('white')});
         map.addOverlay(marker);
       {% endif %}
     {% endfor %}
 
         // add this last to put it on top
-        var dest_m = new GMarker(dest_p, {zIndexProcess:orderOfCreation, icon:get_small_icon('white')});
+        var dest_m = new GMarker(dest_p, {zIndexProcess:orderOfCreation, icon:get_small_icon('red')});
         map.addOverlay(dest_m);
         
     }
@@ -227,8 +227,8 @@
     
     function centermap(latitude, longitude, accuracy) {
       var ll  = new GLatLng(latitude, longitude);
-      var pm  = new GMarker(ll, get_small_icon('red'));
-      map.addOverlay(pm);
+      // var pm  = new GMarker(ll, get_small_icon('white'));
+      // map.addOverlay(pm);
       map.panTo(ll);
       
       return false;
