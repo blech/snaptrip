@@ -872,7 +872,7 @@ def build_stats(trip_list, traveller_info):
 
     # initialise data structure's
     if not year in stats['years']:
-      stats['years'][year] = { 'duration': 0, 'trips': 0 }
+      stats['years'][year] = { 'duration': 0, 'trips': 0, 'away':{}, 'home':{}, }
     if year == trip['finishdate'].year:
       stats['years'][year]['duration'] += duration.days
       stats['years'][year]['trips'] += 1
@@ -891,7 +891,7 @@ def build_stats(trip_list, traveller_info):
         year = trip['finishdate'].year
         year_start = datetime(year, 1, 1)
         if not year in stats['years']:
-          stats['years'][year] = { 'duration': 0, 'trips': 0 }
+          stats['years'][year] = { 'duration': 0, 'trips': 0, 'away':{}, 'home':{}, }
         stats['years'][year]['duration'] += (trip['finishdate']-year_start).days
         # for now we don't count trips in both years. change?
 
@@ -915,11 +915,11 @@ def build_stats(trip_list, traveller_info):
   stats['rgb_start']  = "%x%x%x" % (start, start, start)
 
   # scale country stats for map (including colours)
-  topcountry  = stats['ordered']['countries'][0]
-  topduration = stats['countries'][topcountry]['duration']
+  top_country  = stats['ordered']['countries'][0]
+  top_duration = stats['countries'][top_country]['duration']
   r = stats['rgb'][0:2]; g = stats['rgb'][2:4]; b = stats['rgb'][4:6]
   for country in stats['countries'].keys():
-    scaled = 100*stats['countries'][country]['duration']/topduration
+    scaled = 100*stats['countries'][country]['duration']/top_duration
 
     sr = (scaled*(int(r, 16)-start)/100)+start
     sg = (scaled*(int(g, 16)-start)/100)+start
@@ -929,15 +929,25 @@ def build_stats(trip_list, traveller_info):
     stats['countries'][country]['rgb_scaled'] = "%02x%02x%02x" % (sr, sg, sb)
   
   # scale transport types
-  toptype = stats['ordered']['types'][0]
-  toptrip = int(stats['types'][toptype]['trips'])
+  top_type = stats['ordered']['types'][0]
+  top_trip = int(stats['types'][top_type]['trips'])
   for type in stats['types'].keys():
-    stats['types'][type]['scaled'] = 100*int(stats['types'][type]['trips'])/toptrip
+    stats['types'][type]['scaled'] = 100*int(stats['types'][type]['trips'])/top_trip
       
-  # scale days on trips
-  stats['topyear'] = stats['ordered']['years_by_trip'][0]
-  stats['away']['days'] = (stats['years'][stats['topyear']]['duration'])/3.66
-  stats['home']['days'] = (366-stats['years'][stats['topyear']]['duration'])/3.66
+  # scale years
+  top_year_by_days = stats['ordered']['years_by_days'][0]
+  top_year_days    = stats['years'][top_year_by_days]['duration']
+  top_year_by_trip = stats['ordered']['years_by_trip'][0]
+  top_year_trips   = stats['years'][top_year_by_trip]['trips']
+  for year in stats['years']:
+    if year == top_year_by_days:
+      # TODO do this in template (the data's there...)
+      stats['away']['days'] = (stats['years'][top_year_by_days]['duration'])/3.66
+      stats['home']['days'] = (366-stats['years'][top_year_by_days]['duration'])/3.66
+    stats['years'][year]['away']['days']     = (stats['years'][top_year_by_days]['duration'])/3.66
+    stats['years'][year]['home']['days']     = (366-stats['years'][top_year_by_days]['duration'])/3.66
+    stats['years'][year]['duration_scaled']  = int(140*stats['years'][year]['duration']/top_year_days)
+    stats['years'][year]['trips_scaled']     = int(140*stats['years'][year]['trips']/top_year_trips)
   
   return stats
 
