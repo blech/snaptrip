@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8">
-	<title>snaptrip - all your trips</title>
+	<title>snaptrip - trip overview.</title>
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
   <script type="text/javascript" src="http://www.google.com/jsapi"></script>
@@ -51,24 +51,37 @@
       <div class="label">1.</div>
       
       <div class="onecol">Countries visited.
-        <div class="map"><img src="http://chart.apis.google.com/chart?cht=t&chs=440x190&chtm=world&chco=d7d7d7,{{ stats.rgb_start }},{{ stats.rgb }}&chld={% for country in stats.countries %}{{ stats.countries[country].code }}{% endfor %}&chd=t:{% for country in stats.countries %}{{ stats.countries[country].scaled }}{% if not loop.last %},{% endif %}{% endfor %}" width="440" height="190"></div>
+        <div class="map">
+          <div id="mapimage"><img src="http://chart.apis.google.com/chart?cht=t&chs=440x190&chtm=world&chco=ffffff,{{ stats.rgb_start }},{{ stats.rgb }}&chld={% for country in stats.countries %}{{ stats.countries[country].code }}{% endfor %}&chd=t:{% for country in stats.countries %}{{ stats.countries[country].scaled }}{% if not loop.last %},{% endif %}{% endfor %}" width="440" height="190"></div>
+          <div id="mapoverlay"><img src="/images/google_map_overlay.png" width="440" height="190"></div>
+        </div>
       </div>
 
-      <div class="br"></div>
-      
+        <div class="br"></div>
+
       <div class="label">2.</div>
       
       <div class="threecol">Trips by year.<br><br>{# TODO two <br>s? How declassee... #}
 
-      {% for year in stats.ordered.years_by_trip %}
-        <div class="trips_by_year" style="position:relative; height:25px;{#{% if stats.ordered.types|length < loop.index %} display:none;{% endif %}#}">
-          {% if stats.years[year].trips_scaled < 35 %}
-          <div style="position:absolute; top:0px; left:0px; height:20px; line-height:20px; padding-left:5px;">{{ year }}</div>
-          {% endif %}
-
-          <div style="position:absolute; top:0px; left:0px; background:#{{ stats.rgb_start }}; display:block; width:{{ stats.years[year].trips_scaled }}px; height:20px; line-height:20px; padding:0px 0px 0px 5px; margin-bottom:5px; color:#fff; overflow:hidden;">{{ year }}</div>
+      {% for year in stats.ordered.years %}
+        <div class="trips_by_year" style="position:relative; height:17px;{#{% if stats.ordered.types|length < loop.index %} display:none;{% endif %}#}">
+          <div style="position:absolute; top:0px; left:0px; height:16px; line-height:16px;">{{ year }}</div>
+          <div style="position:absolute; top:0px; left:40px; background:#fff;">
+<!--            {{ stats.years[year].trips }} {{ stats.years[year].trips_blocks_l|length }} {{ stats.years[year].trips_blocks_l|length * stats.trips_per_block }} {{ stats.years[year].trips_blocks_r }} -->
+            {% for i in stats.years[year].trips_blocks_l %}
+            <div style="width:{{ stats.block_width-3 }}px; border:1px solid #{{ stats.rgb }}; height:14px; margin-right:1px; float:left;"></div>
+            {% endfor %}{% if stats.years[year].trips_blocks_r > 2 %}
+            <div style="width:{{ stats.years[year].trips_blocks_r-3 }}px; border:1px solid #{{ stats.rgb }}; height:14px; float:left;"></div>
+            {% endif %}
+          </div>
         </div>
       {% endfor %}
+
+<!--
+    <p class="switch">
+    {{ stats.top_year_trips }} trips in busiest year, with
+    {{ stats.trips_per_block }} trips per block. Each block is
+    {{ stats.block_width }} pixels wide.</p> -->
 
       </div>
 
@@ -91,7 +104,7 @@
         <img src="http://chart.apis.google.com/chart?cht=p&chs=100x100&chco={{ stats.rgb_start }},{{ stats.rgb }}&chd=t:{{ stats.home.days }},{{ stats.away.days }}" width="100" height="100">
       </div>
 
-      <div class="br"></div>
+        <div class="br"></div>
 
       <div class="label">5.</div>
       
@@ -136,6 +149,8 @@
           <a href="#" onclick="javascript:return showall()">Show all?</a></p>
 
       </div>
+      
+      <div class="br"></div>
 
       {% endif %}
 
@@ -174,7 +189,7 @@
         
         <dd>Total time and trip information for each city visited.</dd>
       </dl>
-      
+
      {% endif %}
 
     </div>

@@ -395,6 +395,14 @@ div.threecol {
 
 div.map {
   padding-top:5px;
+  position: relative;
+}
+
+div.map div#mapoverlay {
+  padding-top:5px;
+  position: absolute;
+  top: 0px;
+  left: 0px;
 }
 
 .switch {

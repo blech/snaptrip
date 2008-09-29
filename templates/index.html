@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8">
-	<title>snaptrip - all your trips</title>
+	<title>snaptrip - all {% if traveller.name != session.name %}{{ traveller.name }}'s{% else %}your{% endif %} trips</title>
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
   <script type="text/javascript">
@@ -113,7 +113,7 @@
       
     {% if stats.ordered.years %}
       
-      <p>{% if traveller.name == session.name %}You've{% else %}{% if stats.current %}They have{% else %}{{ traveller.name }} has {% endif %}{% endif %} been on trips in {{ stats.countries|length }}{# TODO jinja ordinal? #} countries, spending the most time in {{ stats.countries[stats.ordered.countries[0]].inline }}.</p>
+      <p>{% if traveller.name == session.name %}You've{% else %}{% if stats.current %}They have{% else %}{{ traveller.name }} has {% endif %}{% endif %} been on trips in {% if numbers[stats.countries|length] %}{{ numbers[stats.countries|length] }}{% else %}{{ stats.countries|length }}{% endif %} countries, spending the most time in {{ stats.countries[stats.ordered.countries[0]].inline }}.</p>
 
 <!-- 
       {{ stats.ordered.countries[0] }} equal? {{ stats.cities[stats.ordered.cities[0]].country }}
@@ -124,13 +124,13 @@
            {% if traveller.name == session.name %}you've{% else %}they've{% endif %} 
            spent most time in {{ stats.ordered.cities[0] }}, 
            with a total time there of {{ stats.cities[stats.ordered.cities[0]].duration }} 
-           days.
+           days, during {% if numbers[stats.cities[stats.ordered.cities[0]].trips] %}{{ numbers[stats.cities[stats.ordered.cities[0]].trips] }}{% else %}{{ stats.cities[stats.ordered.cities[0]].trips }}{% endif %} trip{% if stats.cities[stats.ordered.cities[0]].trips != 1 %}s{% endif %}.
          {% else %}
            However, the city 
            {% if traveller.name == session.name %}you've{% else %}they've{% endif %} 
            spent most time in is {{ stats.ordered.cities[0] }}, 
            in {{ stats.countries[stats.cities[stats.ordered.cities[0]].country].inline }}, {# countries ( cities ( most visited city ) ) inline #}
-           with a total time there of {{ stats.cities[stats.ordered.cities[0]].duration }} days.
+           with a total time there of {{ stats.cities[stats.ordered.cities[0]].duration }} days, during {% if numbers[stats.cities[stats.ordered.cities[0]].trips] %}{{ numbers[stats.cities[stats.ordered.cities[0]].trips] }}{% else %}{{ stats.cities[stats.ordered.cities[0]].trips }}{% endif %} trip{% if stats.cities[stats.ordered.cities[0]].trips != 1 %}s{% endif %}.
          {% endif %}</p>
             
 <!-- 

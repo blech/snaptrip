@@ -7,6 +7,7 @@ import logging
 from datetime import datetime
 from operator import itemgetter
 
+import colors     # from nodebox
 import feedparser
 import flickrapi
 import simplejson
@@ -51,7 +52,7 @@ class IndexPage(webapp.RequestHandler):
       return error_page(self, session, traveller_info['error'])
 
     # TODO ajax/memcache
-    stats           = build_stats(trips_info['trip'], traveller_info)
+    stats           = build_stats(trips_info['trip'], traveller_info, 'front')
     
     template_values = {
       'session':    session,
@@ -59,6 +60,7 @@ class IndexPage(webapp.RequestHandler):
       'traveller':  traveller_info,
       'trips':      trips_info['trip'],
       'stats':      stats,
+      'numbers':    get_numbers(),
       'memcache':   memcache.get_stats(),
     }
     
@@ -66,7 +68,7 @@ class IndexPage(webapp.RequestHandler):
     
     self.response.out.write(template.render(template_values))
 
-class StatsPage(webapp.RequestHandler):
+class StatsPage(webapp.RequestHandler): # TODO DRY
   def get(self, who=""):
     session = get_session()
 
@@ -92,8 +94,7 @@ class StatsPage(webapp.RequestHandler):
     if traveller_info.has_key('error'):
       return error_page(self, session, traveller_info['error'])
 
-    # TODO ajax/memcache
-    stats           = build_stats(trips_info['trip'], traveller_info)
+    stats           = build_stats(trips_info['trip'], traveller_info, 'detail')
     
     template_values = {
       'session':    session,
@@ -101,6 +102,7 @@ class StatsPage(webapp.RequestHandler):
       'traveller':  traveller_info,
       'trips':      trips_info['trip'],
       'stats':      stats,
+      'numbers':    get_numbers(),
       'memcache':   memcache.get_stats(),
     }
     
@@ -574,8 +576,6 @@ def get_trip_info(token, trip_id):
 # == Flickr
 
 def get_flickr_nsid(flickr, token):
-  logging.debug("Attempting to fetch Flickr NSID (check token)")
-
   key = repr(flickr)+":token="+token
   nsid  = memcache.get(key)
   if nsid is not None:
@@ -716,6 +716,10 @@ def error_page(self, session, error):
   path = os.path.join(os.path.dirname(__file__), 'templates/error.html')
   self.response.out.write(template.render(path, {'error':error, 'session':session, }))
 
+def get_numbers():
+  return ["no", "one", "two", "three", "four", "five", "six",
+          "seven", "eight", "nine", "ten"]
+
 def prettify_trips(trip_list):
   # parse dates to datetime objects
   now = datetime.now()
@@ -789,9 +793,11 @@ def links_for_trip(trips_list, trip_id):
 
   return links
   
-def build_stats(trip_list, traveller_info):
+def build_stats(trip_list, traveller_info, type):
   # TODO break this apart and/or do similar things in subroutines
   # TODO build more year metadata
+  # TODO don't do as much work for front page
+  # TODO cache?
 
   stats = {'countries': {},
            'cities':    {},
@@ -805,7 +811,7 @@ def build_stats(trip_list, traveller_info):
   if not trip_list:
     return stats
            
-  home_country = traveller_info['home_city']['country']
+  # home_country = traveller_info['home_city']['country']
   
   for trip in trip_list:
     # skip if not a past trip
@@ -841,23 +847,24 @@ def build_stats(trip_list, traveller_info):
     stats['countries'][country]['duration'] += duration.days
     stats['countries'][country]['trips']    += 1
 
-    if trip.has_key('return_transport_type'): # TODO remove
-      if not trip['return_transport_type'] in stats['types']:
-        stats['types'][trip['return_transport_type']] = {'trips':0}
-      stats['types'][trip['return_transport_type']]['trips'] += 0.5
-      
-    if trip.has_key('return_transport_type'): # TODO remove
-      if not trip['outgoing_transport_type'] in stats['types']:
-        stats['types'][trip['outgoing_transport_type']] = {'trips':0}
-      stats['types'][trip['outgoing_transport_type']]['trips'] += 0.5
+    if type != "front":
+      if trip.has_key('return_transport_type'): # TODO remove
+        if not trip['return_transport_type'] in stats['types']:
+          stats['types'][trip['return_transport_type']] = {'trips':0}
+        stats['types'][trip['return_transport_type']]['trips'] += 0.5
+        
+      if trip.has_key('return_transport_type'): # TODO remove
+        if not trip['outgoing_transport_type'] in stats['types']:
+          stats['types'][trip['outgoing_transport_type']] = {'trips':0}
+        stats['types'][trip['outgoing_transport_type']]['trips'] += 0.5
  
-    if (country == home_country):
-      stats['home']['trips'] += 1;
-      stats['home']['duration'] += duration.days
-    else:
-      stats['away']['trips'] += 1;
-      stats['away']['duration'] += duration.days
-
+        # if (country == home_country):
+        #   stats['home']['trips'] += 1;
+        #   stats['home']['duration'] += duration.days
+        # else:
+        #   stats['away']['trips'] += 1;
+        #   stats['away']['duration'] += duration.days
+  
     # build city data
     city = trip['city']['name']
     rgb  = trip['city']['rgb']
@@ -912,47 +919,78 @@ def build_stats(trip_list, traveller_info):
   stats['ordered']['countries'] = sorted(stats['countries'],  lambda x, y: (stats['countries'][y]['duration'])-(stats['countries'][x]['duration']))
   stats['ordered']['cities']    = sorted(stats['cities'],     lambda x, y: (stats['cities'][y]['duration'])-(stats['cities'][x]['duration']))
 
-  start = 160
-  stats['rgb'] = stats['countries'][stats['ordered']['countries'][0]]['rgb']
-  stats['rgb_start']  = "%x%x%x" % (start, start, start)
-
-  # scale country stats for map (including colours)
-  top_country  = stats['ordered']['countries'][0]
-  top_duration = stats['countries'][top_country]['duration']
-  r = stats['rgb'][0:2]; g = stats['rgb'][2:4]; b = stats['rgb'][4:6]
-  for country in stats['countries'].keys():
-    scaled = 100*stats['countries'][country]['duration']/top_duration
-
-    sr = (scaled*(int(r, 16)-start)/100)+start
-    sg = (scaled*(int(g, 16)-start)/100)+start
-    sb = (scaled*(int(b, 16)-start)/100)+start
-
-    stats['countries'][country]['scaled'] = scaled
-    stats['countries'][country]['rgb_scaled'] = "%02x%02x%02x" % (sr, sg, sb)
+  # colours
+  if type != "front":
+    rgb = stats['countries'][stats['ordered']['countries'][0]]['rgb']
+    raw = colors.hex('#'+rgb)
+    saturated = raw.saturate(1);
+    lightened = saturated.lighten(0.5);
+    desaturated = lightened.desaturate(0.8);
   
-  # scale transport types
-  if len(stats['types'].keys()):  # TODO remove
-    top_type = stats['ordered']['types'][0]
-    top_trip = int(stats['types'][top_type]['trips'])
-    for type in stats['types'].keys():
-      stats['types'][type]['scaled'] = 100*int(stats['types'][type]['trips'])/top_trip
-      
-  # scale years
-  top_year_by_days = stats['ordered']['years_by_days'][0]
-  top_year_days    = stats['years'][top_year_by_days]['duration']
+    stats['rgb']        = hex_from(lightened)
+    stats['rgb_start']  = hex_from(desaturated)
+  
+    # scale country stats for map (including colours)
+    top_country  = stats['ordered']['countries'][0]
+    top_duration = stats['countries'][top_country]['duration']
+    r = stats['rgb'][0:2]; g = stats['rgb'][2:4]; b = stats['rgb'][4:6]
+    for country in stats['countries'].keys():
+      scaled = 100*stats['countries'][country]['duration']/top_duration
+  
+      satscale = (float(100-scaled)/100)*0.8
+      satcolor = lightened.desaturate(satscale)
+  #     ligscale = (float(100-scaled)/100)*0.9
+  #     ligcolor = saturated.lighten(ligscale)
+  
+      stats['countries'][country]['scaled'] = scaled
+      stats['countries'][country]['rgb_scaled'] = hex_from(satcolor)
+    
+    # scale transport types
+    if len(stats['types'].keys()):  # TODO remove
+      top_type = stats['ordered']['types'][0]
+      top_trip = int(stats['types'][top_type]['trips'])
+      for type in stats['types'].keys():
+        stats['types'][type]['scaled'] = 100*int(stats['types'][type]['trips'])/top_trip
+        
+    # scale years
+    top_year_by_days = stats['ordered']['years_by_days'][0]
+    top_year_days    = stats['years'][top_year_by_days]['duration']
+
+  # scale years (for front page too)
   top_year_by_trip = stats['ordered']['years_by_trip'][0]
   top_year_trips   = stats['years'][top_year_by_trip]['trips']
-  for year in stats['years']:
-    if year == top_year_by_days:
-      # TODO do this in template (the data's there...)
-      stats['away']['days'] = (stats['years'][top_year_by_days]['duration'])/3.66
-      stats['home']['days'] = (366-stats['years'][top_year_by_days]['duration'])/3.66
-    stats['years'][year]['away']['days']     = (stats['years'][top_year_by_days]['duration'])/3.66
-    stats['years'][year]['home']['days']     = (366-stats['years'][top_year_by_days]['duration'])/3.66
-    stats['years'][year]['duration_scaled']  = int(140*stats['years'][year]['duration']/top_year_days)
-    stats['years'][year]['trips_scaled']     = int(140*stats['years'][year]['trips']/top_year_trips)
+
+  if type != "front":
+    # width per trip scaling for years
+    trips_per_block = 1
+    while 90*trips_per_block/top_year_trips < 10:
+      trips_per_block += 1
+    
+    stats['top_year_trips']  = top_year_trips
+    stats['trips_per_block'] = trips_per_block
+    stats['block_width']     = 90*trips_per_block/top_year_trips
   
+    for year in stats['years']:
+      if year == top_year_by_days:
+        # TODO do this in template (the data's there...)
+        stats['away']['days'] = (stats['years'][top_year_by_days]['duration'])/3.66
+        stats['home']['days'] = (366-stats['years'][top_year_by_days]['duration'])/3.66
+      stats['years'][year]['away']['days']     = (stats['years'][top_year_by_days]['duration'])/3.66
+      stats['years'][year]['home']['days']     = (366-stats['years'][top_year_by_days]['duration'])/3.66
+  
+      # raw scaling
+      stats['years'][year]['duration_scaled']  = int(90*stats['years'][year]['duration']/top_year_days)
+      stats['years'][year]['trips_scaled']     = int(90*stats['years'][year]['trips']/top_year_trips)
+  
+      # block scaling
+      stats['years'][year]['trips_blocks']     = float(stats['years'][year]['trips'])/stats['trips_per_block']
+      stats['years'][year]['trips_blocks_l']   = [True] * (stats['years'][year]['trips']/stats['trips_per_block'])
+      stats['years'][year]['trips_blocks_r']   = int((stats['years'][year]['trips_blocks']-len(stats['years'][year]['trips_blocks_l']))*stats['block_width'])
+
   return stats
+
+def hex_from(color):
+  return "%02x%02x%02x" % (int(color.r*255), int(color.g*255), int(color.b*255))
 
 def get_display_names():
   return {
