@@ -174,6 +174,41 @@ class TripPage(webapp.RequestHandler):
     path = os.path.join(os.path.dirname(__file__), 'templates/trip.html')
     self.response.out.write(template.render(path, template_values))    
 
+class AddPage(webapp.RequestHandler):
+  def get(self, who=""):
+    logging.debug("really in Add page")
+    session = get_session()
+
+    # session objects don't support has_key. bah.
+    # TODO DRY
+    try:
+      permanent = session['dopplr']
+      token     = session['flickr']
+    except KeyError, e:
+      return self.redirect("/login/")
+
+    keys = get_keys(self.request.host)
+    flickr = get_flickr(keys, token)
+
+    template_values = {
+      'session':    session,
+      'permanent':  permanent,
+      'memcache':   memcache.get_stats(),
+    }
+
+    logging.debug("in Add page")
+
+    nsid = get_flickr_nsid(flickr, token)
+    logging.debug(" "+nsid)
+    if nsid:
+      logging.debug("getting set list")
+      sets = get_flickr_setlist(flickr, nsid)
+      template_values['sets'] = sets
+    
+    # note this is jinja2
+    template = env.get_template('add.html')
+    self.response.out.write(template.render(template_values))
+
 class LoginPage(webapp.RequestHandler):
   def get(self):
     session = get_session()
@@ -679,6 +714,25 @@ def get_flickr_photos_by_date(flickr, nsid, trip_info, page):
 
   return photos['photos']
 
+def get_flickr_setlist(flickr, nsid):
+#   key = repr(flickr)+":nsid="+nsid+":type=sets"
+#   sets = memcache.get(key)
+#   if sets:
+#     return sets
+#     
+  logging.info("Getting set list from Flickr")
+  try:
+    sets = flickr.photosets_getList(
+               format='json',
+               nojsoncallback="1",
+               nsid=nsid, )
+    logging.info(sets)
+    sets = simplejson.loads(sets)
+  except:
+    return {'error': 'Could not get list of sets from Flickr.'}
+  
+  return sets
+
 def get_flickr_geototal(photos):
   photos['photos']['subtotal'] = 0
   photos['photos']['geototal'] = 0
@@ -1040,6 +1094,7 @@ application = webapp.WSGIApplication(
                    ('/where/(\w*)', IndexPage),
                    ('/overview/', StatsPage),
                    ('/overview/(\w*)', StatsPage),
+                   ('/trip/add', AddPage),
                    ('/trip/(\d*)', TripPage),
                    ('/trip/(\d*)/by/(\w+)', TripPage),
                    ('/trip/(\d*)/by/(\w+)/(\d+)', TripPage),
