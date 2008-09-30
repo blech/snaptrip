@@ -343,7 +343,7 @@ class FormPage(webapp.RequestHandler):
 
 class MoreJSON(webapp.RequestHandler):
   def get(self):
-    logging.error("deprecated")
+    logging.error("deprecated MoreJSON handler called")
 
     token = self.request.get("token")
     nsid = self.request.get("nsid")
@@ -511,7 +511,7 @@ def get_traveller_info(token, who=""):
     return {'error': "Didn't get a JSON response from Dopplr's traveller_info API"}
 
   if not memcache.add(key, traveller_info, 3600):
-    logging.error("set for traveller_info failed")
+    logging.warning("memcache set for traveller_info failed")
 
   return traveller_info
 
@@ -550,7 +550,7 @@ def get_trips_info(token, who=""):
     return {'error': "Could not get information about past trips (user permission?)."}
 
   if not memcache.add(key, trips_info, 3600):
-    logging.error("set for trips_info failed")
+    logging.warning("memcache set for trips_info failed")
 
   return trips_info
 
@@ -604,7 +604,7 @@ def get_trip_info(token, trip_id):
     trip_info["trip"]["status"] = "Future"
 
   if not memcache.add(key, trip_info, 3600):
-    logging.error("set for trip_info failed")
+    logging.warning("memcache set for trip_info failed")
     
   return trip_info
 
@@ -634,7 +634,7 @@ def get_flickr_nsid(flickr, token):
     logging.info("Got Flickr user NSID "+nsid)
 
     if not memcache.add(key, nsid):
-      logging.error("Memcache set for NSID failed")
+      logging.warning("memcache set for NSID failed")
 
     return nsid
   else:
@@ -672,7 +672,7 @@ def get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page):
   photos = get_flickr_tagtotal(photos, trip_info["trip"]["id"])
 
   if not memcache.add(key, photos['photos'], 3600):
-    logging.error("Memcache set for photos by tag failed")
+    logging.warning("memcache set for photos by tag failed")
 
   return photos['photos']
 
@@ -710,7 +710,7 @@ def get_flickr_photos_by_date(flickr, nsid, trip_info, page):
   photos = get_flickr_tagtotal(photos, trip_info["trip"]["id"])
 
   if not memcache.add(key, photos['photos'], 3600):
-    logging.error("Memcache set for photos by date failed")
+    logging.warning("memcache set for photos by date failed")
 
   return photos['photos']
 
