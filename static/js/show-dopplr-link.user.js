@@ -6,7 +6,7 @@
 // @exclude        http://*flickr.com/photos/organize*
 // ==/UserScript==
 
-// Version 1.05
+// Version 1.1
 // Copyright (c) Paul Mison
 // GPL licenced: http://www.gnu.org/copyleft/gpl.html
 
@@ -45,7 +45,7 @@ display = function display() {
   var html =  '<br/><a href="http://dopplr.com/trip/id/'+trip_id+'">';
   html += '<img align="left" alt="Taken during a Dopplr trip" src="http://snaptrip.appspot.com/images/dopplr.png"/>';
   html += '</a> Taken during a ';
-  html += '<a class="Plain" href="http://dopplr.com/trip/id/'+trip_id+'">trip '+placename+'</a>.<br/>';
+  html += '<a class="Plain" href="http://dopplr.com/trip/id/'+trip_id+'">trip '+placename+'</a><br/>';
 
   var privacy = document.evaluate(
                    "//p[@class='Privacy']",
@@ -87,10 +87,16 @@ if (links.length > 0) {
   
     // get name of location
     if (this.woeid) {
-      GM_xmlhttpRequest({ method: 'GET',
-                          url:    flickr_url + 'place_id='+this.woeid,
-                          onload: display,
-                       });
+      if(typeof GM_xmlhttpRequest === "undefined") { 
+        // can't do cross-site Ajax calls in Safari
+        display();
+      } else {
+        // use Greasemonkey proper
+        GM_xmlhttpRequest({ method: 'GET',
+                            url:    flickr_url + 'place_id='+this.woeid,
+                            onload: display,
+                         });
+      }
     } else {
       display();
     }
