@@ -406,7 +406,7 @@ div.map div#mapoverlay {
 }
 
 .switch {
-  font-size: 12px;
+  font-size: 11px;
 }
 
 dl {
@@ -429,13 +429,33 @@ dl dd {
 
 ul.small li {
   font-size: 13px;
-  overflow: hidden;
 }
 
+/*
 ul.small span.details {
   text-align: right;
   position: absolute;
   right: 0px;
   background: #fff;
+  padding-left: 5px;
+}
+*/
+
+ul.small div.city_details {
+  margin-left:23px;
+  font-size:11px;
+  display:none;
+}
+
+ul.small span.city {
+  float: left;
+}
+
+ul.small span.country {
+  float: left;
+}
+
+ul.small span.details {
+  float: right;
   padding-left: 5px;
 }

@@ -6,6 +6,46 @@
 	<title>snaptrip - trip overview.</title>
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
+  <script type="text/javascript">
+    $(document).ready(function() {
+      /* cities list */
+      $("ul#cities li").hover(function() {
+        $(this).css({ backgroundColor:"#def" });
+      }, function() {
+        $(this).css({ backgroundColor:"#fff" })
+      });
+      $("li").click(function() {
+        $(this).css({ backgroundColor:"#fff" })
+        $(this).children('div.city_details').toggle();
+      });
+
+      // if they're clickable, they should look clickable
+      $("ul#cities li").css({ cursor:"hand" });
+      $("ul#cities li").css({ cursor:"pointer" });
+
+      /* countries list */
+      $("ul#countries li").hover(function() {
+        $(this).css({ backgroundColor:"#def" });
+        code = $(this).attr('id');
+        $("ul#cities li."+code).css({ backgroundColor:"#def" });
+      }, function() {
+        $(this).css({ backgroundColor:"#fff" })
+        code = $(this).attr('id');
+        $("ul#cities li."+code).css({ backgroundColor:"#fff" });
+      });
+      $("li").click(function() {
+//         $(this).css({ backgroundColor:"#fff" })
+//         $(this).children('div.city_details').toggle();
+      });
+
+      // if they're clickable, they should look clickable
+//       $("ul#countries li").css({ cursor:"hand" });
+//       $("ul#countries li").css({ cursor:"pointer" });
+
+
+    })
+  
+  </script>
   <script type="text/javascript" src="http://www.google.com/jsapi"></script>
   <script type="text/javascript">
     google.load("visualization", "1", {packages:["intensitymap"]});
@@ -112,12 +152,12 @@
       
         <ul id="countries" class="dotted small">
         {% for country in stats.ordered.countries %}
-          <li><span class="block" style="background:#{{ stats.countries[country].rgb_scaled}}">&nbsp</span>
+          <li id="{{ stats.countries[country].code }}"><span class="block" style="background:#{{ stats.countries[country].rgb_scaled}}">&nbsp</span>
               <span class="country">{{ stats.countries[country].display }}</span> 
               <span class="details">
                 {{ stats.countries[country].trips }} trip{% if stats.countries[country].trips != 1 %}s{% endif %}, 
                 {{ stats.countries[country].duration }} day{% if stats.countries[country].duration != 1 %}s{% endif %}
-              </span>
+              </span><br>
            </li>
         {% endfor %}
         </ul>
@@ -132,13 +172,19 @@
       
         <ul id="cities" class="dotted small">
         {% for city in stats.ordered.cities %}
-          <li{% if stats.ordered.countries|length < loop.index %} style="display:none;"{% endif %}>
-              <span class="block" style="background:#{{ stats.cities[city].rgb}}">&nbsp</span>
+          <li{% if stats.ordered.countries|length < loop.index %} style="display:none;"{% endif %} class="{{ stats.cities[city].code }}">
+              <span class="block" style="background:#{{ stats.cities[city].rgb}}; display:block;">&nbsp</span>
               <span class="city">{{ city }}</span> 
               <span class="details">
               {{ stats.cities[city].trips }} trip{% if stats.cities[city].trips != 1 %}s{% endif %}, 
               {{ stats.cities[city].duration }} day{% if stats.cities[city].duration != 1 %}s{% endif %}
-              </span>
+              </span><br>
+              
+              <div class="city_details" id="{{ stats.cities[city].id }}">
+                {% for trip in stats.cities[city].trip_list | reverse %}
+                  <span class="city">{{ trip.startdate.strftime("%B %Y") }}</span>
+                  <span class="details">{{ trip.duration }} day{% if trip.duration != 1 %}s{% endif %}</span><br>
+                {% endfor %}</div>
            </li>
         {% endfor %}
         </ul>

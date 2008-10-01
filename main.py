@@ -319,7 +319,7 @@ class FormPage(webapp.RequestHandler):
       message = mail.EmailMessage(subject='snaptrip feedback (via form)',)
       message.sender = "misonp@googlemail.com"
     
-      message.to = "Paul Mison <misonp+snaptrip@googlemail.com>"
+      message.to = "Paul Mison <misonp@googlemail.com>"
       if email:
         message.cc = name+" <"+email+">"
         
@@ -856,6 +856,7 @@ def build_stats(trip_list, traveller_info, type):
   stats = {'countries': {},
            'cities':    {},
            'years':     {},
+           'months':    {},
            'home':      { 'trips': 0, 'duration':0, },
            'away':      { 'trips': 0, 'duration':0, },
            'future':    0,
@@ -878,6 +879,7 @@ def build_stats(trip_list, traveller_info, type):
       
     # how long (simple version...) # TODO never double count date
     duration = trip['finishdate'] - trip['startdate']
+    trip['duration'] = duration.days
     
     # build country data
     country = trip['city']['country']
@@ -925,10 +927,16 @@ def build_stats(trip_list, traveller_info, type):
 
     if not city in stats['cities']:
       stats['cities'][city] = { 'duration': 0, 'trips': 0, 
-                                'rgb':rgb, 'country':country}
+                                'rgb':rgb, 'country':country, 
+                                'id':trip['city']['woeid'], 
+                                'trip_list': [], 'code':trip['city']['country_code']
+                              }
 
     stats['cities'][city]['duration'] += duration.days
     stats['cities'][city]['trips']    += 1
+
+    if type != "front":
+      stats['cities'][city]['trip_list'].append(trip)
     
     # build year data
     year = trip['startdate'].year
@@ -957,6 +965,15 @@ def build_stats(trip_list, traveller_info, type):
           stats['years'][year] = { 'duration': 0, 'trips': 0, 'away':{}, 'home':{}, }
         stats['years'][year]['duration'] += (trip['finishdate']-year_start).days
         # for now we don't count trips in both years. change?
+
+    if type != "front":
+      # do we care about finish months?
+      month = trip['startdate'].month
+      if not stats['months'].has_key(month):
+        stats['months'][month] = {'trips':0, 'duration':0, 'cities':[]}
+      stats['months'][month]['trips'] += 1
+      stats['months'][month]['duration'] += duration.days
+      stats['months'][month]['cities'].append(trip)
 
     # do we want to supply full-blown cross-cut stats? maybe later...
     # END TRIP LOOP
