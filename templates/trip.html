@@ -275,6 +275,21 @@
               {% endfor %}
 
               <br style="clear:both;">        
+
+<!-- page navigation - if needed -->
+            {% ifnotequal photos.pages 1 %}
+              <div class="trip_nav">
+              {% ifnotequal photos.page 1 %} 
+                <span class="left"><a href="/trip/{{ trip.trip.id }}/by/{{ method }}/{{ prevpage }}">See previous page of photos.</a></span>
+              {% endifnotequal %}
+              {% ifnotequal photos.page photos.pages %}
+                <span class="right"><a href="/trip/{{ trip.trip.id }}/by/{{ method }}/{{ nextpage }}">See next page of photos.</a></span>
+              {% endifnotequal %}
+              </div>
+
+              <br style="clear:both;">        
+            {% endifnotequal %}
+
 <!-- 'showing' text -->
             <p id="phototext">Showing 
             {% ifnotequal photos.pages 1 %}
@@ -323,9 +338,9 @@
       {% endifnotequal %}
     {% endifequal %}
     
-      <div id="trip_nav">
-        <span class="index"><a href="/where/{{ session.nick }}">&larr; Back to all trips.</a></span>
-        <span class="dopplr"><a href="{{ trip.trip.url }}">View this trip at Dopplr. &rarr;</a></span>
+      <div class="trip_nav">
+        <span class="left"><a href="/{% ifnotequal trip.trip.nick session.nick %}where/{{ session.nick }}{% endifnotequal %}">&larr; Back to all trips.</a></span>
+        <span class="right"><a href="{{ trip.trip.url }}">View this trip at Dopplr. &rarr;</a></span>
       </div>
       
     </div>

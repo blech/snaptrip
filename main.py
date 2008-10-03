@@ -152,6 +152,7 @@ class TripPage(webapp.RequestHandler):
 
         nsid = get_flickr_nsid(flickr, token)
         if nsid:
+          template_values['prevpage'] = int(page)-1
           template_values['nextpage'] = int(page)+1
   
           if type == 'date':  

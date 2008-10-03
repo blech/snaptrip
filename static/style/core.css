@@ -302,15 +302,15 @@ div#photos span.image span.geo a:hover {
 }
 
 
-div#trip_nav {
+div.trip_nav {
   width: 512px;
 }
 
-div#trip_nav span.index {
+div.trip_nav span.left {
   float:left;
 }
 
-div#trip_nav span.dopplr {
+div.trip_nav span.right {
   float:right;
 }
 
@@ -396,6 +396,8 @@ div.threecol {
 div.map {
   padding-top:5px;
   position: relative;
+  width:440px;
+  height:190px;
 }
 
 div.map div#mapoverlay {
