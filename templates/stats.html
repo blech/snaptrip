@@ -182,7 +182,7 @@
               
               <div class="city_details" id="{{ stats.cities[city].id }}">
                 {% for trip in stats.cities[city].trip_list | reverse %}
-                  <span class="city">{{ trip.startdate.strftime("%B %Y") }}</span>
+                  <span class="city"><a href="/trip/{{ trip.id }}">{{ trip.startdate.strftime("%B %Y") }}</a></span>
                   <span class="details">{{ trip.duration }} day{% if trip.duration != 1 %}s{% endif %}</span><br>
                 {% endfor %}</div>
            </li>
