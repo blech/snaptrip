@@ -6,24 +6,82 @@
 	<title>snaptrip - add a trip from a Flickr set</title>
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
   
+  <style type="text/css">
+    div.set {
+      width: 512px;
+      clear:both;
+      border-bottom: 1px dotted #ccc;
+      min-height: 85px;
+      margin-bottom: 10px;
+    }
+
+    div.set h3 {
+      margin: 0px;
+      padding-bottom:0px;
+      margin-bottom: 2px;
+      line-height:20px;
+      float: left;
+    }
+
+    div.set p.count {
+      font-size: 12px;
+      float: right;
+      margin: 4px 0px 2px 0px;
+    }
+    
+    div.set p.desc {
+      clear:right;
+    }
+    
+    div.set img {
+      margin-right: 10px;
+      width: 75px;
+      height: 75px;
+      border: 2px solid #666;
+    }
+    
+    div.trip_nav {
+      padding-bottom: 10px;
+    }
+
+  </style>
+  
 </head>
 <body>
   {% include "includes/header.html" %}
 
   <div id="content">
     <div id="main" class="add">
-      <h2>Add a trip to Dopplr</h2>
-      
-      <p>{% for photoset in sets.photosets.photoset %}
-        {{ photoset.id }}: {{ photoset.title._content }} - {# photoset.description._content #} ({{ photoset.photos }} photos)<br>
+      <h2>Add a trip to Dopplr from a Flickr set.</h2>
 
-<!-- 
-        <img src="http://farm{{ photoset.farm }}.static.flickr.com/{{ photoset.server }}/{{ photoset.primary }}_{{ photoset.secret }}_s.jpg" alt="" title="" id="{{ photoset.primary }}">
- -->
+      <p>If you already have a set for a trip in Flickr, you can convert it to a trip in Dopplr.</p>
+      
+      {% for photoset in sets.photoset %}
+        <div class="set" id="{{ photoset.id }}">
+          <img src="http://farm{{ photoset.farm }}.static.flickr.com/{{ photoset.server }}/{{ photoset.primary }}_{{ photoset.secret }}_s.jpg" alt="" title="" id="{{ photoset.primary }}" style="float:left;">
+          <h3>{{ photoset.title._content }}</h3>
+          <p class="count"><span class="date">{{ photoset.photos }} photos</p>
+          <p class="desc">{{ photoset.description._content }}</p>
+        </div>
 
-      {% endfor %}</p>
+      {% endfor %}
       
+      <!-- page navigation - if needed -->
+      {% if sets.pages != 1 %}
+        <div class="trip_nav">
+        {% if sets.page != 1 %} 
+          <span class="left"><a href="/trip/add/sets/{{ sets.page-1 }}">&larr; See previous page of sets.</a></span>
+        {% endif %}
+        {% if sets.page != sets.pages %}
+          <span class="right"><a href="/trip/add/sets/{{ sets.page+1 }}">See next page of sets. &rarr;</a></span>
+        {% endif %}
+        </div>
+  
+        <br style="clear:both;">        
+      {% endif %}
       
+    <!-- p><tt style="font: 9px monaco;">{{ sets }}</p -->
+            
     </div>
 
     <div id="side">
