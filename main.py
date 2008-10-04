@@ -2,6 +2,7 @@ import os
 import re
 import md5
 import sys
+import math
 import logging
 
 from datetime import datetime
@@ -176,9 +177,11 @@ class TripPage(webapp.RequestHandler):
     self.response.out.write(template.render(path, template_values))    
 
 class AddPage(webapp.RequestHandler):
-  def get(self, who=""):
+  def get(self, page="1"):
     logging.debug("really in Add page")
     session = get_session()
+
+    page = int(page)
 
     # session objects don't support has_key. bah.
     # TODO DRY
@@ -204,9 +207,11 @@ class AddPage(webapp.RequestHandler):
     if nsid:
       logging.debug("getting set list")
       sets = get_flickr_setlist(flickr, nsid)
-      template_values['sets'] = sets
+      sets = get_paged_setlist(sets, page)
+
+      template_values['sets'] = sets['photosets']
     
-    # note this is jinja2
+    # jinja2
     template = env.get_template('add.html')
     self.response.out.write(template.render(template_values))
 
@@ -716,23 +721,43 @@ def get_flickr_photos_by_date(flickr, nsid, trip_info, page):
   return photos['photos']
 
 def get_flickr_setlist(flickr, nsid):
-#   key = repr(flickr)+":nsid="+nsid+":type=sets"
-#   sets = memcache.get(key)
-#   if sets:
-#     return sets
-#     
+  key = repr(flickr)+":nsid="+nsid+":type=sets"
+  sets = memcache.get(key)
+  if sets:
+    logging.info("memcache hit for setlist")
+    return sets
+    
   logging.info("Getting set list from Flickr")
   try:
     sets = flickr.photosets_getList(
                format='json',
                nojsoncallback="1",
                nsid=nsid, )
-    logging.info(sets)
     sets = simplejson.loads(sets)
+
+    if not memcache.add(key, sets, 3600):
+      logging.warning("memcache set for setlist failed")
   except:
     return {'error': 'Could not get list of sets from Flickr.'}
   
   return sets
+
+def get_paged_setlist(sets, page):
+  logging.info("getting page %s of setlist" % page);
+  setsperpage = 20
+  setcount   = len(sets['photosets']['photoset'])
+
+  sets['photosets']['total'] = setcount
+  sets['photosets']['pages'] = int(math.ceil(float(setcount)/setsperpage))
+  sets['photosets']['page']  = page
+  sets['photosets']['perpage'] = setsperpage
+  
+  if setcount > setsperpage:
+    start = setsperpage*(page-1)
+    end   = setsperpage*page
+    sets['photosets']['photoset'] = sets['photosets']['photoset'][start:end]
+
+  return sets;
 
 def get_flickr_geototal(photos):
   photos['photos']['subtotal'] = 0
@@ -1110,14 +1135,20 @@ def get_session():
 application = webapp.WSGIApplication(
                   [('/', IndexPage),
                    ('/where/(\w*)', IndexPage),
+
                    ('/overview/', StatsPage),
                    ('/overview/(\w*)', StatsPage),
+
                    ('/trip/add', AddPage),
+                   ('/trip/add/sets/(\d+)', AddPage),
+
                    ('/trip/(\d*)', TripPage),
                    ('/trip/(\d*)/by/(\w+)', TripPage),
                    ('/trip/(\d*)/by/(\w+)/(\d+)', TripPage),
+
                    ('/login/', LoginPage),
                    ('/form/', FormPage),
+
                    ('/ajax/photos.more', MoreJSON),
                    ('/ajax/photos.tag', TagJSON),
                    ('/ajax/photos.geotag', GeoTagJSON),
