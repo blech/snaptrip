@@ -8,7 +8,7 @@
   
   <style type="text/css">
     div.set {
-      width: 512px;
+      width: 520px;
       clear:both;
       border-bottom: 1px dotted #ccc;
       min-height: 87px;
@@ -26,6 +26,7 @@
     div.set h3 {
       margin: 0px;
       padding-bottom:0px;
+      padding-right: 5px;
       margin-bottom: 2px;
       line-height:20px;
       float: left;
@@ -48,7 +49,8 @@
       border: 2px solid #666;
     }
     
-    div.trip_nav {
+    div#set_trip_nav {
+      width: 520px;
       padding-bottom: 10px;
     }
 
@@ -58,13 +60,23 @@
   <script type="text/javascript">
     var ids = new Array();
     var index = 0;
+
+    $(document).ajaxError(function(){
+        if (window.console && window.console.error) {
+            console.error(arguments);
+        }
+    });
   
     $(document).ready(function() {
       $("div.set").each(function(i) {
-        ids.push($(this).attr('id'));
+        id = $(this).attr('id');
+        if ($('div#'+id+" span.date").text() == "") {
+          ids.push(id);
+        }
       });
 
-      /* $("div.set").hover(function() {
+      /* don't do this yet.
+      $("div.set").hover(function() {
         $(this).css({ backgroundColor:"#def" });
         $(this).children().children("a").css({ color:"#47a" });
         // get URL
@@ -74,49 +86,47 @@
         $(this).css({ backgroundColor:"#fff" })
         $(this).children().children("a").css({ color:"#69c" });
         window.status = '';
-      }); */
+      });
+      */
       
       console.log(ids);
-      if (ids) {
+      if (ids.length) {
         _get_set_info(ids[0]);
       }
+
+      /* all-in-one version - to try on live?
+      for (var i=0; i<ids.length; i++) {
+        console.log(ids[i]);
+        _get_set_info(ids[i]);
+      } */
+
     });   
 
     function _get_set_info(id) {
       var ajax_url = "/ajax/photos.set?set_id="+id+"&token={{ session.flickr }}";
-      console.log("getting info for '"+id+"'");
-//       $('div#'+id+" span.date").text("date,");
-// 
-//       index++;
-//       if (ids[index]) {
-//         _get_set_info(ids[index]);
-//       }
-
-      details = function(json) { console.log(json); };
-      console.log(details);
-
-      $.getJSON(ajax_url);
-//                 function(json) {
-//                   console.log(true);
-//                   return true;
-// //                   if (json.stat != "ok") {
-// //                     console.log("json.stat not ok; aborting");
-// //                     return;
-// //                   } else {
-// //                     console.log('displaying date for '+id);
-// //                     // TODO display method
-// //                     $('div#'+id+" span.date").text("date,");
-// //                     index++;
-// //                   }
-// //                   
-// //                   if (ids[index]) {
-// //                     _get_set_info(ids[index]);
-// //                   }
-//                 }
-//                );     
+      $.getJSON(ajax_url, 
+                function(json) {
+                  if (json.stat == "ok") {
+                    $('div#'+id+" span.date").text(", "+json.photoset.dates);
+              
+                    if (json.photoset.trip_id) {
+                      console.log("trip_id matched: "+json.photoset.trip_id)
+                      $('div#'+id+" img").css({ border:"2px solid #f00"})
+                    }
+              
+                    index++;
+                    if (ids[index]) {
+                      _get_set_info(ids[index]);
+                    }
+                  } else {
+                    try {
+                      console.log("json.stat not ok:"+json.message+"; aborting");
+                    } catch (err) {}
+                    return;
+                  }
+                }
+               );
     }
-
-      
   </script>
   
 </head>
@@ -133,7 +143,7 @@
         <div class="set{% if loop.first %} first{% endif %}{% if loop.last %} last{% endif %}" id="{{ photoset.id }}">
           <img src="http://farm{{ photoset.farm }}.static.flickr.com/{{ photoset.server }}/{{ photoset.primary }}_{{ photoset.secret }}_s.jpg" alt="" title="" id="{{ photoset.primary }}" style="float:left;">
           <h3>{{ photoset.title._content }}</h3>
-          <p class="count"><span class="date"></span> {{ photoset.photos }} photos</p>
+          <p class="count">{{ photoset.photos }} photo{% if photoset.photos != 1 %}s{% endif %}<span class="date">{% if photoset.dates %}, {{ photoset.dates }}{% endif %}</span></p>
           <p class="desc">{{ photoset.description._content }}</p>
         </div>
 
@@ -141,12 +151,12 @@
       
       <!-- page navigation - if needed -->
       {% if sets.pages != 1 %}
-        <div class="trip_nav">
+        <div id="set_trip_nav" class="trip_nav">
         {% if sets.page != 1 %} 
-          <span class="left"><a href="/trip/add/sets/{{ sets.page-1 }}">&larr; See previous page of sets.</a></span>
+          <span class="left"><a href="/sets/{{ sets.page-1 }}">&larr; See previous page of sets.</a></span>
         {% endif %}
         {% if sets.page != sets.pages %}
-          <span class="right"><a href="/trip/add/sets/{{ sets.page+1 }}">See next page of sets. &rarr;</a></span>
+          <span class="right"><a href="/sets/{{ sets.page+1 }}">See next page of sets. &rarr;</a></span>
         {% endif %}
         </div>
   

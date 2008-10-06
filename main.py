@@ -176,7 +176,7 @@ class TripPage(webapp.RequestHandler):
     path = os.path.join(os.path.dirname(__file__), 'templates/trip.html')
     self.response.out.write(template.render(path, template_values))    
 
-class AddPage(webapp.RequestHandler):
+class SetPage(webapp.RequestHandler):
   def get(self, page="1"):
     logging.debug("really in Add page")
     session = get_session()
@@ -200,14 +200,18 @@ class AddPage(webapp.RequestHandler):
       'memcache':   memcache.get_stats(),
     }
 
-    logging.debug("in Add page")
-
     nsid = get_flickr_nsid(flickr, token)
     logging.debug(" "+nsid)
     if nsid:
       logging.debug("getting set list")
       sets = get_flickr_setlist(flickr, nsid)
       sets = get_paged_setlist(sets, page)
+
+      logging.info(sets)
+
+      sets = get_set_details(flickr, sets)
+
+      logging.info(sets)
 
       template_values['sets'] = sets['photosets']
     
@@ -491,50 +495,44 @@ class SetJSON(webapp.RequestHandler):
     logging.info("in SetJSON")
     token = self.request.get("token")
 
-    # hack...
-    json = simplejson.loads('{"photoset":{"id":"72157604075543257", "primary":"2318872797", "owner":"48600109393@N01", "ownername":"\u00a0blech", "photo":[{"id":"2318872797", "secret":"00431a8264", "server":"3179", "farm":4, "title":"Star Wars Annual No. 1", "isprimary":"1", "dateupload":"1205012602", "datetaken":"2008-03-08 21:07:31", "datetakengranularity":"0", "tags":"book starwars comic cover 1978 exif:flash=flashdidnotfire exif:iso_speed=400 exif:focal_length=8mm exif:aperture=f28 exif:exposure_bias=0100ev camera:make=fujifilm camera:model=finepixf30 annualno1 exif:exposure=0009sec1110 meta:exif=1205266208"}, {"id":"2318896429", "secret":"7fa77a3ce8", "server":"3232", "farm":4, "title":"FTOOM SPWEEE", "isprimary":"0", "dateupload":"1205013250", "datetaken":"2008-03-08 21:09:25", "datetakengranularity":"0", "tags":"book starwars comic xwing 1978 tiefighter exif:flash=flashdidnotfire exif:iso_speed=200 exif:focal_length=8mm exif:aperture=f28 exif:exposure_bias=0100ev camera:make=fujifilm camera:model=finepixf30 annualno1 exif:exposure=0007sec1140 meta:exif=1205266198"}], "page":1, "per_page":500, "perpage":500, "pages":1, "total":2}, "stat":"ok"}')
-    return self.response.out.write(json)
-
     # and properly:
     if not token:
-      return self.response.out.write({'error': 'There was no Flickr token.'})
+      return self.response.out.write({'stat':'error', 'message': 'There was no Flickr token.'})
 
-    photo_id = self.request.get("photo_id")
-    latitude = self.request.get("latitude")
-    longitude = self.request.get("longitude")
+    set_id = self.request.get("set_id")
+    logging.info("Got token "+token+", set-id "+set_id)
 
-    logging.info("Got token "+token+", latitude "+latitude+" and longitude "+longitude)
+    if not set_id:
+      logging.warn("No set_id or trip_id!")
+      return self.response.out.write({'stat':'error', 'message': 'There were missing parameters.'})
 
-    if not photo_id or not latitude or not longitude:
-      logging.warn("No photo_id or trip_id!")
-      return self.response.out.write({'error': 'There were missing parameters.'})
-
+    # TODO memcache
     keys = get_keys(self.request.host)
     flickr = get_flickr(keys, token, True)
 
+    key = repr(flickr)+":set_id="+set_id
+    photoset = memcache.get(key)
+    if photoset:
+      return self.response.out.write(simplejson.dumps(photoset))
+
     try:
-      json = flickr.photos_geo_setLocation(
+      json = flickr.photosets_getPhotos(
                  format='json',
                  nojsoncallback="1",
-                 photo_id=photo_id,
-                 lat=latitude,
-                 lon=longitude,
-                 accuracy=9,   # 'city'
+                 photoset_id=set_id,
+                 extras='date_taken,date_upload,tags',
                 )
-      test = simplejson.loads(json) # check it's valid JSON
-      
-      # remove memcache
-      if (self.request.get("nsid")):
-        key = repr(flickr)+":nsid="+self.request.get("nsid")+":tripid="+self.request.get("trip_id")+":page="+self.request.get("page")+":type="+self.request.get("method")
-        logging.info("key:: "+key)
-        if memcache.delete(key) != 2:
-          logging.info("Key deletion failed; either network error or key missing");
+      photoset = simplejson.loads(json) # check it's valid JSON
     except:
-      json = {'error': 'There was a problem contacting Flickr.'}
+      photoset = {'stat':'error', 'message': 'There was a problem contacting Flickr.'}
 
-    logging.info("got json "+repr(json));
+    photoset['photoset'] = get_flickr_date_range(photoset['photoset'])
+    photoset['photoset'] = get_flickr_trip_ids(photoset['photoset'])
 
-    self.response.out.write(json)
+    if not memcache.add(key, photoset, 3600):
+      logging.warning("memcache set for photoset failed")
+
+    self.response.out.write(simplejson.dumps(photoset))
 
 # == Dopplr
 
@@ -697,6 +695,7 @@ def get_flickr_nsid(flickr, token):
     return None
 
 def get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page):
+  # TODO dedupe with get_flickr_photos_by_date
   key = repr(flickr)+":nsid="+nsid+":tripid="+str(trip_info["trip"]["id"])+":page="+page+":type=tag"
   logging.info("memcache key is "+key);
   photos = memcache.get(key)
@@ -724,15 +723,18 @@ def get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page):
     photos = simplejson.loads(photos)
   except:
     return {'error': 'Could not get photos from Flickr using machine tag search.'}
+
+  photos = photos['photos']
   photos = get_flickr_geototal(photos)
   photos = get_flickr_tagtotal(photos, trip_info["trip"]["id"])
 
-  if not memcache.add(key, photos['photos'], 3600):
+  if not memcache.add(key, photos, 3600):
     logging.warning("memcache set for photos by tag failed")
 
-  return photos['photos']
+  return photos
 
 def get_flickr_photos_by_date(flickr, nsid, trip_info, page):
+  # TODO dedupe with get_flickr_photos_by_machinetag
   key = repr(flickr)+":nsid="+nsid+":tripid="+str(trip_info["trip"]["id"])+":page="+page+":type=date"
   photos = memcache.get(key)
   if photos:
@@ -762,13 +764,14 @@ def get_flickr_photos_by_date(flickr, nsid, trip_info, page):
   except:
     return {'error': 'Could not get photos from Flickr using date taken search.'}
 
+  photos = photos['photos']
   photos = get_flickr_geototal(photos)
   photos = get_flickr_tagtotal(photos, trip_info["trip"]["id"])
 
-  if not memcache.add(key, photos['photos'], 3600):
+  if not memcache.add(key, photos, 3600):
     logging.warning("memcache set for photos by date failed")
 
-  return photos['photos']
+  return photos
 
 def get_flickr_setlist(flickr, nsid):
   key = repr(flickr)+":nsid="+nsid+":type=sets"
@@ -809,35 +812,95 @@ def get_paged_setlist(sets, page):
 
   return sets;
 
+def get_set_details(flickr, sets):
+  for set in sets['photosets']['photoset']:
+    key = repr(flickr)+":set_id="+set['id']
+    
+    details = memcache.get(key)
+    if details:
+      logging.info(details['photoset']['dates'])
+
+      set['dates']   = details['photoset']['dates']
+      if details['photoset'].has_key('trip_id'):
+        set['trip_id'] = details['photoset']['trip_id']
+  
+  return sets
+
 def get_flickr_geototal(photos):
-  photos['photos']['subtotal'] = 0
-  photos['photos']['geototal'] = 0
-  for photo in photos['photos']['photo']:
-    photos['photos']['subtotal'] = photos['photos']['subtotal'] +1
+  photos['subtotal'] = 0
+  photos['geototal'] = 0
+  for photo in photos['photo']:
+    photos['subtotal'] = photos['subtotal'] +1
     if photo['latitude'] and photo['longitude']:
-      photos['photos']['geototal'] = photos['photos']['geototal']+1
+      photos['geototal'] = photos['geototal']+1
       if int(photo['accuracy']) > 9:
         photo['accurate'] = True
 
   # if we want this as a string (we don't)
-  # photos['photos']['geototal'] = str(photos['photos']['geototal'])
+  # photos['geototal'] = str(photos['geototal'])
 
   return photos
 
 def get_flickr_tagtotal(photos, trip_id):
-  photos['photos']['tagtotal'] = 0
-  for photo in photos['photos']['photo']:
+  photos['tagtotal'] = 0
+  for photo in photos['photo']:
 
     if photo['tags'].find('dopplr:trip='+str(trip_id)) > 0:
-      photos['photos']['tagtotal'] = photos['photos']['tagtotal']+1
+      photos['tagtotal'] += 1
       photo['dopplr'] = True;
 
-  if photos['photos']['tagtotal']:
-    photos['photos']['totag']    = str(int(photos['photos']['subtotal'])-photos['photos']['tagtotal'])
+  if photos['tagtotal']:
+    photos['totag']    = str(int(photos['subtotal'])-photos['tagtotal'])
   else:
-    photos['photos']['totag']    = photos['photos']['subtotal']
-  photos['photos']['tagtotal'] = str(photos['photos']['tagtotal'])
+    photos['totag']    = photos['subtotal']
+  photos['tagtotal'] = str(photos['tagtotal'])
 
+  return photos
+
+def get_flickr_date_range(photos):
+  start_date = None
+  finish_date = None
+  
+  for photo in photos['photo']:
+    datetaken = datetime.strptime(photo['datetaken'], "%Y-%m-%d %H:%M:%S")
+    if not start_date or datetaken < start_date:
+      start_date = datetaken
+    if not finish_date or finish_date < datetaken:
+      finish_date = datetaken
+
+  start_day  = start_date.strftime("%d %B %Y")
+  finish_day = finish_date.strftime("%d %B %Y")
+
+  if start_day == finish_day:
+    photos['dates'] = "taken on %s" % (start_day)
+  elif start_date.month == finish_date.month and start_date.year == finish_date.year:
+    photos['dates'] = "taken from %s to %s" % (start_date.strftime("%d"), finish_day)
+  elif start_date.year == finish_date.year:
+    photos['dates'] = "taken from %s to %s" % (start_date.strftime("%d %B"), finish_day)
+  else:
+    photos['dates'] = "taken from %s to %s" % (start_day, finish_day)
+
+  # humanise
+  photos['dates'] = photos['dates'].replace(" 0", " ")
+  return photos
+
+def get_flickr_trip_ids(photos):
+  trip_ids = {}
+
+  for photo in photos['photo']:
+    for m in re.finditer('dopplr:trip=(\d+)', photo['tags']):
+      trip_id = m.group(1)
+      if not trip_ids.has_key(trip_id):
+        trip_ids[trip_id] = 1
+      else:
+        trip_ids[trip_id] += 1
+    
+  for trip_id in trip_ids:
+    if trip_ids[trip_id] == photos['total']:
+      photos['trip_id'] = trip_id
+      break # only take the first
+  
+#  photos['trip_ids'] = trip_ids
   return photos
 
 # == utilities
@@ -1189,8 +1252,8 @@ application = webapp.WSGIApplication(
                    ('/overview/', StatsPage),
                    ('/overview/(\w*)', StatsPage),
 
-                   ('/trip/add', AddPage),
-                   ('/trip/add/sets/(\d+)', AddPage),
+                   ('/sets', SetPage),
+                   ('/sets/page/(\d+)', SetPage),
 
                    ('/trip/(\d*)', TripPage),
                    ('/trip/(\d*)/by/(\w+)', TripPage),
