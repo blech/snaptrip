@@ -356,7 +356,7 @@ class MoreJSON(webapp.RequestHandler):
     page = self.request.get("page")
 
     if not token or not nsid:
-      return self.response.out.write({'error': 'There was no Flickr token.'})
+      return self.response.out.write({'error': 'There was no Flickr token or NSID.'})
 
     keys = get_keys(self.request.host)
     flickr = get_flickr(keys, token)
@@ -446,6 +446,56 @@ class GeoTagJSON(webapp.RequestHandler):
     logging.info("in GeoTagJSON")
     token = self.request.get("token")
 
+    if not token:
+      return self.response.out.write({'error': 'There was no Flickr token.'})
+
+    photo_id = self.request.get("photo_id")
+    latitude = self.request.get("latitude")
+    longitude = self.request.get("longitude")
+
+    logging.info("Got token "+token+", latitude "+latitude+" and longitude "+longitude)
+
+    if not photo_id or not latitude or not longitude:
+      logging.warn("No photo_id or trip_id!")
+      return self.response.out.write({'error': 'There were missing parameters.'})
+
+    keys = get_keys(self.request.host)
+    flickr = get_flickr(keys, token, True)
+
+    try:
+      json = flickr.photos_geo_setLocation(
+                 format='json',
+                 nojsoncallback="1",
+                 photo_id=photo_id,
+                 lat=latitude,
+                 lon=longitude,
+                 accuracy=9,   # 'city'
+                )
+      test = simplejson.loads(json) # check it's valid JSON
+      
+      # remove memcache
+      if (self.request.get("nsid")):
+        key = repr(flickr)+":nsid="+self.request.get("nsid")+":tripid="+self.request.get("trip_id")+":page="+self.request.get("page")+":type="+self.request.get("method")
+        logging.info("key:: "+key)
+        if memcache.delete(key) != 2:
+          logging.info("Key deletion failed; either network error or key missing");
+    except:
+      json = {'error': 'There was a problem contacting Flickr.'}
+
+    logging.info("got json "+repr(json));
+
+    self.response.out.write(json)
+
+class SetJSON(webapp.RequestHandler):
+  def get(self):
+    logging.info("in SetJSON")
+    token = self.request.get("token")
+
+    # hack...
+    json = simplejson.loads('{"photoset":{"id":"72157604075543257", "primary":"2318872797", "owner":"48600109393@N01", "ownername":"\u00a0blech", "photo":[{"id":"2318872797", "secret":"00431a8264", "server":"3179", "farm":4, "title":"Star Wars Annual No. 1", "isprimary":"1", "dateupload":"1205012602", "datetaken":"2008-03-08 21:07:31", "datetakengranularity":"0", "tags":"book starwars comic cover 1978 exif:flash=flashdidnotfire exif:iso_speed=400 exif:focal_length=8mm exif:aperture=f28 exif:exposure_bias=0100ev camera:make=fujifilm camera:model=finepixf30 annualno1 exif:exposure=0009sec1110 meta:exif=1205266208"}, {"id":"2318896429", "secret":"7fa77a3ce8", "server":"3232", "farm":4, "title":"FTOOM SPWEEE", "isprimary":"0", "dateupload":"1205013250", "datetaken":"2008-03-08 21:09:25", "datetakengranularity":"0", "tags":"book starwars comic xwing 1978 tiefighter exif:flash=flashdidnotfire exif:iso_speed=200 exif:focal_length=8mm exif:aperture=f28 exif:exposure_bias=0100ev camera:make=fujifilm camera:model=finepixf30 annualno1 exif:exposure=0007sec1140 meta:exif=1205266198"}], "page":1, "per_page":500, "perpage":500, "pages":1, "total":2}, "stat":"ok"}')
+    return self.response.out.write(json)
+
+    # and properly:
     if not token:
       return self.response.out.write({'error': 'There was no Flickr token.'})
 
@@ -1152,6 +1202,7 @@ application = webapp.WSGIApplication(
                    ('/ajax/photos.more', MoreJSON),
                    ('/ajax/photos.tag', TagJSON),
                    ('/ajax/photos.geotag', GeoTagJSON),
+                   ('/ajax/photos.set', SetJSON),
                   ],
                   debug=True)
 

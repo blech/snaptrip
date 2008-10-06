@@ -11,7 +11,15 @@
       width: 512px;
       clear:both;
       border-bottom: 1px dotted #ccc;
-      min-height: 85px;
+      min-height: 87px;
+      padding-top: 10px;
+    }
+
+    div.set.first {
+      padding-top: 0px;
+    }
+
+    div.set.last {
       margin-bottom: 10px;
     }
 
@@ -45,6 +53,71 @@
     }
 
   </style>
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
+  <script type="text/javascript">
+    var ids = new Array();
+    var index = 0;
+  
+    $(document).ready(function() {
+      $("div.set").each(function(i) {
+        ids.push($(this).attr('id'));
+      });
+
+      /* $("div.set").hover(function() {
+        $(this).css({ backgroundColor:"#def" });
+        $(this).children().children("a").css({ color:"#47a" });
+        // get URL
+        // local = $(this).children().children("a").attr("href").substring(1);
+        // window.status = window.location + local;
+      }, function() {
+        $(this).css({ backgroundColor:"#fff" })
+        $(this).children().children("a").css({ color:"#69c" });
+        window.status = '';
+      }); */
+      
+      console.log(ids);
+      if (ids) {
+        _get_set_info(ids[0]);
+      }
+    });   
+
+    function _get_set_info(id) {
+      var ajax_url = "/ajax/photos.set?set_id="+id+"&token={{ session.flickr }}";
+      console.log("getting info for '"+id+"'");
+//       $('div#'+id+" span.date").text("date,");
+// 
+//       index++;
+//       if (ids[index]) {
+//         _get_set_info(ids[index]);
+//       }
+
+      details = function(json) { console.log(json); };
+      console.log(details);
+
+      $.getJSON(ajax_url);
+//                 function(json) {
+//                   console.log(true);
+//                   return true;
+// //                   if (json.stat != "ok") {
+// //                     console.log("json.stat not ok; aborting");
+// //                     return;
+// //                   } else {
+// //                     console.log('displaying date for '+id);
+// //                     // TODO display method
+// //                     $('div#'+id+" span.date").text("date,");
+// //                     index++;
+// //                   }
+// //                   
+// //                   if (ids[index]) {
+// //                     _get_set_info(ids[index]);
+// //                   }
+//                 }
+//                );     
+    }
+
+      
+  </script>
   
 </head>
 <body>
@@ -57,10 +130,10 @@
       <p>If you already have a set for a trip in Flickr, you can convert it to a trip in Dopplr.</p>
       
       {% for photoset in sets.photoset %}
-        <div class="set" id="{{ photoset.id }}">
+        <div class="set{% if loop.first %} first{% endif %}{% if loop.last %} last{% endif %}" id="{{ photoset.id }}">
           <img src="http://farm{{ photoset.farm }}.static.flickr.com/{{ photoset.server }}/{{ photoset.primary }}_{{ photoset.secret }}_s.jpg" alt="" title="" id="{{ photoset.primary }}" style="float:left;">
           <h3>{{ photoset.title._content }}</h3>
-          <p class="count"><span class="date">{{ photoset.photos }} photos</p>
+          <p class="count"><span class="date"></span> {{ photoset.photos }} photos</p>
           <p class="desc">{{ photoset.description._content }}</p>
         </div>
 
