@@ -29,13 +29,11 @@
       padding-right: 5px;
       margin-bottom: 2px;
       line-height:20px;
-      float: left;
     }
 
     div.set p.count {
       font-size: 12px;
-      float: right;
-      margin: 4px 0px 2px 0px;
+      text-align: right;
     }
     
     div.set p.desc {
@@ -46,7 +44,7 @@
       margin-right: 10px;
       width: 75px;
       height: 75px;
-      border: 2px solid #666;
+      border: 1px solid #fff;
     }
     
     div#set_trip_nav {
@@ -143,8 +141,8 @@
         <div class="set{% if loop.first %} first{% endif %}{% if loop.last %} last{% endif %}" id="{{ photoset.id }}">
           <img src="http://farm{{ photoset.farm }}.static.flickr.com/{{ photoset.server }}/{{ photoset.primary }}_{{ photoset.secret }}_s.jpg" alt="" title="" id="{{ photoset.primary }}" style="float:left;">
           <h3>{{ photoset.title._content }}</h3>
-          <p class="count">{{ photoset.photos }} photo{% if photoset.photos != 1 %}s{% endif %}<span class="date">{% if photoset.dates %}, {{ photoset.dates }}{% endif %}</span></p>
           <p class="desc">{{ photoset.description._content }}</p>
+          <p class="count">{{ photoset.photos }} photo{% if photoset.photos != 1 %}s{% endif %}<span class="date">{% if photoset.dates %}, {{ photoset.dates }}{% endif %}</span></p>
         </div>
 
       {% endfor %}
@@ -153,10 +151,10 @@
       {% if sets.pages != 1 %}
         <div id="set_trip_nav" class="trip_nav">
         {% if sets.page != 1 %} 
-          <span class="left"><a href="/sets/{{ sets.page-1 }}">&larr; See previous page of sets.</a></span>
+          <span class="left"><a href="/sets/page/{{ sets.page-1 }}">&larr; See previous page of sets.</a></span>
         {% endif %}
         {% if sets.page != sets.pages %}
-          <span class="right"><a href="/sets/{{ sets.page+1 }}">See next page of sets. &rarr;</a></span>
+          <span class="right"><a href="/sets/page/{{ sets.page+1 }}">See next page of sets. &rarr;</a></span>
         {% endif %}
         </div>
   
