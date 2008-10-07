@@ -171,6 +171,9 @@ class TripPage(webapp.RequestHandler):
               template_values['photos'] = get_flickr_photos_by_date(flickr, nsid, trip_info, page)
               template_values['method'] = "date"
 
+        else:
+          return error_page(self, session, "Could not get info about the user data from Flickr.")     
+
     template_values['memcache'] = memcache.get_stats(),
 
     path = os.path.join(os.path.dirname(__file__), 'templates/trip.html')
@@ -201,7 +204,6 @@ class SetPage(webapp.RequestHandler):
     }
 
     nsid = get_flickr_nsid(flickr, token)
-    logging.debug(" "+nsid)
     if nsid:
       logging.debug("getting set list")
       sets = get_flickr_setlist(flickr, nsid)
@@ -214,7 +216,9 @@ class SetPage(webapp.RequestHandler):
       logging.info(sets)
 
       template_values['sets'] = sets['photosets']
-    
+    else:
+      return error_page(self, session, "Could not get info about the user data from Flickr.")     
+ 
     # jinja2
     template = env.get_template('add.html')
     self.response.out.write(template.render(template_values))
@@ -671,15 +675,19 @@ def get_flickr_nsid(flickr, token):
     return nsid
 
   # check token (and get nsid)
-  auth = flickr.auth_checkToken(
-            format='json',
-            nojsoncallback="1",
-         )
+  try:
+    auth = flickr.auth_checkToken(
+              format='json',
+              nojsoncallback="1",
+           )
+  except:
+    logging.info("Could not fetch auth token")
+    return None
 
   try:
     auth = simplejson.loads(auth)
   except:
-    logging.info("Could not parse '"+auth+"'")
+    logging.info("Could not parse  '"+auth+"'")
     return None
 
   if auth.get("auth"):
@@ -787,13 +795,16 @@ def get_flickr_setlist(flickr, nsid):
                nojsoncallback="1",
                nsid=nsid, )
     sets = simplejson.loads(sets)
+    if sets['stat'] == "ok":
+      if not memcache.add(key, sets, 3600):
+        logging.warning("memcache set for setlist failed")
 
-    if not memcache.add(key, sets, 3600):
-      logging.warning("memcache set for setlist failed")
+    return sets
+
   except:
-    return {'error': 'Could not get list of sets from Flickr.'}
-  
-  return sets
+    logging.error("Error getting list of sets from Flickr")
+
+  return {'message': 'Could not get list of sets from Flickr.'}  
 
 def get_paged_setlist(sets, page):
   logging.info("getting page %s of setlist" % page);
