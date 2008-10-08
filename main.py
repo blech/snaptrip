@@ -216,7 +216,7 @@ class SetPage(webapp.RequestHandler):
       return error_page(self, session, "Could not get info about the user data from Flickr.")     
  
     # jinja2
-    template = env.get_template('add.html')
+    template = env.get_template('sets.html')
     self.response.out.write(template.render(template_values))
 
 class LoginPage(webapp.RequestHandler):
