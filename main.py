@@ -210,12 +210,7 @@ class SetPage(webapp.RequestHandler):
       if sets:
         sets = get_paged_setlist(sets, page)
 
-      logging.info(sets)
-
       sets = get_set_details(flickr, sets)
-
-      logging.info(sets)
-
       template_values['sets'] = sets['photosets']
     else:
       return error_page(self, session, "Could not get info about the user data from Flickr.")     
@@ -498,11 +493,14 @@ class GeoTagJSON(webapp.RequestHandler):
 class SetJSON(webapp.RequestHandler):
   def get(self):
     logging.info("in SetJSON")
-    token = self.request.get("token")
 
-    # and properly:
-    if not token:
-      return self.response.out.write({'stat':'error', 'message': 'There was no Flickr token.'})
+    session = get_session()
+    
+    try:
+      token  = session['flickr']
+      dopplr = session['dopplr']
+    except KeyError, e:
+      return self.response.out.write({'stat':'error', 'message': 'Could not get tokens from session.'})
 
     set_id = self.request.get("set_id")
     logging.info("Got token "+token+", set-id "+set_id)
@@ -532,7 +530,7 @@ class SetJSON(webapp.RequestHandler):
       photoset = {'stat':'error', 'message': 'There was a problem contacting Flickr.'}
 
     photoset['photoset'] = get_flickr_date_range(photoset['photoset'])
-    photoset['photoset'] = get_flickr_trip_ids(photoset['photoset'])
+    photoset['photoset'] = get_flickr_trip_ids(dopplr, photoset['photoset'])
 
     if not memcache.add(key, photoset, 3600):
       logging.warning("memcache set for photoset failed")
@@ -843,7 +841,7 @@ def get_flickr_setlist(flickr, nsid):
 
 def get_paged_setlist(sets, page):
   logging.info("getting page %s of setlist" % page);
-  setsperpage = 20
+  setsperpage = 10
   setcount   = len(sets['photosets']['photoset'])
 
   sets['photosets']['total'] = setcount
@@ -861,14 +859,14 @@ def get_paged_setlist(sets, page):
 def get_set_details(flickr, sets):
   for set in sets['photosets']['photoset']:
     key = repr(flickr)+":set_id="+set['id']
-    
+
     details = memcache.get(key)
     if details:
-      logging.info(details['photoset']['dates'])
-
+      logging.info("fetching previously cached set datails for key '"+key+"'")
       set['dates']   = details['photoset']['dates']
       if details['photoset'].has_key('trip_id'):
         set['trip_id'] = details['photoset']['trip_id']
+        set['trip_info'] = details['photoset']['trip_info']
   
   return sets
 
@@ -930,7 +928,7 @@ def get_flickr_date_range(photos):
   photos['dates'] = photos['dates'].replace(" 0", " ")
   return photos
 
-def get_flickr_trip_ids(photos):
+def get_flickr_trip_ids(dopplr, photos):
   trip_ids = {}
 
   for photo in photos['photo']:
@@ -944,9 +942,14 @@ def get_flickr_trip_ids(photos):
   for trip_id in trip_ids:
     if trip_ids[trip_id] == photos['total']:
       photos['trip_id'] = trip_id
+      trip_info = get_trip_info(dopplr, trip_id)
+      photos['trip_info'] = { 'rgb': trip_info['city']['rgb'],
+                              'name': trip_info['city']['name'],
+                            }
       break # only take the first
   
-#  photos['trip_ids'] = trip_ids
+  photos['trip_ids'] = trip_ids
+
   return photos
 
 # == utilities
@@ -1015,9 +1018,6 @@ def links_for_trip(trips_list, trip_id):
       city_index = index
     index = index+1
 
-  logging.info(city_index)
-  logging.info(trip_index)
-  
   links = {}
 
   if (trip_index > 0):

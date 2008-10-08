@@ -42,9 +42,10 @@
     
     div.set img {
       margin-right: 10px;
+      margin-bottom: 2px;
       width: 75px;
       height: 75px;
-      border: 1px solid #fff;
+      border: 2px solid #fff;
     }
     
     div#set_trip_nav {
@@ -68,7 +69,7 @@
     $(document).ready(function() {
       $("div.set").each(function(i) {
         id = $(this).attr('id');
-        if ($('div#'+id+" span.date").text() == "") {
+        if ($('div#'+id+" span.date").text() == ".") {
           ids.push(id);
         }
       });
@@ -93,7 +94,7 @@
       }
 
       /* all-in-one version - to try on live?
-      for (var i=0; i<ids.length; i++) {
+      for (var i=0; ids.length>i; i++) {
         console.log(ids[i]);
         _get_set_info(ids[i]);
       } */
@@ -101,15 +102,17 @@
     });   
 
     function _get_set_info(id) {
-      var ajax_url = "/ajax/photos.set?set_id="+id+"&token={{ session.flickr }}";
+      var ajax_url = "/ajax/photos.set?set_id="+id;
       $.getJSON(ajax_url, 
                 function(json) {
                   if (json.stat == "ok") {
-                    $('div#'+id+" span.date").text(", "+json.photoset.dates);
+                    $('div#'+id+" span.date").text(", "+json.photoset.dates+".");
               
                     if (json.photoset.trip_id) {
                       console.log("trip_id matched: "+json.photoset.trip_id)
-                      $('div#'+id+" img").css({ border:"2px solid #f00"})
+                      console.log(json.photoset.trip_info.rgb)
+                      $('div#'+id+" img").css({ border:"2px solid #"+json.photoset.trip_info.rgb })
+                      $('div#'+id+" span.date").html(", during a <a href='/trip/"+json.photoset.trip_id+"'>trip to "+json.photoset.trip_info.name+"</"+"a>.");
                     }
               
                     index++;
@@ -139,10 +142,11 @@
       
       {% for photoset in sets.photoset %}
         <div class="set{% if loop.first %} first{% endif %}{% if loop.last %} last{% endif %}" id="{{ photoset.id }}">
-          <img src="http://farm{{ photoset.farm }}.static.flickr.com/{{ photoset.server }}/{{ photoset.primary }}_{{ photoset.secret }}_s.jpg" alt="" title="" id="{{ photoset.primary }}" style="float:left;">
+          <img src="http://farm{{ photoset.farm }}.static.flickr.com/{{ photoset.server }}/{{ photoset.primary }}_{{ photoset.secret }}_s.jpg" alt="" title="" id="{{ photoset.primary }}" style="float:left;{% if photoset.trip_info %} border:2px solid #{{ photoset.trip_info.rgb }};{% endif %}">
           <h3>{{ photoset.title._content }}</h3>
           <p class="desc">{{ photoset.description._content }}</p>
-          <p class="count">{{ photoset.photos }} photo{% if photoset.photos != 1 %}s{% endif %}<span class="date">{% if photoset.dates %}, {{ photoset.dates }}{% endif %}</span></p>
+          <p class="count">{{ photoset.photos }} photo{% if photoset.photos != 1 %}s{% endif %}<span class="date">{% if photoset.trip_info %}, during a <a href="/trips/{{ photoset.id }}">trip to {{ photoset.trip_info.name }}</a>.{% else %}{% if photoset.dates %}, {{ photoset.dates }}.{% else %}.{% endif %}{% endif %}</span>
+          </p>
         </div>
 
       {% endfor %}
@@ -150,6 +154,8 @@
       <!-- page navigation - if needed -->
       {% if sets.pages != 1 %}
         <div id="set_trip_nav" class="trip_nav">
+          <p>Showing sets {{ (sets.page-1)*(sets.perpage)+1 }} to {{ (sets.page)*(sets.perpage) }} of {{ sets.total }} (page {{ sets.page }} of {{ sets.pages }}).</p>
+        
         {% if sets.page != 1 %} 
           <span class="left"><a href="/sets/page/{{ sets.page-1 }}">&larr; See previous page of sets.</a></span>
         {% endif %}
