@@ -3,11 +3,11 @@
 <html lang="en">
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8">
-	<title>snaptrip - a trip to {{ trip.trip.city.name }} in {{ trip.trip.startdate|date:"F Y" }}</title>
+	<title>snaptrip - a trip to {{ trip.city.name }} in {{ trip.startdate|date:"F Y" }}</title>
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
   <style type="text/css">
     div#photos span.image a.img img.dopplr {
-      border:2px solid #{{ trip.trip.city.rgb }};
+      border:2px solid #{{ trip.city.rgb }};
     }
   </style>
 
@@ -21,14 +21,14 @@
     page++;
 
   {% ifequal method 'tag' %}
-    $.getJSON("/ajax/photos.more?page="+page+"&token={{ session.flickr }}&nsid={{ photos.photo.0.owner }}&tripid={{ trip.trip.id }}",
+    $.getJSON("/ajax/photos.more?page="+page+"&token={{ session.flickr }}&nsid={{ photos.photo.0.owner }}&tripid={{ trip.id }}",
               function(json) { 
                 page = json.photos.page;
                 add_photos(json);
               }
              );
   {% else %}
-    $.getJSON("/ajax/photos.more?page="+page+"&token={{ session.flickr }}&nsid={{ photos.photo.0.owner }}&startdate={{ trip.trip.startdate|date:"Y-m-d" }}&finishdate={{ trip.trip.finishdate|date:"Y-m-d" }}",
+    $.getJSON("/ajax/photos.more?page="+page+"&token={{ session.flickr }}&nsid={{ photos.photo.0.owner }}&startdate={{ trip.startdate|date:"Y-m-d" }}&finishdate={{ trip.finishdate|date:"Y-m-d" }}",
               function(json) { 
                 page = json.photos.page;
                 add_photos(json);
@@ -98,7 +98,7 @@
   }
 
   function _do_tag(photo_id) {
-    var ajax_url = "/ajax/photos.tag?photo_id="+photo_id+"&trip_id={{ trip.trip.id }}&woe_id={{ trip.trip.city.woeid }}&token={{ session.flickr }}";
+    var ajax_url = "/ajax/photos.tag?photo_id="+photo_id+"&trip_id={{ trip.id }}&woe_id={{ trip.city.woeid }}&token={{ session.flickr }}";
     if (!tag_index) { // first time through, memcache invalidate
       ajax_url += "&page={{ photos.page }}&method={{method}}&nsid={{ photos.photo.0.owner }}";
     }
@@ -118,14 +118,14 @@
                   }
                 } else {
                   // TODO display method
-                  $('img#'+photo_id).css({ border:"2px solid #{{ trip.trip.city.rgb }}"});
+                  $('img#'+photo_id).css({ border:"2px solid #{{ trip.city.rgb }}"});
                   tag_index++;
                 }
                 
                 if (photos_to_tag[tag_index]) {
                   _do_tag(photos_to_tag[tag_index]);
                 } else {
-                  $('p#tag').html("Your photos have been tagged with <a href='http://flickr.com/photos/tags/dopplr:trip={{trip.trip.id}}'>'dopplr:trip={{ trip.trip.id }}'<"+"/a>. Thanks.");
+                  $('p#tag').html("Your photos have been tagged with <a href='http://flickr.com/photos/tags/dopplr:trip={{trip.id}}'>'dopplr:trip={{ trip.id }}'<"+"/a>. Thanks.");
                   // alert("Tagged all photos.");
                 }
               }
@@ -133,9 +133,9 @@
    }
 
   function _do_geotag(photo_id) {
-    var ajax_url = "/ajax/photos.geotag?photo_id="+photo_id+"&latitude={{ trip.trip.city.latitude }}&longitude={{ trip.trip.city.longitude }}&token={{ session.flickr }}";
+    var ajax_url = "/ajax/photos.geotag?photo_id="+photo_id+"&latitude={{ trip.city.latitude }}&longitude={{ trip.city.longitude }}&token={{ session.flickr }}";
     if (!tag_index) { // first time through, add cache invalidate headers
-      ajax_url += "&page={{ photos.page }}&method={{method}}&nsid={{ photos.photo.0.owner }}&trip_id={{trip.trip.id}}";
+      ajax_url += "&page={{ photos.page }}&method={{method}}&nsid={{ photos.photo.0.owner }}&trip_id={{trip.id}}";
     }
     $.getJSON(ajax_url,
               function(json) {
@@ -178,15 +178,15 @@
 
     function initialize() {
         map = new google.maps.Map2(document.getElementById("map"));
-        map.setCenter(new GLatLng({{trip.trip.city.latitude}},{{trip.trip.city.longitude}}), 4);
+        map.setCenter(new GLatLng({{trip.city.latitude}},{{trip.city.longitude}}), 4);
         map.setMapType(G_PHYSICAL_MAP);
         map.addControl(new GSmallMapControl());
 
         // add trip markers
-        var dest_p = new GLatLng({{trip.trip.city.latitude}},{{trip.trip.city.longitude}});
+        var dest_p = new GLatLng({{trip.city.latitude}},{{trip.city.longitude}});
 
         /* // geodesics. suppressed, for now.
-        var dep_p = new GLatLng({{trip.trip.departure.latitude}},{{trip.trip.departure.longitude}});
+        var dep_p = new GLatLng({{trip.departure.latitude}},{{trip.departure.longitude}});
         var dep_m = new GMarker(dep_p, {zIndexProcess:orderOfCreation, icon:get_small_icon('green')});
         map.addOverlay(dep_m);
 
@@ -194,7 +194,7 @@
         var polyline = new GPolyline([
           dep_p,
           dest_p
-          ], "#{{ trip.trip.city.rgb }}", 1, 1, polyOptions);
+          ], "#{{ trip.city.rgb }}", 1, 1, polyOptions);
         map.addOverlay(polyline);
         */
 
@@ -247,17 +247,17 @@
 
   <div id="content">
     <div id="main" class="trip">
-      <h2>A trip to {{trip.trip.city.name}}, {{trip.trip.city.country}}.</h2>
+      <h2>A trip to {{trip.city.name}}, {{trip.city.country}}.</h2>
       
       {# TODO polyline from start point #}
       {# TODO slippymap? #}
-      <div id="map" style="width:500px; height:188px; border: 2px solid #{{ trip.trip.city.rgb }};"></div>
+      <div id="map" style="width:500px; height:188px; border: 2px solid #{{ trip.city.rgb }};"></div>
 
-    {% ifequal trip.trip.status "Future" %}
+    {% ifequal trip.status "Future" %}
       <p>This trip hasn't happened yet, so no Flickr photos are available.</p>
       
     {% else %}
-      {% ifnotequal trip.trip.nick session.nick %}
+      {% ifnotequal trip.nick session.nick %}
         <p>Unfortunately, for now we can't look up photos for other people's trips.</p>
 
       {% else %}
@@ -280,10 +280,10 @@
             {% ifnotequal photos.pages 1 %}
               <div class="trip_nav">
               {% ifnotequal photos.page 1 %} 
-                <span class="left"><a href="/trip/{{ trip.trip.id }}/by/{{ method }}/{{ prevpage }}">See previous page of photos.</a></span>
+                <span class="left"><a href="/trip/{{ trip.id }}/by/{{ method }}/{{ prevpage }}">See previous page of photos.</a></span>
               {% endifnotequal %}
               {% ifnotequal photos.page photos.pages %}
-                <span class="right"><a href="/trip/{{ trip.trip.id }}/by/{{ method }}/{{ nextpage }}">See next page of photos.</a></span>
+                <span class="right"><a href="/trip/{{ trip.id }}/by/{{ method }}/{{ nextpage }}">See next page of photos.</a></span>
               {% endifnotequal %}
               </div>
 
@@ -300,12 +300,12 @@
           
 <!-- 'showing' text: (machine)tag -->
             {% ifequal method 'tag' %}
-              with the machine tag 'dopplr:trip={{ trip.trip.id }}'.{% ifnotequal photos.pages photos.page %} <a href="/trip/{{ trip.trip.id }}/by/tag/{{ nextpage }}" id="more">See more?</a>{% endifnotequal %}</p>
+              with the machine tag 'dopplr:trip={{ trip.id }}'.{% ifnotequal photos.pages photos.page %} <a href="/trip/{{ trip.id }}/by/tag/{{ nextpage }}" id="more">See more?</a>{% endifnotequal %}</p>
               
-              <p id="tag">Dopplr will use this tag to show your pubic photos, if you have associated your account. However, there may be more photos from this trip. Would you like to <a href="/trip/{{ trip.trip.id }}/by/date">search by date</a> instead?</p>
+              <p id="tag">Dopplr will use this tag to show your pubic photos, if you have associated your account. However, there may be more photos from this trip. Would you like to <a href="/trip/{{ trip.id }}/by/date">search by date</a> instead?</p>
 <!-- 'showing' text: by date -->
             {% else %}
-              taken between {{ trip.trip.startdate|date:"d F Y" }} and {{ trip.trip.finishdate|date:"d F Y" }}.{% ifnotequal photos.pages photos.page %} <a href="/trip/{{ trip.trip.id }}/by/date/{{ nextpage }}" id="more">See more?</a>{% endifnotequal %}</p>
+              taken between {{ trip.startdate|date:"d F Y" }} and {{ trip.finishdate|date:"d F Y" }}.{% ifnotequal photos.pages photos.page %} <a href="/trip/{{ trip.id }}/by/date/{{ nextpage }}" id="more">See more?</a>{% endifnotequal %}</p>
               
            
 <!-- tag info -->
@@ -339,8 +339,8 @@
     {% endifequal %}
     
       <div class="trip_nav">
-        <span class="left"><a href="/{% ifnotequal trip.trip.nick session.nick %}where/{{ session.nick }}{% endifnotequal %}">&larr; Back to all trips.</a></span>
-        <span class="right"><a href="{{ trip.trip.url }}">View this trip at Dopplr. &rarr;</a></span>
+        <span class="left"><a href="/{% ifnotequal trip.nick session.nick %}where/{{ session.nick }}{% endifnotequal %}">&larr; Back to all trips.</a></span>
+        <span class="right"><a href="{{ trip.url }}">View this trip at Dopplr. &rarr;</a></span>
       </div>
       
     </div>
@@ -366,19 +366,19 @@
       <h3>More trips.</h3>
       
       <p>{% if links.prev %}
-        {% ifequal trip.trip.nick session.nick %}Your{% else %}Their{% endifequal %} 
+        {% ifequal trip.nick session.nick %}Your{% else %}Their{% endifequal %} 
         previous trip 
         {% ifequal links.prev.status "Past" %}was{% else %}is{% endifequal %}
         to <a href="/trip/{{ links.prev.id }}">{{ links.prev.city }}</a> {{ links.past.status }}
         
         {% if links.next %}
-        and {% ifequal trip.trip.nick session.nick %}your{% else %}their{% endifequal %} next trip
+        and {% ifequal trip.nick session.nick %}your{% else %}their{% endifequal %} next trip
         {% ifequal links.next.status "Past" %}was{% else %}is{% endifequal %}
         to <a href="/trip/{{ links.next.id }}">{{ links.next.city }}</a>.
         {% endif %}
       {% else %}
         {% if links.next %}
-          {% ifequal trip.trip.nick session.nick %}Your{% else %}Their{% endifequal %}
+          {% ifequal trip.nick session.nick %}Your{% else %}Their{% endifequal %}
           next trip {% ifequal links.next.status "Past" %}was{% else %}is{% endifequal %}
           to <a href="/trip/{{ links.next.id }}">{{ links.next.city }}</a>.
         {% else %}
@@ -388,11 +388,11 @@
 
 <!-- 
       {% if links.city_prev %}
-      <p>Previous trip to <a href="/trip/{{ links.city_prev.id }}">{{ trip.trip.city.name }}</a>.</p>
+      <p>Previous trip to <a href="/trip/{{ links.city_prev.id }}">{{ trip.city.name }}</a>.</p>
       {% endif %}
 
       {% if links.city_next %}
-      <p>Next trip to <a href="/trip/{{ links.city_next.id }}">{{ trip.trip.city.name }}</a>.</p>
+      <p>Next trip to <a href="/trip/{{ links.city_next.id }}">{{ trip.city.name }}</a>.</p>
       {% endif %}
  -->
 

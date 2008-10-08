@@ -130,8 +130,8 @@ class TripPage(webapp.RequestHandler):
       return error_page(self, session, trip_info['error'])
 
     who = ""
-    if session["nick"] == trip_info["trip"]["nick"]:
-      who = trip_info["trip"]["nick"]
+    if session["nick"] == trip_info["nick"]:
+      who = trip_info["nick"]
       
     trips_info = get_trips_info(permanent, who)
     if trips_info.has_key('error'):
@@ -145,8 +145,8 @@ class TripPage(webapp.RequestHandler):
       'keys':       get_keys(self.request.host),
     }
   
-    if session["nick"] == trip_info["trip"]["nick"]:
-      if token and not trip_info["trip"]["status"] == "Future":
+    if session["nick"] == trip_info["nick"]:
+      if token and not trip_info["status"] == "Future":
         # get keys
         keys = get_keys(self.request.host)
         flickr = get_flickr(keys, token)      
@@ -207,7 +207,8 @@ class SetPage(webapp.RequestHandler):
     if nsid:
       logging.debug("getting set list")
       sets = get_flickr_setlist(flickr, nsid)
-      sets = get_paged_setlist(sets, page)
+      if sets:
+        sets = get_paged_setlist(sets, page)
 
       logging.info(sets)
 
@@ -612,7 +613,7 @@ def get_trips_info(token, who=""):
 
   return trips_info
 
-def get_trip_info(token, trip_id):
+def get_trip_info_direct(token, trip_id):
   key = "dopplr="+token+":info=trip:tripid="+trip_id
 
   trips_info = memcache.get(key)
@@ -664,7 +665,41 @@ def get_trip_info(token, trip_id):
   if not memcache.add(key, trip_info, 3600):
     logging.warning("memcache set for trip_info failed")
     
-  return trip_info
+  return trip_info['trip']
+
+def get_trip_info(token, trip_id):
+  key = "dopplr="+token+":info=trip:tripid="+trip_id
+
+  logging.info("looking for trip_id "+str(trip_id))
+
+  trip_info = memcache.get(key)
+  if trip_info:
+    return trip_info
+
+  trip_list = get_trips_info(token)
+  trips = {}
+  for trip in trip_list['trip']:
+    key = "dopplr="+token+":info=trip:tripid="+str(trip['id'])
+
+    # add 'nick' data to trip
+    match = re.search('trip/(.*?)/', trip["url"])
+    if (match):
+      trip["nick"] = match.group(1)
+    
+    if trip:
+      trips[key] = trip
+
+    if int(trip_id) == trip["id"]:
+      logging.info("matched trip id with trip in trip_list")
+      trip_info = trip
+
+  if not memcache.set_multi(trips, 3600):
+    logging.warning("memcache set_multi for trip_info failed")
+
+  if trip_info:
+    return trip_info
+  else:
+    return get_trip_info_direct(token, trip_id)
 
 # == Flickr
 
@@ -704,7 +739,7 @@ def get_flickr_nsid(flickr, token):
 
 def get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page):
   # TODO dedupe with get_flickr_photos_by_date
-  key = repr(flickr)+":nsid="+nsid+":tripid="+str(trip_info["trip"]["id"])+":page="+page+":type=tag"
+  key = repr(flickr)+":nsid="+nsid+":tripid="+str(trip_info["id"])+":page="+page+":type=tag"
   logging.info("memcache key is "+key);
   photos = memcache.get(key)
   if photos:
@@ -713,7 +748,7 @@ def get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page):
     
   logging.debug("Attempting photo search by tag (no cache)")
 
-  machine_tag = "dopplr:trip="+str(trip_info["trip"]["id"])
+  machine_tag = "dopplr:trip="+str(trip_info["id"])
   logging.info("Got trip ID to search on: "+machine_tag);
  
   try:
@@ -734,7 +769,7 @@ def get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page):
 
   photos = photos['photos']
   photos = get_flickr_geototal(photos)
-  photos = get_flickr_tagtotal(photos, trip_info["trip"]["id"])
+  photos = get_flickr_tagtotal(photos, trip_info["id"])
 
   if not memcache.add(key, photos, 3600):
     logging.warning("memcache set for photos by tag failed")
@@ -743,7 +778,7 @@ def get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page):
 
 def get_flickr_photos_by_date(flickr, nsid, trip_info, page):
   # TODO dedupe with get_flickr_photos_by_machinetag
-  key = repr(flickr)+":nsid="+nsid+":tripid="+str(trip_info["trip"]["id"])+":page="+page+":type=date"
+  key = repr(flickr)+":nsid="+nsid+":tripid="+str(trip_info["id"])+":page="+page+":type=date"
   photos = memcache.get(key)
   if photos:
     return photos
@@ -751,8 +786,8 @@ def get_flickr_photos_by_date(flickr, nsid, trip_info, page):
   logging.debug("Attempting photo search by date (no cache)")
 
   # TODO right thing with times (which is...?)
-  min_taken = trip_info["trip"]["startdate"].strftime("%Y-%m-%d 00:00:01")
-  max_taken = trip_info["trip"]["finishdate"].strftime("%Y-%m-%d 23:59:59")
+  min_taken = trip_info["startdate"].strftime("%Y-%m-%d 00:00:01")
+  max_taken = trip_info["finishdate"].strftime("%Y-%m-%d 23:59:59")
 
   # TODO dtrt with day ends (what did I mean here?)
   try:
@@ -774,7 +809,7 @@ def get_flickr_photos_by_date(flickr, nsid, trip_info, page):
 
   photos = photos['photos']
   photos = get_flickr_geototal(photos)
-  photos = get_flickr_tagtotal(photos, trip_info["trip"]["id"])
+  photos = get_flickr_tagtotal(photos, trip_info["id"])
 
   if not memcache.add(key, photos, 3600):
     logging.warning("memcache set for photos by date failed")
