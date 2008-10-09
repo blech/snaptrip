@@ -247,7 +247,7 @@
 
   <div id="content">
     <div id="main" class="trip">
-      <h2>A trip to {{trip.city.name}}, {{trip.city.country}}.</h2>
+      <h2>A trip to {{trip.city.name}}, {{trip.city.country}}{# ifnotequal trip.nick session.nick %} for {{ traveller.name }}{% endifnotequal #}.</h2>
       
       {# TODO polyline from start point #}
       {# TODO slippymap? #}
@@ -258,7 +258,7 @@
       
     {% else %}
       {% ifnotequal trip.nick session.nick %}
-        <p>Unfortunately, for now we can't look up photos for other people's trips.</p>
+        <p>Unfortunately, for now photos cannot be shown for other people's trips.</p>
 
       {% else %}
         {% if photos %}
@@ -369,9 +369,7 @@
         {% ifequal trip.nick session.nick %}Your{% else %}Their{% endifequal %} 
         previous trip 
         {% ifequal links.prev.status "Past" %}was{% else %}is{% endifequal %}
-        to <a href="/trip/{{ links.prev.id }}">{{ links.prev.city }}</a> {{ links.past.status }}
-        
-        {% if links.next %}
+        to <a href="/trip/{{ links.prev.id }}">{{ links.prev.city }}</a>{% if not links.next %}.{% else %}
         and {% ifequal trip.nick session.nick %}your{% else %}their{% endifequal %} next trip
         {% ifequal links.next.status "Past" %}was{% else %}is{% endifequal %}
         to <a href="/trip/{{ links.next.id }}">{{ links.next.city }}</a>.

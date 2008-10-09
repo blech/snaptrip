@@ -130,18 +130,23 @@ class TripPage(webapp.RequestHandler):
       return error_page(self, session, trip_info['error'])
 
     who = ""
-    if session["nick"] == trip_info["nick"]:
+    if session["nick"] != trip_info["nick"]:
       who = trip_info["nick"]
-      
+      # TODO traveller info (sigh)
+
+    logging.info("who: '"+who+"'")
+
     trips_info = get_trips_info(permanent, who)
     if trips_info.has_key('error'):
       return error_page(self, session, trips_info['error'])
 
+    links = links_for_trip(trips_info, trip_id)
+        
     # initialise template data before we call Flickr
     template_values = {
       'session':    session,
       'trip':       trip_info,
-      'links':      links_for_trip(trips_info, trip_id),
+      'links':      links,
       'keys':       get_keys(self.request.host),
     }
   
@@ -579,6 +584,7 @@ def get_trips_info(token, who=""):
 
   trips_info = memcache.get(key)
   if trips_info:
+    logging.info("memcache hit for trips_info for '"+key+"'")
     return trips_info
 
   url = "https://www.dopplr.com/api/trips_info.js"
@@ -614,8 +620,10 @@ def get_trips_info(token, who=""):
 def get_trip_info_direct(token, trip_id):
   key = "dopplr="+token+":info=trip:tripid="+trip_id
 
+  logging.info("getting trip_info directly from Dopplr")
   trips_info = memcache.get(key)
   if trips_info:
+    logging.info("memcache hit")
     return trips_info
 
   url = "https://www.dopplr.com/api/trip_info.js?trip_id="+trip_id
@@ -637,6 +645,7 @@ def get_trip_info_direct(token, trip_id):
     # not good. show to user?
     return {'error': trip_info['error']}
 
+  logging.info("got trip, postprocessing")
   ## postprocessing - time consuming? seperate routine?
   # get who info
   match = re.search('trip/(.*?)/', trip_info["trip"]["url"])
@@ -660,9 +669,11 @@ def get_trip_info_direct(token, trip_id):
   else:
     trip_info["trip"]["status"] = "Future"
 
-  if not memcache.add(key, trip_info, 3600):
+  if not memcache.add(key, trip_info['trip'], 3600):
     logging.warning("memcache set for trip_info failed")
     
+  logging.info("returning trip info")
+  logging.info(trip_info['trip'])
   return trip_info['trip']
 
 def get_trip_info(token, trip_id):
@@ -672,6 +683,7 @@ def get_trip_info(token, trip_id):
 
   trip_info = memcache.get(key)
   if trip_info:
+    logging.info("memcache hit for key '"+key+"'")
     return trip_info
 
   trip_list = get_trips_info(token)
@@ -697,6 +709,7 @@ def get_trip_info(token, trip_id):
   if trip_info:
     return trip_info
   else:
+    logging.info("didn't find trip in logged in users: calling direct")
     return get_trip_info_direct(token, trip_id)
 
 # == Flickr
@@ -988,6 +1001,9 @@ def links_for_trip(trips_list, trip_id):
   trip_index = 0
   city_index = 0
 
+  logging.info(trip_id)
+  logging.info(len(trips_list))
+
   ids = []
   cities = []
   status = []
@@ -1001,8 +1017,8 @@ def links_for_trip(trips_list, trip_id):
       trip_city  = trip['city']['name']
     index = index+1
 
-  logging.debug("status")
-  logging.debug(status)
+  if not trip_index:
+    return {}
 
   index = 0
   city_ids = []
