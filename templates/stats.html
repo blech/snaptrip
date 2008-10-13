@@ -78,7 +78,7 @@
   {% include "includes/header.html" %}
   
   <div id="content">
-    <div id="main" class="stats">
+    <div id="main" class="stats wide">
     
       <h3>Trip overview{% if traveller.name != session.name %} for {{ traveller.name }}{% endif %}.</h3>
     
@@ -90,12 +90,33 @@
 
       <div class="label">1.</div>
       
-      <div class="onecol">Countries visited.
+      <div class="twoasymcol-left">Countries visited.
         <div class="map">
           <div id="mapimage"><img src="http://chart.apis.google.com/chart?cht=t&chs=440x190&chtm=world&chco=ffffff,{{ stats.rgb_start }},{{ stats.rgb }}&chld={% for country in stats.countries %}{{ stats.countries[country].code }}{% endfor %}&chd=t:{% for country in stats.countries %}{{ stats.countries[country].scaled }}{% if not loop.last %},{% endif %}{% endfor %}" width="440" height="190"></div>
           <div id="mapoverlay"><img src="/images/google_map_overlay.png" width="440" height="190"></div>
         </div>
       </div>
+      
+      <div class="label">2.</div>
+
+      <div class="twoasymcol-right">Trips by type.<br><br>{# TODO two <br>s? How declassee... #} <!-- <option value="plane">by plane</option>
+<option value="train">by train</option>
+<option value="car">by car</option>
+<option value="bus">by bus</option>
+<option value="ferry">by ferry</option>
+<option value="motorcycle">by motorcycle</option>
+<option value="cycle">by bicycle</option>
+<option value="walk">on foot</option>
+<option value="other">other</option -->
+
+      <table cellpadding="0" cellspacing="0" border="0">
+      {% for type in stats.ordered.types %}
+        <tr>
+          <td><img src="/images/{{ type }}.gif" width="25" height="25" alt=""></td>
+          <td><div style="background:#{{ stats.rgb }}; display:block; width:{{ stats.types[type].scaled }}px; height:20px; margin-bottom:5px; color:#fff;"></div></td>
+        </tr>
+      {% endfor %}
+      </table></div>
 
         <div class="br"></div>
 
@@ -148,7 +169,7 @@
 
       <div class="label">5.</div>
       
-      <div class="twocol">Countries visited.<br>
+      <div class="twosymcol">Countries visited.<br>
       
         <ul id="countries" class="dotted small">
         {% for country in stats.ordered.countries %}
@@ -168,7 +189,7 @@
 
       <div class="label">6.</div>
       
-      <div class="twocol">Cities visited.<br>
+      <div class="twosymcol">Cities visited.<br>
       
         <ul id="cities" class="dotted small">
         {% for city in stats.ordered.cities %}
@@ -201,42 +222,6 @@
       {% endif %}
 
       <p><a href="/where/{{ traveller.nick }}">&larr; Return to the listing of all trips</a>.</p>
-
-    </div>
-
-    <div id="side">
-
-    {% if stats.ordered.years %}
-
-      <h3>Key.</h3>
- 
-      <dl>
-        <dt><span>1.</span> Countries visited.</dt>
-        
-        <dd>The map shows all the countries that {% if traveller.nick == session.nick %}you{% else %}{{ traveller.name }}{% endif %} has visited. The colouring reflects the total number of days spent in the country.</dt>
-        
-        <dt><span>2.</span> Trips by year.</dt>
-        
-        <dd>How many trips {% if traveller.nick == session.nick %}you{% else %}they{% endif %} have taken in the given years.</dd>
-        
-        <dt><span>3.</span> Trips by type.</dt>
-        
-        <dd>Each trip taken contributes to this listing of trips, ordered by the type of transport.</dd>
-
-        <dt><span>4.</span> Days on trips.</dt>
-        
-        <dd>Every day spent on a trip in {{ stats.ordered.years_by_trip[0] }} contributes to the coloured region of this chart.</dd>
-
-        <dt><span>5.</span> Countries visited.</dt>
-        
-        <dd>More details on the countries that have been visited.</dd>
-
-        <dt><span>6.</span> Cities visited.</dt>
-        
-        <dd>Total time and trip information for each city visited.</dd>
-      </dl>
-
-     {% endif %}
 
     </div>
   </div>
