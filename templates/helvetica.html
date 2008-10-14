@@ -37,14 +37,34 @@
     }
 
     a:hover {
-      color: #666;
+      color: #fff;
+      background: #666;
     }
   </style>
 
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
   <script type="text/javascript">
+    /* $(document).ready(function() {
+      $("span.city").css({ cursor:"hand" });
+      $("span.city").css({ cursor:"pointer" });
+
+      $("span.city").click(function() {
+        id = $(this).attr('id');
+        console.log(id)
+        if ($('div#'+id).is(':visible')) {
+          $('div#'+id).slideUp('fast');
+        } else {
+          $('div#'+id).slideDown('fast');
+        }
+      })
+    }) */
+
     function showinfo(id) {
-      $('div#'+id).toggle();
+      if ($('div#'+id).is(':visible')) {
+        $('div#'+id).slideUp('fast');
+      } else {
+        $('div#'+id).slideDown('fast');
+      }
       return false;
     }
   </script>
