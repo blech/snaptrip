@@ -60,11 +60,8 @@
     }) */
 
     function showinfo(id) {
-      if ($('div#'+id).is(':visible')) {
-        $('div#'+id).slideUp('fast');
-      } else {
-        $('div#'+id).slideDown('fast');
-      }
+      $("#cities .info").not('div#'+id).slideUp("fast");
+      $('div#'+id).slideToggle('fast');
       return false;
     }
   </script>
