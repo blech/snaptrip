@@ -99,7 +99,8 @@
       
       <div class="label">2.</div>
 
-      <div class="twoasymcol-right">Trips by type.<br><br>{# TODO two <br>s? How declassee... #} <!-- <option value="plane">by plane</option>
+      <div class="twoasymcol-right">Trips by type.<br><br>{# TODO two <br>s? How declassee... #} 
+<!-- <option value="plane">by plane</option>
 <option value="train">by train</option>
 <option value="car">by car</option>
 <option value="bus">by bus</option>
@@ -109,15 +110,38 @@
 <option value="walk">on foot</option>
 <option value="other">other</option -->
 
-      <table cellpadding="0" cellspacing="0" border="0">
+      <table cellpadding="0" cellspacing="0" border="0" width="290">
       {% for type in stats.ordered.types %}
         <tr>
-          <td><img src="/images/{{ type }}.gif" width="25" height="25" alt=""></td>
-          <td><div style="background:#{{ stats.rgb }}; display:block; width:{{ stats.types[type].scaled }}px; height:20px; margin-bottom:5px; color:#fff;"></div></td>
+          <td><img src="/images/{{ type }}.png" width="15" height="15" style="margin:0px 5px 5px 0px;" alt="Trips by {{ type }}"></td>
+          <td><div style="background:#{{ stats.rgb }}; display:block; width:{{ stats.types[type].scaled }}px; height:15px; margin-bottom:5px; color:#fff;"></div></td>
+          <td class="switch" width="70px" align="right">{{ stats.types[type].journeys }} journeys</td>
         </tr>
       {% endfor %}
-      </table></div>
+      </table><br></div>
 
+      <div class="label">3.</div>
+
+      <div class="twoasymcol-right">When.<br><br>{# TODO two <br>s? How declassee... #} 
+      {% for year in stats.ordered.years %}
+        <div class="trips_by_year" style="position:relative; height:27px;{#{% if stats.ordered.types|length < loop.index %} display:none;{% endif %}#}">
+          <div style="position:absolute; top:0px; left:0px; height:16px; line-height:16px;">{{ year }}</div>
+          <div style="position:absolute; top:0px; left:40px; background:#{{ stats.rgb }}; width: {{ stats.years[year].trips_scaled }}px; height:12px; text-align:right; font-size:10px; line-height:12px;">{{ stats.years[year].trips }} trips&nbsp;</div>
+          <div class="switch" style="position:absolute; top:13px; left:40px; background:#ccc; width: {{ stats.years[year].duration_scaled }}px; height:12px; text-align:right; font-size:10px; line-height:12px; padding-right:2px;">{{ stats.years[year].duration }} days&nbsp;</div>
+ 
+
+<!--            {{ stats.years[year].trips }} {{ stats.years[year].trips_blocks_l|length }} {{ stats.years[year].trips_blocks_l|length * stats.trips_per_block }} {{ stats.years[year].trips_blocks_r }} -->
+<!--            {% for i in stats.years[year].trips_blocks_l %}
+            <div style="width:{{ stats.block_width-3 }}px; border:1px solid #{{ stats.rgb }}; height:14px; margin-right:1px; float:left;"></div>
+            {% endfor %}{% if stats.years[year].trips_blocks_r > 2 %}
+            <div style="width:{{ stats.years[year].trips_blocks_r-3 }}px; border:1px solid #{{ stats.rgb }}; height:14px; float:left;"></div>
+            {% endif %} 
+          </div> -->
+        </div>
+      {% endfor %}
+      </div>
+
+<!-- 
         <div class="br"></div>
 
       <div class="label">2.</div>
@@ -128,7 +152,9 @@
         <div class="trips_by_year" style="position:relative; height:17px;{#{% if stats.ordered.types|length < loop.index %} display:none;{% endif %}#}">
           <div style="position:absolute; top:0px; left:0px; height:16px; line-height:16px;">{{ year }}</div>
           <div style="position:absolute; top:0px; left:40px; background:#fff;">
+ -->
 <!--            {{ stats.years[year].trips }} {{ stats.years[year].trips_blocks_l|length }} {{ stats.years[year].trips_blocks_l|length * stats.trips_per_block }} {{ stats.years[year].trips_blocks_r }} -->
+<!-- 
             {% for i in stats.years[year].trips_blocks_l %}
             <div style="width:{{ stats.block_width-3 }}px; border:1px solid #{{ stats.rgb }}; height:14px; margin-right:1px; float:left;"></div>
             {% endfor %}{% if stats.years[year].trips_blocks_r > 2 %}
@@ -138,11 +164,13 @@
         </div>
       {% endfor %}
 
+ -->
 <!--
     <p class="switch">
     {{ stats.top_year_trips }} trips in busiest year, with
     {{ stats.trips_per_block }} trips per block. Each block is
     {{ stats.block_width }} pixels wide.</p> -->
+<!-- 
 
       </div>
 
@@ -164,10 +192,11 @@
       <div class="threecol">Days on trips, {{ stats.ordered.years_by_trip[0] }}.<br>
         <img src="http://chart.apis.google.com/chart?cht=p&chs=100x100&chco={{ stats.rgb_start }},{{ stats.rgb }}&chd=t:{{ stats.home.days }},{{ stats.away.days }}" width="100" height="100">
       </div>
+ -->
 
         <div class="br"></div>
 
-      <div class="label">5.</div>
+      <div class="label">4.</div>
       
       <div class="twosymcol">Countries visited.<br>
       
@@ -187,7 +216,7 @@
 
       </div>
 
-      <div class="label">6.</div>
+      <div class="label">5.</div>
       
       <div class="twosymcol">Cities visited.<br>
       
@@ -217,7 +246,9 @@
 
       </div>
       
+<!-- 
       <div class="br"></div>
+ -->
 
       {% endif %}
 
