@@ -23,6 +23,10 @@ div#main {
   float:left;
 }
 
+div#main.wide {
+  width:800px;
+}
+
 /* headings */
 
 h1 {
@@ -367,9 +371,11 @@ div.label {
   padding: 0px;
 }
 
-div.stats div.br {
+div.br {
   clear: both;
-  padding-top: 20px;
+  border-bottom: 1px dotted #ccc;
+  padding-top: 10px;
+  margin-bottom: 10px;
 }
 
 div.onecol {
@@ -379,9 +385,23 @@ div.onecol {
   padding: 0px;
 }
 
-div.twocol {
+div.twoasymcol-left {
   float:left;
-  width: 230px;
+  width: 460px;
+  margin: 0px;
+  padding: 0px;
+}
+
+div.twoasymcol-right {
+  float:left;
+  width: 290px;
+  margin: 0px;
+  padding: 0px;
+}
+
+div.twosymcol {
+  float:left;
+  width: 375px;
   margin: 0px;
   padding: 0px;
 }
@@ -461,3 +481,55 @@ ul.small span.details {
   float: right;
   padding-left: 5px;
 }
+
+/* sets */
+
+/*
+div.set {
+  clear:both;
+  border-bottom: 1px dotted #ccc;
+  min-height: 87px;
+  padding-top: 10px;
+}
+
+div.set.first {
+  padding-top: 0px;
+}
+
+div.set.last {
+  margin-bottom: 10px;
+}
+
+div.set h3 {
+  margin: 0px;
+  float:left;
+  padding-bottom:0px;
+  padding-right: 5px;
+  margin-bottom: 2px;
+  line-height:20px;
+}
+
+div.set p.count {
+  float: right;
+  font-size: 12px;
+  margin: 4px 0px 2px 0px;
+}
+
+div.set p.desc {
+  clear:right;
+}
+
+div.set img {
+  margin-right: 10px;
+  margin-bottom: 2px;
+  width: 75px;
+  height: 75px;
+  border: 2px solid #fff;
+}
+
+div#set_trip_nav {
+  width: 800px;
+  padding-bottom: 10px;
+}
+
+*/

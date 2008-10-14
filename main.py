@@ -39,6 +39,12 @@ class IndexPage(webapp.RequestHandler):
 
     stats           = {}
     
+    # easter egg
+    if (self.request.get('hel')):
+      hel = True
+    else:
+      hel = False
+    
     # TODO deboilerplate
     trips_info      = get_trips_info(permanent, who)
     if not trips_info:
@@ -54,6 +60,8 @@ class IndexPage(webapp.RequestHandler):
 
     # TODO ajax/memcache
     stats           = build_stats(trips_info['trip'], traveller_info, 'front')
+    if hel:
+      stats           = build_stats(trips_info['trip'], traveller_info, 'helvetica')
     
     template_values = {
       'session':    session,
@@ -66,6 +74,8 @@ class IndexPage(webapp.RequestHandler):
     }
     
     template = env.get_template('index.html')
+    if hel:
+      template = env.get_template('helvetica.html')
     
     self.response.out.write(template.render(template_values))
 
@@ -184,7 +194,7 @@ class TripPage(webapp.RequestHandler):
     path = os.path.join(os.path.dirname(__file__), 'templates/trip.html')
     self.response.out.write(template.render(path, template_values))    
 
-class SetPage(webapp.RequestHandler):
+class SetsPage(webapp.RequestHandler):
   def get(self, page="1"):
     logging.debug("really in Add page")
     session = get_session()
@@ -215,7 +225,47 @@ class SetPage(webapp.RequestHandler):
       if sets:
         sets = get_paged_setlist(sets, page)
 
-      sets = get_set_details(flickr, sets)
+      sets = get_sets_details(flickr, sets)
+      template_values['sets'] = sets['photosets']
+    else:
+      return error_page(self, session, "Could not get info about the user data from Flickr.")     
+ 
+    # jinja2
+    template = env.get_template('sets.html')
+    self.response.out.write(template.render(template_values))
+
+class SetPage(webapp.RequestHandler):
+  def get(self, set):
+    logging.debug("Set page")
+    session = get_session()
+
+    set = int(set)
+
+    # session objects don't support has_key. bah.
+    # TODO DRY (decorator?)
+    try:
+      permanent = session['dopplr']
+      token     = session['flickr']
+    except KeyError, e:
+      return self.redirect("/login/")
+
+    keys = get_keys(self.request.host)
+    flickr = get_flickr(keys, token)
+
+    template_values = {
+      'session':    session,
+      'permanent':  permanent,
+      'memcache':   memcache.get_stats(),
+    }
+
+    nsid = get_flickr_nsid(flickr, token)
+    if nsid:
+      logging.debug("getting set list")
+      sets = get_flickr_setlist(flickr, nsid)
+      if sets:
+        sets = get_paged_setlist(sets, page)
+
+      sets = get_sets_details(flickr, sets)
       template_values['sets'] = sets['photosets']
     else:
       return error_page(self, session, "Could not get info about the user data from Flickr.")     
@@ -514,31 +564,32 @@ class SetJSON(webapp.RequestHandler):
       logging.warn("No set_id or trip_id!")
       return self.response.out.write({'stat':'error', 'message': 'There were missing parameters.'})
 
-    # TODO memcache
     keys = get_keys(self.request.host)
     flickr = get_flickr(keys, token, True)
 
+    photoset = get_set_details(flickr, set_id, True)
+
     key = repr(flickr)+":set_id="+set_id
-    photoset = memcache.get(key)
-    if photoset:
-      return self.response.out.write(simplejson.dumps(photoset))
-
-    try:
-      json = flickr.photosets_getPhotos(
-                 format='json',
-                 nojsoncallback="1",
-                 photoset_id=set_id,
-                 extras='date_taken,date_upload,tags',
-                )
-      photoset = simplejson.loads(json) # check it's valid JSON
-    except:
-      photoset = {'stat':'error', 'message': 'There was a problem contacting Flickr.'}
-
-    photoset['photoset'] = get_flickr_date_range(photoset['photoset'])
+#     photoset = memcache.get(key)
+#     if photoset:
+#       return self.response.out.write(simplejson.dumps(photoset))
+# 
+#     try:
+#       json = flickr.photosets_getPhotos(
+#                  format='json',
+#                  nojsoncallback="1",
+#                  photoset_id=set_id,
+#                  extras='date_taken,date_upload,tags',
+#                 )
+#       photoset = simplejson.loads(json) # check it's valid JSON
+#     except:
+#       photoset = {'stat':'error', 'message': 'There was a problem contacting Flickr.'}
+# 
+#     photoset['photoset'] = get_flickr_date_range(photoset['photoset'])
     photoset['photoset'] = get_flickr_trip_ids(dopplr, photoset['photoset'])
 
     if not memcache.add(key, photoset, 3600):
-      logging.warning("memcache set for photoset failed")
+      logging.warning("memcache add for photoset failed")
 
     self.response.out.write(simplejson.dumps(photoset))
 
@@ -573,7 +624,7 @@ def get_traveller_info(token, who=""):
     return {'error': "Didn't get a JSON response from Dopplr's traveller_info API"}
 
   if not memcache.add(key, traveller_info, 3600):
-    logging.warning("memcache set for traveller_info failed")
+    logging.warning("memcache add for traveller_info failed")
 
   return traveller_info
 
@@ -613,7 +664,7 @@ def get_trips_info(token, who=""):
     return {'error': "Could not get information about past trips (user permission?)."}
 
   if not memcache.add(key, trips_info, 3600):
-    logging.warning("memcache set for trips_info failed")
+    logging.warning("memcache add for trips_info failed")
 
   return trips_info
 
@@ -670,7 +721,7 @@ def get_trip_info_direct(token, trip_id):
     trip_info["trip"]["status"] = "Future"
 
   if not memcache.add(key, trip_info['trip'], 3600):
-    logging.warning("memcache set for trip_info failed")
+    logging.warning("memcache add for trip_info failed")
     
   logging.info("returning trip info")
   logging.info(trip_info['trip'])
@@ -742,7 +793,7 @@ def get_flickr_nsid(flickr, token):
     logging.info("Got Flickr user NSID "+nsid)
 
     if not memcache.add(key, nsid):
-      logging.warning("memcache set for NSID failed")
+      logging.warning("memcache add for NSID failed")
 
     return nsid
   else:
@@ -783,7 +834,7 @@ def get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page):
   photos = get_flickr_tagtotal(photos, trip_info["id"])
 
   if not memcache.add(key, photos, 3600):
-    logging.warning("memcache set for photos by tag failed")
+    logging.warning("memcache add for photos by tag failed")
 
   return photos
 
@@ -823,7 +874,7 @@ def get_flickr_photos_by_date(flickr, nsid, trip_info, page):
   photos = get_flickr_tagtotal(photos, trip_info["id"])
 
   if not memcache.add(key, photos, 3600):
-    logging.warning("memcache set for photos by date failed")
+    logging.warning("memcache add for photos by date failed")
 
   return photos
 
@@ -843,7 +894,7 @@ def get_flickr_setlist(flickr, nsid):
     sets = simplejson.loads(sets)
     if sets['stat'] == "ok":
       if not memcache.add(key, sets, 3600):
-        logging.warning("memcache set for setlist failed")
+        logging.warning("memcache add for setlist failed")
 
     return sets
 
@@ -869,19 +920,39 @@ def get_paged_setlist(sets, page):
 
   return sets;
 
-def get_set_details(flickr, sets):
+def get_sets_details(flickr, sets):
   for set in sets['photosets']['photoset']:
-    key = repr(flickr)+":set_id="+set['id']
-
-    details = memcache.get(key)
+    details = get_set_details(flickr, set['id'], False)
     if details:
-      logging.info("fetching previously cached set datails for key '"+key+"'")
+      logging.info("fetched previously cached set details")
       set['dates']   = details['photoset']['dates']
       if details['photoset'].has_key('trip_id'):
         set['trip_id'] = details['photoset']['trip_id']
         set['trip_info'] = details['photoset']['trip_info']
   
   return sets
+
+def get_set_details(flickr, set_id, ask_flickr=False):
+  key = repr(flickr)+":set_id="+set_id
+
+  photoset = memcache.get(key)
+  if not photoset and ask_flickr:
+    logging.info("fetching previously uncached set datails for key '"+key+"'")
+
+    try:
+      json = flickr.photosets_getPhotos(
+                 format='json',
+                 nojsoncallback="1",
+                 photoset_id=set_id,
+                 extras='date_taken,date_upload,tags',
+                )
+      photoset = simplejson.loads(json) # check it's valid JSON
+    except:
+      photoset = {'stat':'error', 'message': 'There was a problem contacting Flickr.'}
+
+    photoset['photoset'] = get_flickr_date_range(photoset['photoset'])
+  
+  return photoset
 
 def get_flickr_geototal(photos):
   photos['subtotal'] = 0
@@ -1107,12 +1178,12 @@ def build_stats(trip_list, traveller_info, type):
     if type != "front":
       if trip.has_key('return_transport_type'): # TODO remove
         if not trip['return_transport_type'] in stats['types']:
-          stats['types'][trip['return_transport_type']] = {'trips':0}
+          stats['types'][trip['return_transport_type']] = {'trips':0, 'journeys':0, }
         stats['types'][trip['return_transport_type']]['trips'] += 0.5
         
       if trip.has_key('return_transport_type'): # TODO remove
         if not trip['outgoing_transport_type'] in stats['types']:
-          stats['types'][trip['outgoing_transport_type']] = {'trips':0}
+          stats['types'][trip['outgoing_transport_type']] = {'trips':0, 'journeys':0, }
         stats['types'][trip['outgoing_transport_type']]['trips'] += 0.5
  
         # if (country == home_country):
@@ -1222,7 +1293,8 @@ def build_stats(trip_list, traveller_info, type):
       top_type = stats['ordered']['types'][0]
       top_trip = int(stats['types'][top_type]['trips'])
       for type in stats['types'].keys():
-        stats['types'][type]['scaled'] = 100*int(stats['types'][type]['trips'])/top_trip
+        stats['types'][type]['scaled'] = 200*int(stats['types'][type]['trips'])/top_trip
+        stats['types'][type]['journeys'] = int((stats['types'][type]['trips']*2))
         
     # scale years
     top_year_by_days = stats['ordered']['years_by_days'][0]
@@ -1251,8 +1323,8 @@ def build_stats(trip_list, traveller_info, type):
       stats['years'][year]['home']['days']     = (366-stats['years'][top_year_by_days]['duration'])/3.66
   
       # raw scaling
-      stats['years'][year]['duration_scaled']  = int(90*stats['years'][year]['duration']/top_year_days)
-      stats['years'][year]['trips_scaled']     = int(90*stats['years'][year]['trips']/top_year_trips)
+      stats['years'][year]['duration_scaled']  = int(220*stats['years'][year]['duration']/top_year_days)
+      stats['years'][year]['trips_scaled']     = int(220*stats['years'][year]['trips']/top_year_trips)
   
       # block scaling
       stats['years'][year]['trips_blocks']     = float(stats['years'][year]['trips'])/stats['trips_per_block']
@@ -1314,8 +1386,10 @@ application = webapp.WSGIApplication(
                    ('/overview/', StatsPage),
                    ('/overview/(\w*)', StatsPage),
 
-                   ('/sets', SetPage),
-                   ('/sets/page/(\d+)', SetPage),
+                   ('/sets/', SetsPage),
+                   ('/sets/page/(\d+)', SetsPage),
+
+                   ('/sets/set/(\d)+', SetPage),
 
                    ('/trip/(\d*)', TripPage),
                    ('/trip/(\d*)/by/(\w+)', TripPage),
