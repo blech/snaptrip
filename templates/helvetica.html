@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+	<title>snaptrip - all {% if traveller.name != session.name %}{{ traveller.name }}'s{% else %}your{% endif %} trips</title>
+  <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
+  <style type="text/css">
+    div.city {
+      font: 64px "Helvetica Neue", Helvetica, Arial, sans-serif;
+      letter-spacing: -0.05em;
+      line-height: 48px;
+      padding-top:10px;
+    }
+
+    span.city {
+      font: 64px "Helvetica Neue", Helvetica, Arial, sans-serif;
+      letter-spacing: -0.05em;
+      line-height: 48px;
+      display:block;
+      float:left;
+    }
+    
+    span.details {
+      display:block;
+      float:left;
+      padding-top:18px;
+      padding-left:5px;
+    }
+  
+    div.info {
+      display:none;
+    }
+    
+    a {
+      color: #666;
+    }
+
+    a:hover {
+      color: #666;
+    }
+  </style>
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
+  <script type="text/javascript">
+    function showinfo(id) {
+      $('div#'+id).toggle();
+      return false;
+    }
+  </script>
+
+</head>
+<body>
+  <div id="content">
+    <div id="main" class="wide">
+
+      <div class='city'>Cities for {{ traveller.name }}:</div>
+      <!-- in the past. on dopplr. -->
+
+      {% if not trips %}
+      <p>There are no trips in Dopplr to show.</p>
+      {% endif %}
+
+        <ul id="cities" class="">
+        {% for city in stats.ordered.cities %}
+
+          <li class="{{ stats.cities[city].code }}">
+              <span class="city" style="color:#{{ stats.cities[city].rgb}};">{{ city }}</span> 
+              <span class="details">
+              {% if stats.cities[city].trips == 1 %}
+                <a href="/trip/{{ stats.cities[city].trip_list[0].id }}">{% else %}
+                <a href="#" onclick="javascript:return showinfo({{ stats.cities[city].id }})">{% endif %}
+                {{ stats.cities[city].trips }} trip{% if stats.cities[city].trips != 1 %}s{% endif %}<br>
+              {{ stats.cities[city].duration }} day{% if stats.cities[city].duration != 1 %}s{% endif %}</a>
+              </span><br style="clear:both;">
+              
+              <div class="info" id="{{ stats.cities[city].id }}">
+                {% for trip in stats.cities[city].trip_list | reverse %}
+                  <a href="/trip/{{ trip.id }}">{{ trip.startdate.strftime("%B %Y") }}</a>{% if not loop.last %},{% endif %}
+                {% endfor %}</div>
+           </li>
+        {% endfor %}
+        </ul>
+      
+    </div>      
+
+  </div>
+</body>
+</html>
