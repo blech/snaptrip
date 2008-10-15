@@ -309,7 +309,7 @@
               
            
 <!-- tag info -->
-            <p id="tag">{% ifequal photos.totag "0" %}All these photos are tagged at Dopplr.{% else %}
+            <p id="tag">{% ifequal photos.totag "0" %}All these photos are tagged for Dopplr.{% else %}
               You can <a href="#" onclick="javascript:return tag('dopplr')">add a Dopplr tag</a> to 
               {% ifnotequal photos.totag photos.total %}
                 {{ photos.totag }} photo{% ifnotequal photos.totag "1" %}s{% endifnotequal %} at Flickr that {% ifnotequal photos.totag "1" %}aren't{% else %}isn't{% endifnotequal %} currently tagged.</p>
