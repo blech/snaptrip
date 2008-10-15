@@ -3,9 +3,12 @@
 <html lang="en">
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8">
-	<title>snaptrip - a set on Flickr</title>
+	<title>snaptrip - a set, '{{ metadata.title._content }}', on Flickr</title>
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
   <style type="text/css">
+    div#photos span.image a.img img.dopplr {
+      border:2px solid #{% if set.trip_info %}{{ set.trip_info.rgb }}{% else %}666{% endif %};
+    }
   </style>
 
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
@@ -16,13 +19,63 @@
 
   <div id="content">
     <div id="main" class="set">
-      <h2>A set on Flickr.</h2>
-      
-      <p><tt style="font: 9px monaco;">{{ metadata }}</tt></p>
+      <h2>{{ metadata.title._content }}, a set on Flickr.</h2>
 
-      <hr>
+      <p>{{ metadata.description._content }}</p>
+      
+    {% if set.photo %}
+
+<!-- photos -->        
+      <h3 class="photos">Flickr photos from this trip.</h3>
+        <div id="photos">
+          {% for photo in set.photo %}
+            {% if loop.index > 24 %}
+              {% break %}
+            {% endif %}
+            <span class="image">
+              <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/" class="img"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" alt="{{ photo.title }}"{% if photo.dopplr %} class="dopplr"{% endif %} title="View '{{ photo.title }}' at Flickr." id="{{ photo.id }}"></a>
+              {% if photo.latitude %}<span class="geo"><a href="#" onclick="javascript:return centermap({{ photo.latitude }}, {{ photo.longitude }}, {{ photo.accuracy }})" title="This photo has a location."><img src="/images/pushpin-whitesmall.png" class="pin"></a></span>{% endif %}
+            </span>
+          {% endfor %}
+
+          <br style="clear:both;">        
+    {% endif %}    
+
+<!-- 'showing' text -->
+            <p id="phototext">Showing 
+            {% if set.total > 24 %}
+              <span class="count">24 of {{ set.total }} photos (page {{ set.page }} of {{ set.pages }})</span>
+            {% else %}
+              all {{ set.total }} photos       
+            {% endif %}
+          
+<!-- 'showing' text: (machine)tag -->
+              in this set.</p>
+           
+<!-- tag info -->
+            <p id="tag">{% if set.totag == "0" %}All{% if set.total > 24 %} {{ set.total }}{% endif %} of these photos are tagged for Dopplr.{% else %}
+              You can <a href="#" onclick="javascript:return tag('dopplr')">add a Dopplr tag</a> to 
+              {% if set.totag != set.total %}
+                {{ set.totag }} photo{% if set.totag != "1" %}s{% endif %} at Flickr that {% if set.totag != "1" %}aren't{% else %}isn't{% endif %} currently tagged.</p>
+              {% else %}
+                all these photos at Flickr.</p>
+              {% endif %}
+            {% endif %}
+ 
+<!-- location info -->
+            <p id="geotag">{% if set.geototal == 0 %}None{% else %}{% if set.geototal == set.subtotal %}All{% if set.total > 24 %} {{ set.total }}{% endif %}{% else %}{{ set.geototal }}{% endif %}{% endif %} of these photo{% if set.geototal != 1 %}s are{% else %}s is{% endif %} already tagged with {% if set.geototal == 1 %}its{% else %}their{% endif %} location in Flickr.{% if set.subtotal != set.geototal %}
+              You can <a href="#" onclick="javascript:return tag('geo')">add a location</a> based on your trip to {% if set.geototal == 0 %}all these photos{% else %}the photos that don't already have one{% endif %}.
+            {% endif %}</p>
+            
+            </div>
+     
+      <!--
+
+      <p><tt>{{ metadata }}</tt></p>
       
       <p><tt>{{ set }}</tt></p>
+
+      -->
 
     </div>
 

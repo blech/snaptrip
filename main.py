@@ -24,7 +24,8 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 # jinja2
-env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates/')))
+env = Environment(extensions=['jinja2.ext.loopcontrols'],
+                  loader=FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates/')))
 
 class IndexPage(webapp.RequestHandler):
   def get(self, who=""):
@@ -269,21 +270,30 @@ class SetPage(webapp.RequestHandler):
           break
 
       logging.debug("getting set details")
-      set = get_set_details(flickr, set_id, True)
+      photoset = get_set_details(flickr, set_id, True)
 
-      photos = set['photoset']
+      if not photoset or not photoset.has_key('photoset'):
+        return error_page(self, session, "Could not get info about the set from Flickr.")     
+
+      # add metadata
+      if not photoset['photoset'].has_key('dates'):
+        photoset['photoset'] = get_flickr_date_range(photoset['photoset'])
+      if not photoset['photoset'].has_key('trip_ids'):
+        photoset['photoset'] = get_flickr_trip_ids(permanent, photoset['photoset'])
+
+      photos = photoset['photoset']
       photos['subtotal'] = len(photos['photo'])
 
-      # photos = get_flickr_geototal(photos)
-      if set['photoset'].has_key('trip_ids'):
-        for trip_id in set['photoset']['trip_ids'].keys():
+      photos = get_flickr_geototal(photos)
+      if photoset['photoset'].has_key('trip_ids'):
+        for trip_id in photoset['photoset']['trip_ids'].keys():
           photos = get_flickr_tagtotal(photos, trip_id)
           # also get trip info for template?
 
-      set['photoset'] = photos
+      photoset['photoset'] = photos
 
 #       template_values['sets'] = sets
-      template_values['set'] = set['photoset']
+      template_values['set'] = photoset['photoset']
 
     else:
       return error_page(self, session, "Could not get info about the user data from Flickr.")     
