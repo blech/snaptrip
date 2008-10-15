@@ -41,8 +41,8 @@ h3 {
   font: 200 16px Arial, Helvetica, sans-serif;
 }
 
-h3 {
-  font: 200 16px Arial, Helvetica, sans-serif;
+h4 {
+  font: 200 14px Arial, Helvetica, sans-serif;
 }
 
 /* general classes */
@@ -227,6 +227,17 @@ ul#where li span.country {
 
 ul#when {
   padding: 0px;
+}
+
+div#ee, div#ee a, div#ee a:hover {
+  background: #fff;
+  color: #fff;
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  width:100px;
+  font: 12px Helvetica, sans-serif;
+  text-align:right;
 }
 
 /* trip page */
