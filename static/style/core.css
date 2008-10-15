@@ -533,3 +533,9 @@ div#set_trip_nav {
 }
 
 */
+
+/* debugging */
+
+tt {
+  font: 9px monaco;
+}
