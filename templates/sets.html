@@ -74,7 +74,6 @@
         }
       });
 
-      /* don't do this yet.
       $("div.set").hover(function() {
         $(this).css({ backgroundColor:"#def" });
         $(this).children().children("a").css({ color:"#47a" });
@@ -86,7 +85,6 @@
         $(this).children().children("a").css({ color:"#69c" });
         window.status = '';
       });
-      */
       
       console.log(ids);
       if (ids.length) {
@@ -143,7 +141,7 @@
       {% for photoset in sets.photoset %}
         <div class="set{% if loop.first %} first{% endif %}{% if loop.last %} last{% endif %}" id="{{ photoset.id }}">
           <img src="http://farm{{ photoset.farm }}.static.flickr.com/{{ photoset.server }}/{{ photoset.primary }}_{{ photoset.secret }}_s.jpg" alt="" title="" id="{{ photoset.primary }}" style="float:left;{% if photoset.trip_info %} border:2px solid #{{ photoset.trip_info.rgb }};{% endif %}">
-          <h3>{{ photoset.title._content }}</h3>
+          <h3><a href="/sets/set/{{ photoset.id }}">{{ photoset.title._content }}</a></h3>
           <p class="desc">{{ photoset.description._content }}</p>
           <p class="count">{{ photoset.photos }} photo{% if photoset.photos != 1 %}s{% endif %}<span class="date">{% if photoset.trip_info %}, during a <a href="/trips/{{ photoset.id }}">trip to {{ photoset.trip_info.name }}</a>.{% else %}{% if photoset.dates %}, {{ photoset.dates }}.{% else %}.{% endif %}{% endif %}</span>
           </p>

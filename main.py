@@ -235,11 +235,11 @@ class SetsPage(webapp.RequestHandler):
     self.response.out.write(template.render(template_values))
 
 class SetPage(webapp.RequestHandler):
-  def get(self, set):
+  def get(self, set_id):
     logging.debug("Set page")
     session = get_session()
 
-    set = int(set)
+#     set_id = int(set_id)
 
     # session objects don't support has_key. bah.
     # TODO DRY (decorator?)
@@ -262,16 +262,34 @@ class SetPage(webapp.RequestHandler):
     if nsid:
       logging.debug("getting set list")
       sets = get_flickr_setlist(flickr, nsid)
-      if sets:
-        sets = get_paged_setlist(sets, page)
+      
+      for set in sets['photosets']['photoset']:
+        if set['id'] == set_id:
+          template_values['metadata'] = set
+          break
 
-      sets = get_sets_details(flickr, sets)
-      template_values['sets'] = sets['photosets']
+      logging.debug("getting set details")
+      set = get_set_details(flickr, set_id, True)
+
+      photos = set['photoset']
+      photos['subtotal'] = len(photos['photo'])
+
+      # photos = get_flickr_geototal(photos)
+      if set['photoset'].has_key('trip_ids'):
+        for trip_id in set['photoset']['trip_ids'].keys():
+          photos = get_flickr_tagtotal(photos, trip_id)
+          # also get trip info for template?
+
+      set['photoset'] = photos
+
+#       template_values['sets'] = sets
+      template_values['set'] = set['photoset']
+
     else:
       return error_page(self, session, "Could not get info about the user data from Flickr.")     
  
     # jinja2
-    template = env.get_template('sets.html')
+    template = env.get_template('set.html')
     self.response.out.write(template.render(template_values))
 
 class LoginPage(webapp.RequestHandler):
@@ -586,6 +604,8 @@ class SetJSON(webapp.RequestHandler):
 #       photoset = {'stat':'error', 'message': 'There was a problem contacting Flickr.'}
 # 
 #     photoset['photoset'] = get_flickr_date_range(photoset['photoset'])
+
+    photoset['photoset'] = get_flickr_date_range(photoset['photoset'])
     photoset['photoset'] = get_flickr_trip_ids(dopplr, photoset['photoset'])
 
     if not memcache.add(key, photoset, 3600):
@@ -940,18 +960,19 @@ def get_set_details(flickr, set_id, ask_flickr=False):
     logging.info("fetching previously uncached set datails for key '"+key+"'")
 
     try:
+      logging.debug("no cache, calling flickr.photosets.getPhotos with set_id "+set_id)
       json = flickr.photosets_getPhotos(
                  format='json',
                  nojsoncallback="1",
                  photoset_id=set_id,
-                 extras='date_taken,date_upload,tags',
+                 extras='geo,date_taken,date_upload,tags',
+#                 extras='date_taken,date_upload,tags',
                 )
+      logging.debug("got response '"+json+"'")
       photoset = simplejson.loads(json) # check it's valid JSON
     except:
       photoset = {'stat':'error', 'message': 'There was a problem contacting Flickr.'}
 
-    photoset['photoset'] = get_flickr_date_range(photoset['photoset'])
-  
   return photoset
 
 def get_flickr_geototal(photos):
@@ -1389,7 +1410,7 @@ application = webapp.WSGIApplication(
                    ('/sets/', SetsPage),
                    ('/sets/page/(\d+)', SetsPage),
 
-                   ('/sets/set/(\d)+', SetPage),
+                   ('/sets/set/(\d+)', SetPage),
 
                    ('/trip/(\d*)', TripPage),
                    ('/trip/(\d*)/by/(\w+)', TripPage),
