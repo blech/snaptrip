@@ -1,0 +1,37 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+	<title>snaptrip - a set on Flickr</title>
+  <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
+  <style type="text/css">
+  </style>
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
+  
+</head>
+<body>
+  {% include "includes/header.html" %}
+
+  <div id="content">
+    <div id="main" class="set">
+      <h2>A set on Flickr.</h2>
+      
+      <p><tt style="font: 9px monaco;">{{ metadata }}</tt></p>
+
+      <hr>
+      
+      <p><tt>{{ set }}</tt></p>
+
+    </div>
+
+    <div id="side">
+
+
+    </div>
+  </div>
+  
+  {% include "includes/footer.html" %}
+</body>
+</html>
