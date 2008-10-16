@@ -22,11 +22,17 @@
       <h2>{{ metadata.title._content }}, a set on Flickr.</h2>
 
       <p>{{ metadata.description._content }}</p>
+
+    {% if set.trip_info %}
+      <p>Set already tagged for a Dopplr <a href="/trip/{{ set.trip_id }}">trip to {{ set.trip_info.name }}</a>.</p>
+    {% else %}
+      <p>Potential trip IDs: {{ trip_ids }}</p>
+    {% endif %}
       
     {% if set.photo %}
 
 <!-- photos -->        
-      <h3 class="photos">Flickr photos from this trip.</h3>
+      <h3 class="photos">Flickr photos from this set.</h3>
         <div id="photos">
           {% for photo in set.photo %}
             {% if loop.index > 24 %}
@@ -80,7 +86,33 @@
     </div>
 
     <div id="side">
+      <h3>About sets.</h3>
+      
+      <p>Sets are a convenient way of grouping Flickr photos, and so snaptrip works with them. There are three situations that snaptrip expects.</p>
+      
+      <dl>
+        <dt>Set has no matching trip.</dt>
+        <dd>Sometimes a set in Flickr won't have a matching trip in Dopplr. If this is the case, snaptrip can start by adding a trip based on the information in the photos in the set, before going on to do the work described below.
+        
+            <a href="http://localhost:8080/sets/set/72157608066839657">Iceland</a>
+        
+        </dd>
+        
+        <dt>Set is not fully tagged, but matches a trip.</dt>
+        <dd>If snaptrip can find a trip whose date span includes the photos in a set, it can offer to tag the photos for Dopplr, and add location data.
 
+            <a href="http://localhost:8080/sets/set/72157594480925485">Mississippi</a>
+                
+        </dd>
+        
+        <dt>Set is fully tagged.</dt>
+        <dd>If all the images in a set are already tagged for Dopplr, then there's not much to do for the photos at Flickr. However, it is possible to tag the trip at Dopplr as having an associated Flickr set.
+        
+            <a href="http://localhost:8080/sets/set/72157602209131797">Cromer</a>
+                
+        </dd>
+      </dl>
+        
 
     </div>
   </div>

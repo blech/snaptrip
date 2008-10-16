@@ -223,9 +223,12 @@ class SetsPage(webapp.RequestHandler):
     if nsid:
       logging.debug("getting set list")
       sets = get_flickr_setlist(flickr, nsid)
-      if sets:
-        sets = get_paged_setlist(sets, page)
 
+      if sets and sets.has_key('photosets'):
+        sets = get_paged_setlist(sets, page)
+      else:
+        return error_page(self, session, "Could not get info about sets from Flickr.")     
+      
       sets = get_sets_details(flickr, sets)
       template_values['sets'] = sets['photosets']
     else:
@@ -239,8 +242,6 @@ class SetPage(webapp.RequestHandler):
   def get(self, set_id):
     logging.debug("Set page")
     session = get_session()
-
-#     set_id = int(set_id)
 
     # session objects don't support has_key. bah.
     # TODO DRY (decorator?)
@@ -264,6 +265,9 @@ class SetPage(webapp.RequestHandler):
       logging.debug("getting set list")
       sets = get_flickr_setlist(flickr, nsid)
       
+      if not sets or not sets.has_key('photosets'):
+        return error_page(self, session, "Could not get info about sets from Flickr.")     
+      
       for set in sets['photosets']['photoset']:
         if set['id'] == set_id:
           template_values['metadata'] = set
@@ -276,8 +280,7 @@ class SetPage(webapp.RequestHandler):
         return error_page(self, session, "Could not get info about the set from Flickr.")     
 
       # add metadata
-      if not photoset['photoset'].has_key('dates'):
-        photoset['photoset'] = get_flickr_date_range(photoset['photoset'])
+      photoset['photoset'] = get_flickr_date_range(photoset['photoset'], True)
       if not photoset['photoset'].has_key('trip_ids'):
         photoset['photoset'] = get_flickr_trip_ids(permanent, photoset['photoset'])
 
@@ -285,14 +288,25 @@ class SetPage(webapp.RequestHandler):
       photos['subtotal'] = len(photos['photo'])
 
       photos = get_flickr_geototal(photos)
-      if photoset['photoset'].has_key('trip_ids'):
-        for trip_id in photoset['photoset']['trip_ids'].keys():
-          photos = get_flickr_tagtotal(photos, trip_id)
+      if photoset['photoset'].has_key('trip_id'):
+        photos = get_flickr_tagtotal(photos, photoset['photoset']['trip_id'])
+      else:
+        trips_info = get_trips_info(permanent)
+        
+        # find overlaps
+        overlap_ids = []
+        for trip in trips_info:
+          if trip['startdate'] < photos['startdate'] and trip['finishdate'] > photos['finishdate']:
+            overlap_ids.append(trip['id'])
+        template_values['trip_ids'] = overlap_ids
+        
           # also get trip info for template?
+#       if photoset['photoset'].has_key('trip_ids'):
+#         for trip_id in photoset['photoset']['trip_ids'].keys():
+#           photos = get_flickr_tagtotal(photos, trip_id)
+#           # also get trip info for template?
 
       photoset['photoset'] = photos
-
-#       template_values['sets'] = sets
       template_values['set'] = photoset['photoset']
 
     else:
@@ -1016,7 +1030,7 @@ def get_flickr_tagtotal(photos, trip_id):
 
   return photos
 
-def get_flickr_date_range(photos):
+def get_flickr_date_range(photos, dates=False):
   start_date = None
   finish_date = None
   
@@ -1029,6 +1043,10 @@ def get_flickr_date_range(photos):
 
   start_day  = start_date.strftime("%d %B %Y")
   finish_day = finish_date.strftime("%d %B %Y")
+
+  if dates:
+    photos['startdate']  = start_date
+    photos['finishdate'] = finish_date
 
   if start_day == finish_day:
     photos['dates'] = "taken on %s" % (start_day)
