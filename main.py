@@ -292,11 +292,13 @@ class SetPage(webapp.RequestHandler):
         photos = get_flickr_tagtotal(photos, photoset['photoset']['trip_id'])
       else:
         trips_info = get_trips_info(permanent)
+#        logging.info(trips_info)
         
         # find overlaps
         overlap_ids = []
-        for trip in trips_info:
-          if trip['startdate'] < photos['startdate'] and trip['finishdate'] > photos['finishdate']:
+        for trip in trips_info['trip']:
+          if trip['startdate'] < photoset['photoset']['startdate'] \
+             and trip['finishdate'] > photoset['photoset']['startdate']:
             overlap_ids.append(trip['id'])
         template_values['trip_ids'] = overlap_ids
         
@@ -1041,12 +1043,12 @@ def get_flickr_date_range(photos, dates=False):
     if not finish_date or finish_date < datetaken:
       finish_date = datetaken
 
-  start_day  = start_date.strftime("%d %B %Y")
-  finish_day = finish_date.strftime("%d %B %Y")
-
   if dates:
     photos['startdate']  = start_date
     photos['finishdate'] = finish_date
+
+  start_day  = start_date.strftime("%d %B %Y")
+  finish_day = finish_date.strftime("%d %B %Y")
 
   if start_day == finish_day:
     photos['dates'] = "taken on %s" % (start_day)
