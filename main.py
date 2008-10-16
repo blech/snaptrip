@@ -118,7 +118,7 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
       'memcache':   memcache.get_stats(),
     }
     
-    template = env.get_template('stats.html')
+    template = env.get_template('overview.html')
     
     self.response.out.write(template.render(template_values))
 
