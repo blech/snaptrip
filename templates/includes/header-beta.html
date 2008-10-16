@@ -1,0 +1,34 @@
+  <div id="header" class="beta">
+    <h1>snaptrip{% if session.name %} <span class="name">for {{ session.name }}</span>{% endif %}</h1>
+    
+  {% if session.dopplr %}{# lowercase? #}
+    <span class="dopplr">authenticated via <a href="http://dopplr.com/traveller/{{ session.nick }}/">Dopplr</a></span>
+    {% if session.flickr %}{# lowercase? #}
+    <span class="flickr">authenticated via <a href="http://flickr.com/people/me/">Flickr</a></span>
+    {% else %}
+<!-- 
+    <span class="flickr"></span>
+ -->
+    {% endif %}
+
+<!-- 
+    <ul class="nav">
+      <li><b>your trips</b></li>
+      <li>log out</li>
+    </ul>
+ -->
+
+  {% else %}
+    <span class="who">not logged in to dopplr</span>
+
+<!-- 
+    <ul class="nav">
+      <li>log in</li>
+      <li>log out</li>
+    </ul>
+ -->
+  {% endif %}
+
+    <b>beta functionality - beware of the bugs</b>
+
+  </div>

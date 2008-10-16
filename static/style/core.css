@@ -153,6 +153,18 @@ ul.nav li {
   display: inline;
 }
 
+/* navigation beta */
+
+div#header.beta {
+  background: #333;
+  background-image:url(/images/beta-h.gif);
+  color:#fff;
+}
+
+div#header.beta a {
+  color:#bdf;
+}
+
 /* index page */
 
 div#side {
