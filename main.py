@@ -310,6 +310,7 @@ class SetPage(webapp.RequestHandler):
 
       photoset['photoset'] = photos
       template_values['set'] = photoset['photoset']
+      template_values['nsid'] = nsid
 
     else:
       return error_page(self, session, "Could not get info about the user data from Flickr.")     

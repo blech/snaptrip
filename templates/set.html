@@ -39,7 +39,7 @@
               {% break %}
             {% endif %}
             <span class="image">
-              <a href="http://flickr.com/photos/{{ photo.owner }}/{{ photo.id }}/" class="img"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" alt="{{ photo.title }}"{% if photo.dopplr %} class="dopplr"{% endif %} title="View '{{ photo.title }}' at Flickr." id="{{ photo.id }}"></a>
+              <a href="http://flickr.com/photos/{{ nsid }}/{{ photo.id }}/" class="img"><img src="http://farm{{ photo.farm }}.static.flickr.com/{{ photo.server }}/{{ photo.id }}_{{ photo.secret }}_s.jpg" alt="{{ photo.title }}"{% if photo.dopplr %} class="dopplr"{% endif %} title="View '{{ photo.title }}' at Flickr." id="{{ photo.id }}"></a>
               {% if photo.latitude %}<span class="geo"><a href="#" onclick="javascript:return centermap({{ photo.latitude }}, {{ photo.longitude }}, {{ photo.accuracy }})" title="This photo has a location."><img src="/images/pushpin-whitesmall.png" class="pin"></a></span>{% endif %}
             </span>
           {% endfor %}
@@ -50,7 +50,7 @@
 <!-- 'showing' text -->
             <p id="phototext">Showing 
             {% if set.total > 24 %}
-              <span class="count">24 of {{ set.total }} photos (page {{ set.page }} of {{ set.pages }})</span>
+              <span class="count">24 of {{ set.total }} photos (page {{ set.page }} of {{ set.total // 24 + 1 }})</span>
             {% else %}
               all {{ set.total }} photos       
             {% endif %}
