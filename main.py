@@ -291,16 +291,7 @@ class SetPage(webapp.RequestHandler):
       if photoset['photoset'].has_key('trip_id'):
         photos = get_flickr_tagtotal(photos, photoset['photoset']['trip_id'])
       else:
-        trips_info = get_trips_info(permanent)
-#        logging.info(trips_info)
-        
-        # find overlaps
-        overlap_ids = []
-        for trip in trips_info['trip']:
-          if trip['startdate'] < photoset['photoset']['startdate'] \
-             and trip['finishdate'] > photoset['photoset']['startdate']:
-            overlap_ids.append(trip['id'])
-        template_values['trip_ids'] = overlap_ids
+        template_values['trip_ids'] = get_potential_trips(permanent, photoset['photoset'])
         
           # also get trip info for template?
 #       if photoset['photoset'].has_key('trip_ids'):
@@ -310,7 +301,6 @@ class SetPage(webapp.RequestHandler):
 
       photoset['photoset'] = photos
       template_values['set'] = photoset['photoset']
-      template_values['nsid'] = nsid
 
     else:
       return error_page(self, session, "Could not get info about the user data from Flickr.")     
@@ -632,11 +622,17 @@ class SetJSON(webapp.RequestHandler):
 # 
 #     photoset['photoset'] = get_flickr_date_range(photoset['photoset'])
 
-    photoset['photoset'] = get_flickr_date_range(photoset['photoset'])
+    photoset['photoset'] = get_flickr_date_range(photoset['photoset'], True)
     photoset['photoset'] = get_flickr_trip_ids(dopplr, photoset['photoset'])
+
+    photoset['trip_ids'] = get_potential_trips(dopplr, photoset['photoset'])
 
     if not memcache.add(key, photoset, 3600):
       logging.warning("memcache add for photoset failed")
+
+    # convert dates to string reprs for JSON
+    photoset['photoset']['startdate'] = str(photoset['photoset']['startdate'])
+    photoset['photoset']['finishdate'] = str(photoset['photoset']['finishdate'])
 
     self.response.out.write(simplejson.dumps(photoset))
 
@@ -1117,6 +1113,17 @@ def prettify_trips(trip_list):
       
   return trip_list
   
+def get_potential_trips(dopplr, photos):
+  trips_info = get_trips_info(dopplr)
+
+  overlap_ids = []
+  for trip in trips_info['trip']:
+    if trip['startdate'] < photos['startdate'] \
+       and trip['finishdate'] > photos['startdate']:
+      overlap_ids.append(trip['id'])
+
+  return overlap_ids
+
 def links_for_trip(trips_list, trip_id):
   logging.debug("links_for_trip")
   # todo memcache (although this is relatively cheap)
