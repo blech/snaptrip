@@ -292,15 +292,10 @@ class SetPage(webapp.RequestHandler):
         photos = get_flickr_tagtotal(photos, photoset['photoset']['trip_id'])
       else:
         template_values['trip_ids'] = get_potential_trips(permanent, photoset['photoset'])
-        
-          # also get trip info for template?
-#       if photoset['photoset'].has_key('trip_ids'):
-#         for trip_id in photoset['photoset']['trip_ids'].keys():
-#           photos = get_flickr_tagtotal(photos, trip_id)
-#           # also get trip info for template?
 
       photoset['photoset'] = photos
       template_values['set'] = photoset['photoset']
+      template_values['nsid'] = nsid
 
     else:
       return error_page(self, session, "Could not get info about the user data from Flickr.")     
@@ -604,29 +599,12 @@ class SetJSON(webapp.RequestHandler):
 
     photoset = get_set_details(flickr, set_id, True)
 
-    key = repr(flickr)+":set_id="+set_id
-#     photoset = memcache.get(key)
-#     if photoset:
-#       return self.response.out.write(simplejson.dumps(photoset))
-# 
-#     try:
-#       json = flickr.photosets_getPhotos(
-#                  format='json',
-#                  nojsoncallback="1",
-#                  photoset_id=set_id,
-#                  extras='date_taken,date_upload,tags',
-#                 )
-#       photoset = simplejson.loads(json) # check it's valid JSON
-#     except:
-#       photoset = {'stat':'error', 'message': 'There was a problem contacting Flickr.'}
-# 
-#     photoset['photoset'] = get_flickr_date_range(photoset['photoset'])
-
     photoset['photoset'] = get_flickr_date_range(photoset['photoset'], True)
     photoset['photoset'] = get_flickr_trip_ids(dopplr, photoset['photoset'])
 
     photoset['trip_ids'] = get_potential_trips(dopplr, photoset['photoset'])
 
+    key = repr(flickr)+":set_id="+set_id
     if not memcache.add(key, photoset, 3600):
       logging.warning("memcache add for photoset failed")
 
