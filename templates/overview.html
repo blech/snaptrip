@@ -9,7 +9,7 @@
   <script type="text/javascript">
     $(document).ready(function() {
       /* cities list */
-      $("ul#cities li").hover(function() {
+      $("ul.cities li").hover(function() {
         $(this).css({ backgroundColor:"#def" });
       }, function() {
         $(this).css({ backgroundColor:"#fff" })
@@ -20,18 +20,18 @@
       });
 
       // if they're clickable, they should look clickable
-      $("ul#cities li").css({ cursor:"hand" });
-      $("ul#cities li").css({ cursor:"pointer" });
+      $("ul.cities li").css({ cursor:"hand" });
+      $("ul.cities li").css({ cursor:"pointer" });
 
       /* countries list */
       $("ul#countries li").hover(function() {
         $(this).css({ backgroundColor:"#def" });
         code = $(this).attr('id');
-        $("ul#cities li."+code).css({ backgroundColor:"#def" });
+        $("ul.cities li."+code).css({ backgroundColor:"#def" });
       }, function() {
         $(this).css({ backgroundColor:"#fff" })
         code = $(this).attr('id');
-        $("ul#cities li."+code).css({ backgroundColor:"#fff" });
+        $("ul.cities li."+code).css({ backgroundColor:"#fff" });
       });
       $("li").click(function() {
 //         $(this).css({ backgroundColor:"#fff" })
@@ -44,6 +44,13 @@
 
 
     })
+    
+    function showall() {
+      $('ul#citiesplus').slideDown('fast');
+      $('p#cities_info').show();
+      $('p#showall').hide();
+      return false;
+    }
   
   </script>
   <script type="text/javascript" src="http://www.google.com/jsapi"></script>
@@ -64,13 +71,6 @@
       var chart = new google.visualization.IntensityMap(document.getElementById('chart_div'));
       chart.draw(data, {width:440,height:190,});
       $('div.google-visualization-intensitymap-legend').hide();
-    }
-    
-    function showall() {
-      $('li').show();
-      $('p#cities_info').show();
-      $('p#showall').hide();
-      return false;
     }
   </script>
 </head>
@@ -124,7 +124,7 @@
 
       <div class="twoasymcol-right">When.<br><br>{# TODO two <br>s? How declassee... #} 
       {% for year in stats.ordered.years %}
-        <div class="trips_by_year" style="position:relative; height:27px;{#{% if stats.ordered.types|length < loop.index %} display:none;{% endif %}#}">
+        <div class="trips_by_year" style="position:relative; height:27px;">
           <div style="position:absolute; top:0px; left:0px; height:16px; line-height:16px;">{{ year }}</div>
           <div style="position:absolute; top:0px; left:40px; background:#{{ stats.rgb }}; width: {{ stats.years[year].trips_scaled }}px; height:12px; text-align:right; font-size:10px; line-height:12px;">{{ stats.years[year].trips }} trips&nbsp;</div>
           <div class="switch" style="position:absolute; top:13px; left:40px; background:#ccc; width: {{ stats.years[year].duration_scaled }}px; height:12px; text-align:right; font-size:10px; line-height:12px; padding-right:2px;">{{ stats.years[year].duration }} days&nbsp;</div>
@@ -220,9 +220,13 @@
       
       <div class="twosymcol">Cities visited.<br>
       
-        <ul id="cities" class="dotted small">
+        <ul id="cities" class="cities dotted small" style="margin-bottom:0px;">
         {% for city in stats.ordered.cities %}
-          <li{% if stats.ordered.countries|length < loop.index %} style="display:none;"{% endif %} class="{{ stats.cities[city].code }}">
+          {% if stats.ordered.countries|length+1 == loop.index %}
+        </ul><ul id="citiesplus" class="cities dotted small hidden" style="margin-top:0px;">
+          {% endif %} 
+
+          <li class="{{ stats.cities[city].code }}">
               <span class="block" style="background:#{{ stats.cities[city].rgb}}; display:block;">&nbsp</span>
               <span class="city">{{ city }}</span> 
               <span class="details">
@@ -246,9 +250,7 @@
 
       </div>
       
-<!-- 
       <div class="br"></div>
- -->
 
       {% endif %}
 

@@ -505,6 +505,10 @@ ul.small span.details {
   padding-left: 5px;
 }
 
+ul.hidden {
+  display: none;
+}
+
 /* sets */
 
 /*
