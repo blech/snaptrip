@@ -23,8 +23,10 @@
       font: 64px "Helvetica Neue", Helvetica, Arial, sans-serif;
       letter-spacing: -0.05em;
       line-height: 48px;
+    {% if not compact %}
       display:block;
       float:left;
+    {% endif %}
     }
     
     span.details {
@@ -81,7 +83,12 @@
     {% if not trips %}
     <p>There are no trips in Dopplr to show.</p>
     {% endif %}
-    
+ 
+    {% if compact %}
+      {% for city in stats.ordered.cities %}
+      <span class="city" style="color:#{{ stats.cities[city].rgb}};">{{ city }}</span>{% if not loop.last %}<span class="city" style="color:#e0e0e0;">&nbsp;/ </span>{% endif %}
+      {% endfor %}
+    {% else %}
       <ul id="cities" class="">
       {% for city in stats.ordered.cities %}
     
@@ -102,6 +109,7 @@
          </li>
       {% endfor %}
       </ul>
+    {% endif %}
     
     </div>      
   </div>

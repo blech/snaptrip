@@ -77,11 +77,13 @@ class IndexPage(webapp.RequestHandler):
     template = env.get_template('index.html')
     if hel:
       template = env.get_template('helvetica.html')
+      if self.request.get('compact'):
+        template_values['compact'] = True
     
     self.response.out.write(template.render(template_values))
 
 class StatsPage(webapp.RequestHandler): # TODO DRY
-  def get(self, who=""):
+  def get(self, who="", year=None):
     session = get_session()
 
     # session objects don't support has_key. bah.
@@ -92,6 +94,9 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
       return self.redirect("/login/")
 
     stats           = {}
+
+    if who == "year":
+      who = ""
     
     # TODO deboilerplate
     trips_info      = get_trips_info(permanent, who)
@@ -106,7 +111,7 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
     if traveller_info.has_key('error'):
       return error_page(self, session, traveller_info['error'])
 
-    stats           = build_stats(trips_info['trip'], traveller_info, 'detail')
+    stats           = build_stats(trips_info['trip'], traveller_info, 'detail', year)
     
     template_values = {
       'session':    session,
@@ -117,7 +122,10 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
       'numbers':    get_numbers(),
       'memcache':   memcache.get_stats(),
     }
-    
+
+    if (year):
+      template_values['statyear'] = int(year)
+
     template = env.get_template('overview.html')
     
     self.response.out.write(template.render(template_values))
@@ -292,6 +300,7 @@ class SetPage(webapp.RequestHandler):
         photos = get_flickr_tagtotal(photos, photoset['photoset']['trip_id'])
       else:
         template_values['trip_ids'] = get_potential_trips(permanent, photoset['photoset'])
+        # if not len(template_values['trip_ids']):
 
       photoset['photoset'] = photos
       template_values['set'] = photoset['photoset']
@@ -1022,6 +1031,9 @@ def get_flickr_date_range(photos, dates=False):
     photos['startdate']  = start_date
     photos['finishdate'] = finish_date
 
+  duration = finish_date - start_date
+  photos['days'] = duration.days
+
   start_day  = start_date.strftime("%d %B %Y")
   finish_day = finish_date.strftime("%d %B %Y")
 
@@ -1156,7 +1168,7 @@ def links_for_trip(trips_list, trip_id):
 
   return links
   
-def build_stats(trip_list, traveller_info, type):
+def build_stats(trip_list, traveller_info, type, statyear=False):
   # TODO break this apart and/or do similar things in subroutines
   # TODO build more year metadata
   # TODO don't do as much work for front page
@@ -1170,7 +1182,8 @@ def build_stats(trip_list, traveller_info, type):
            'away':      { 'trips': 0, 'duration':0, },
            'future':    0,
            'types':     {},
-           'ordered':   {}, }
+           'ordered':   {},
+           'trips':     0, }
 
   if not trip_list:
     return stats
@@ -1185,7 +1198,15 @@ def build_stats(trip_list, traveller_info, type):
       else:
         stats['future'] += 1
       continue
-      
+
+    if statyear and trip['startdate'].year != int(statyear):
+      stats['years'][trip['startdate'].year] = { 'duration': 0, 'trips': 0, 'away':{}, 'home':{}, } 
+      continue
+    else:
+      logging.info("  + count this trip")
+
+    stats['trips'] += 1
+
     # how long (simple version...) # TODO never double count date
     duration = trip['finishdate'] - trip['startdate']
     trip['duration'] = duration.days
@@ -1421,7 +1442,9 @@ application = webapp.WSGIApplication(
                    ('/where/(\w*)', IndexPage),
 
                    ('/overview/', StatsPage),
+                   ('/overview/(year)/(\d*)', StatsPage),
                    ('/overview/(\w*)', StatsPage),
+                   ('/overview/(\w*)/year/(\d*)', StatsPage),
 
                    ('/sets/', SetsPage),
                    ('/sets/page/(\d+)', SetsPage),
