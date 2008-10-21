@@ -26,7 +26,11 @@
     {% if set.trip_info %}
       <p>Set already tagged for a Dopplr <a href="/trip/{{ set.trip_id }}">trip to {{ set.trip_info.name }}</a>.</p>
     {% else %}
-      <p>Potential trip IDs: {{ trip_ids }}</p>
+      {% if trip_ids %}
+        <p>Potential trip IDs: {{ trip_ids }}</p>
+      {% else %}
+        <p>No matching trip in Dopplr. Add a {{ set.days }} day long one?</p>
+      {% endif %}
     {% endif %}
       
     {% if set.photo %}
