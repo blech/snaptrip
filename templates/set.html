@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/style/core.css" title="Main styles for this page" type="text/css" media="all"> 
   <style type="text/css">
     div#photos span.image a.img img.dopplr {
-      border:2px solid #{% if set.trip_info %}{{ set.trip_info.rgb }}{% else %}666{% endif %};
+      border:2px solid #{% if set.trip_info %}{{ set.trip_info.city.rgb }}{% else %}666{% endif %};
     }
   </style>
 
@@ -24,12 +24,16 @@
       <p>{{ metadata.description._content }}</p>
 
     {% if set.trip_info %}
-      <p>Set already tagged for a Dopplr <a href="/trip/{{ set.trip_id }}">trip to {{ set.trip_info.name }}</a>.</p>
+      <p>This set's photos are already tagged for a Dopplr <a href="/trip/{{ set.trip_id }}">trip to {{ set.trip_info.city.name }}</a>.</p>
     {% else %}
       {% if trip_ids %}
-        <p>Potential trip IDs: {{ trip_ids }}</p>
+        {% if trip_ids|length > 1 %}
+        <p>This set overlaps with trips on Dopplr to {% for trip_id in trip_ids %}<a href="/trip/{{ trip_id }}">{{ trip_ids[trip_id].city.name }}</a>{% if loop.index+1 == trip_ids|length %} and {% elif not loop.last %}, {% endif %}{% endfor %}.</p>
+        {% else %}
+        <p>This set overlaps with a trip on Dopplr to {% for trip_id in trip_ids %}<a href="/trip/{{ trip_id }}">{{ trip_ids[trip_id].city.name }}</a>{% endfor %}.</p>
+        {% endif %}
       {% else %}
-        <p>No matching trip in Dopplr. Add a {{ set.days }} day long one?</p>
+        <p>There is no matching trip in Dopplr for these dates. If this set is from a trip, you can add a {{ set.days }} day long trip.</p>
       {% endif %}
     {% endif %}
       
@@ -54,7 +58,7 @@
 <!-- 'showing' text -->
             <p id="phototext">Showing 
             {% if set.total > 24 %}
-              <span class="count">24 of {{ set.total }} photos (page {{ set.page }} of {{ set.total // 24 + 1 }})</span>
+              <span class="count">24 of {{ set.total }} photos (page {{ set.page }} of {{ set.total|int // 24 + 1 }})</span>
             {% else %}
               all {{ set.total }} photos       
             {% endif %}

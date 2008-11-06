@@ -240,7 +240,7 @@ class SetsPage(webapp.RequestHandler):
       sets = get_sets_details(flickr, sets)
       template_values['sets'] = sets['photosets']
     else:
-      return error_page(self, session, "Could not get info about the user data from Flickr.")     
+      return error_page(self, session, "Could not get info about the sets from Flickr.")     
  
     # jinja2
     template = env.get_template('sets.html')
@@ -289,16 +289,28 @@ class SetPage(webapp.RequestHandler):
 
       # add metadata
       photoset['photoset'] = get_flickr_date_range(photoset['photoset'], True)
+      logging.info("checking for existing trip_ids list:");
       if not photoset['photoset'].has_key('trip_ids'):
+        logging.info(" - not found");
         photoset['photoset'] = get_flickr_trip_ids(permanent, photoset['photoset'])
+      else:
+        logging.info(" - found '%s'" % photoset['photoset']['trip_ids']);
 
       photos = photoset['photoset']
       photos['subtotal'] = len(photos['photo'])
 
       photos = get_flickr_geototal(photos)
-      if photoset['photoset'].has_key('trip_id'):
-        photos = get_flickr_tagtotal(photos, photoset['photoset']['trip_id'])
+      logging.info("checking for existing trip_id value:");
+      if photos.has_key('trip_ids') and len(photos['trip_ids']) > 0:
+        trip_ids = photos['trip_ids']
+        for trip_id in trip_ids:
+          if trip_ids[trip_id] == photos['subtotal']:
+            logging.info(" - found '%s'" % trip_id);
+            photos = get_flickr_tagtotal(photos, trip_id)
+            photos['trip_info'] = get_trip_info(permanent, trip_id)
+        # photos = get_flickr_tagtotal(photos, photoset['photoset']['trip_id'])
       else:
+        logging.info(" - not found");
         template_values['trip_ids'] = get_potential_trips(permanent, photoset['photoset'])
         # if not len(template_values['trip_ids']):
 
@@ -307,7 +319,7 @@ class SetPage(webapp.RequestHandler):
       template_values['nsid'] = nsid
 
     else:
-      return error_page(self, session, "Could not get info about the user data from Flickr.")     
+      return error_page(self, session, "Could not get info about the set from Flickr.")     
  
     # jinja2
     template = env.get_template('set.html')
@@ -761,6 +773,7 @@ def get_trip_info(token, trip_id):
   key = "dopplr="+token+":info=trip:tripid="+trip_id
 
   logging.info("looking for trip_id "+str(trip_id))
+  logging.info("memcache key '%s'" % key)
 
   trip_info = memcache.get(key)
   if trip_info:
@@ -769,6 +782,8 @@ def get_trip_info(token, trip_id):
 
   trip_list = get_trips_info(token)
   trips = {}
+  logging.info(trip_list)
+
   for trip in trip_list['trip']:
     key = "dopplr="+token+":info=trip:tripid="+str(trip['id'])
 
@@ -1054,6 +1069,8 @@ def get_flickr_trip_ids(dopplr, photos):
   trip_ids = {}
 
   for photo in photos['photo']:
+    # logging.info("tags: '"+photo['tags']+"'");
+
     for m in re.finditer('dopplr:trip=(\d+)', photo['tags']):
       trip_id = m.group(1)
       if not trip_ids.has_key(trip_id):
@@ -1106,11 +1123,11 @@ def prettify_trips(trip_list):
 def get_potential_trips(dopplr, photos):
   trips_info = get_trips_info(dopplr)
 
-  overlap_ids = []
+  overlap_ids = {}
   for trip in trips_info['trip']:
     if trip['startdate'] < photos['startdate'] \
        and trip['finishdate'] > photos['startdate']:
-      overlap_ids.append(trip['id'])
+      overlap_ids[trip['id']] = trip
 
   return overlap_ids
 
