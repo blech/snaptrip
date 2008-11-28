@@ -8,6 +8,11 @@
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
   <script type="text/javascript">
     $(document).ready(function() {
+      /* equalise columns */
+      if ($('div#when').height() > $('div#countries-visited').height()) {
+        $('br#equalise').show();
+      }
+
       /* cities list */
       $("ul.cities li").hover(function() {
         $(this).css({ backgroundColor:"#def" });
@@ -90,14 +95,52 @@
 
       <div class="label">1.</div>
       
-      <div class="twoasymcol-left">Countries visited.
+      <div id="countries-visited" class="twoasymcol-left">Countries visited.
         <div class="map">
           <div id="mapimage"><img src="http://chart.apis.google.com/chart?cht=t&chs=440x190&chtm=world&chco=ffffff,{{ stats.rgb_start }},{{ stats.rgb }}&chld={% for country in stats.countries %}{{ stats.countries[country].code }}{% endfor %}&chd=t:{% for country in stats.countries %}{{ stats.countries[country].scaled }}{% if not loop.last %},{% endif %}{% endfor %}" width="440" height="190"></div>
           <div id="mapoverlay"><img src="/images/google_map_overlay.png" width="440" height="190"></div>
         </div>
       </div>
-      
-      <div class="label">2.</div>
+            
+      <div id="when" class="twoasymcol-right">When.<br><br>{# TODO two <br>s? How declassee... #} 
+
+      {% if statyear %}
+        <a href="/overview/{% if traveller.name != session.name %}{{ traveller.nick }}{% endif %}" class="switch">All</a> |
+        {% for year in stats.ordered.years %}
+
+        {% endfor %}
+
+        {% for year in stats.ordered.years %}
+          {% if year == statyear %}
+            <b class="switch">{{ year }}</b>{% if not loop.last %} | {% endif %}
+          {% else %}
+            <a href="/overview/{% if traveller.name != session.name %}{{ traveller.nick }}/{% endif %}year/{{ year }}" class="switch">{{ year }}</a> {% if not loop.last %} | {% endif %}
+          {% endif %}
+        {% endfor %}
+      {% else %}
+
+        {% for year in stats.ordered.years %}
+          <div class="trips_by_year" style="position:relative; height:27px;">
+            <div style="position:absolute; top:0px; left:0px; height:16px; line-height:16px;"><a href="/overview/{% if traveller.name != session.name %}{{ traveller.nick }}/{% endif %}year/{{ year }}">{{ year }}</a></div>
+            <div style="position:absolute; top:0px; left:40px; background:#{{ stats.rgb }}; width: {{ stats.years[year].trips_scaled }}px; height:12px; text-align:right; font-size:10px; line-height:12px;">{{ stats.years[year].trips }} trips&nbsp;</div>
+            <div class="switch" style="position:absolute; top:13px; left:40px; background:#ccc; width: {{ stats.years[year].duration_scaled }}px; height:12px; text-align:right; font-size:10px; line-height:12px; padding-right:2px;">{{ stats.years[year].duration }} days&nbsp;</div>
+   
+  
+  <!--            {{ stats.years[year].trips }} {{ stats.years[year].trips_blocks_l|length }} {{ stats.years[year].trips_blocks_l|length * stats.trips_per_block }} {{ stats.years[year].trips_blocks_r }} -->
+  <!--            {% for i in stats.years[year].trips_blocks_l %}
+              <div style="width:{{ stats.block_width-3 }}px; border:1px solid #{{ stats.rgb }}; height:14px; margin-right:1px; float:left;"></div>
+              {% endfor %}{% if stats.years[year].trips_blocks_r > 2 %}
+              <div style="width:{{ stats.years[year].trips_blocks_r-3 }}px; border:1px solid #{{ stats.rgb }}; height:14px; float:left;"></div>
+              {% endif %} 
+            </div> -->
+          </div>
+        {% endfor %}
+      {% endif %}
+      </div>
+
+      <div class="label right">2.</div>
+
+      <br id="equalise" clear="both" style="display:none;">
 
       <div class="twoasymcol-right">Trips by type.<br><br>{# TODO two <br>s? How declassee... #} 
 <!-- <option value="plane">by plane</option>
@@ -120,39 +163,7 @@
       {% endfor %}
       </table><br></div>
 
-      <div class="label">3.</div>
-
-      <div class="twoasymcol-right">When.<br><br>{# TODO two <br>s? How declassee... #} 
-
-      {% if statyear %}
-        <a href="/overview/{% if traveller.name != session.name %}{{ traveller.nick }}{% endif %}" class="switch">All</a> |
-        {% for year in stats.ordered.years %}
-          {% if year == statyear %}
-            <b class="switch">{{ year }}</b>{% if not loop.last %} | {% endif %}
-          {% else %}
-            <a href="/overview/{% if traveller.name != session.name %}{{ traveller.nick }}/{% endif %}year/{{ year }}" class="switch">{{ year }}</a> {% if not loop.last %} | {% endif %}
-          {% endif %}
-        {% endfor %}
-      {% else %}
-
-        {% for year in stats.ordered.years %}
-          <div class="trips_by_year" style="position:relative; height:27px;">
-            <div style="position:absolute; top:0px; left:0px; height:16px; line-height:16px;">{{ year }}</div>
-            <div style="position:absolute; top:0px; left:40px; background:#{{ stats.rgb }}; width: {{ stats.years[year].trips_scaled }}px; height:12px; text-align:right; font-size:10px; line-height:12px;">{{ stats.years[year].trips }} trips&nbsp;</div>
-            <div class="switch" style="position:absolute; top:13px; left:40px; background:#ccc; width: {{ stats.years[year].duration_scaled }}px; height:12px; text-align:right; font-size:10px; line-height:12px; padding-right:2px;">{{ stats.years[year].duration }} days&nbsp;</div>
-   
-  
-  <!--            {{ stats.years[year].trips }} {{ stats.years[year].trips_blocks_l|length }} {{ stats.years[year].trips_blocks_l|length * stats.trips_per_block }} {{ stats.years[year].trips_blocks_r }} -->
-  <!--            {% for i in stats.years[year].trips_blocks_l %}
-              <div style="width:{{ stats.block_width-3 }}px; border:1px solid #{{ stats.rgb }}; height:14px; margin-right:1px; float:left;"></div>
-              {% endfor %}{% if stats.years[year].trips_blocks_r > 2 %}
-              <div style="width:{{ stats.years[year].trips_blocks_r-3 }}px; border:1px solid #{{ stats.rgb }}; height:14px; float:left;"></div>
-              {% endif %} 
-            </div> -->
-          </div>
-        {% endfor %}
-      {% endif %}
-      </div>
+      <div class="label right">3.</div>
 
 <!-- 
         <div class="br"></div>
