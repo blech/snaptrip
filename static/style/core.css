@@ -367,6 +367,10 @@ label {
   width: 150px;
 }
 
+input.form {
+  border: 1px solid #666;
+}
+
 input.wide, select, textarea {
   width: 350px;
   border: 1px solid #666;
@@ -394,6 +398,10 @@ div.label {
   padding: 0px;
 }
 
+div.right {
+  float:right;
+}
+
 div.br {
   clear: both;
   border-bottom: 1px dotted #ccc;
@@ -416,10 +424,11 @@ div.twoasymcol-left {
 }
 
 div.twoasymcol-right {
-  float:left;
+  float:right;
   width: 290px;
   margin: 0px;
   padding: 0px;
+  margin-bottom: 16px;
 }
 
 div.twosymcol {

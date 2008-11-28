@@ -9,6 +9,7 @@
     div#photos span.image a.img img.dopplr {
       border:2px solid #{% if set.trip_info %}{{ set.trip_info.city.rgb }}{% else %}666{% endif %};
     }
+    
   </style>
 
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
@@ -34,6 +35,20 @@
         {% endif %}
       {% else %}
         <p>There is no matching trip in Dopplr for these dates. If this set is from a trip, you can add a {{ set.days }} day long trip.</p>
+
+        <form>
+          <label for="start">Start date: </label>
+          <input class="form date" type="text" name="start" value="{{ set.startdate }}"><br>
+          
+          <label for="end">End date: </label>
+          <input class="form date"type="text" name="end" value="{{ set.finishdate }}"><br>
+
+          <label for="end">Destination: </label>
+          <input class="form text" type="text" name="destination" value=""><br>
+          
+          <input type="submit" name="add" value="Add trip">
+        </form>
+
       {% endif %}
     {% endif %}
       
