@@ -12,6 +12,8 @@ import colors     # from nodebox
 import feedparser
 import flickrapi
 import simplejson
+
+from geopy import Point, distance
 from jinja2 import FileSystemLoader, Environment
 from utilities import sessions
 
@@ -40,7 +42,7 @@ class IndexPage(webapp.RequestHandler):
 
     stats           = {}
     
-    # easter egg
+    # easter egg - TODO ternary?
     if (self.request.get('hel')):
       hel = True
     else:
@@ -1206,6 +1208,8 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
     return stats
            
   # home_country = traveller_info['home_city']['country']
+  home_city = traveller_info['home_city']
+  home_point = Point(longitude=home_city['longitude'], latitude=home_city['latitude'])
   
   for trip in trip_list:
     # skip if not a past trip
@@ -1273,7 +1277,7 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
     rgb  = trip['city']['rgb']
 
     if not city in stats['cities']:
-      stats['cities'][city] = { 'duration': 0, 'trips': 0, 
+      stats['cities'][city] = { 'duration': 0, 'trips': 0, 'dist_to':0, 'dist_from':0,
                                 'rgb':rgb, 'country':country, 
                                 'id':trip['city']['woeid'], 
                                 'trip_list': [], 'code':trip['city']['country_code']
@@ -1285,15 +1289,23 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
     if type != "front":
       stats['cities'][city]['trip_list'].append(trip)
     
+    # get distances
+    dest_point = Point(longitude=trip['city']['longitude'], latitude=trip['city']['latitude'])
+    dist = distance.distance(home_point, dest_point).km
+    stats['cities'][city]['dist_to'] = dist
+    stats['cities'][city]['dist_from'] = dist
+    
     # build year data
     year = trip['startdate'].year
 
     # initialise data structure's
     if not year in stats['years']:
-      stats['years'][year] = { 'duration': 0, 'trips': 0, 'away':{}, 'home':{}, }
+      stats['years'][year] = { 'duration': 0, 'trips': 0, 'away':{}, 
+                               'home':{}, 'distance': 0, }
     if year == trip['finishdate'].year:
       stats['years'][year]['duration'] += duration.days
       stats['years'][year]['trips'] += 1
+      stats['years'][year]['distance'] += dist*2
     else:
       if trip['finishdate'].year - year == 1:
         # spans a single year boundary, and is therefore Sane
@@ -1305,13 +1317,20 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
         
         stats['years'][year]['duration'] += (year_end-trip['startdate']).days
         stats['years'][year]['trips']    += 1
-  
+
+        stats['years'][year]['distance'] += dist
+
+        # redefine year from year-start to year-end  
         year = trip['finishdate'].year
         year_start = datetime(year, 1, 1)
         if not year in stats['years']:
-          stats['years'][year] = { 'duration': 0, 'trips': 0, 'away':{}, 'home':{}, }
-        stats['years'][year]['duration'] += (trip['finishdate']-year_start).days
+          stats['years'][year] = { 'duration': 0, 'trips': 0, 'away':{}, 
+                                   'home':{}, 'distance': 0, }
+
         # for now we don't count trips in both years. change?
+        # we do count trip days and distance in the end year
+        stats['years'][year]['duration'] += (trip['finishdate']-year_start).days
+        stats['years'][year]['distance'] += dist
 
     if type != "front":
       # do we care about finish months?
