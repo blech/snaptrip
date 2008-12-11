@@ -124,6 +124,7 @@
             <div style="position:absolute; top:0px; left:0px; height:16px; line-height:16px;"><a href="/overview/{% if traveller.name != session.name %}{{ traveller.nick }}/{% endif %}year/{{ year }}">{{ year }}</a></div>
             <div style="position:absolute; top:0px; left:40px; background:#{{ stats.rgb }}; width: {{ stats.years[year].trips_scaled }}px; height:12px; text-align:right; font-size:10px; line-height:12px;">{{ stats.years[year].trips }} trips&nbsp;</div>
             <div class="switch" style="position:absolute; top:13px; left:40px; background:#ccc; width: {{ stats.years[year].duration_scaled }}px; height:12px; text-align:right; font-size:10px; line-height:12px; padding-right:2px;">{{ stats.years[year].duration }} days&nbsp;</div>
+            <br><br><div class="switch">{{ stats.years[year].distance }} km&nbsp;</div>
    
   
   <!--            {{ stats.years[year].trips }} {{ stats.years[year].trips_blocks_l|length }} {{ stats.years[year].trips_blocks_l|length * stats.trips_per_block }} {{ stats.years[year].trips_blocks_r }} -->

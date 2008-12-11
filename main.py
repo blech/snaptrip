@@ -7,6 +7,7 @@ import logging
 
 from datetime import datetime
 from operator import itemgetter
+from random import random
 
 import colors     # from nodebox
 import feedparser
@@ -346,7 +347,8 @@ class LoginPage(webapp.RequestHandler):
 
     # get blog
     try:
-      atom = urlfetch.fetch("http://blech.vox.com/library/posts/tags/snaptrip/atom-full.xml")
+      cb   = int(random()*10000)
+      atom = urlfetch.fetch("http://blech.vox.com/library/posts/tags/snaptrip/atom-full.xml?cb=%s", cb)
       feed = feedparser.parse(atom.content)
       # trim to just two
       feed['entries'] = feed['entries'][0:2]
