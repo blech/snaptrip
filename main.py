@@ -116,6 +116,12 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
 
     stats           = build_stats(trips_info['trip'], traveller_info, 'detail', year)
     
+    if not stats:
+      if who:
+        return self.redirect("/overview/%s" % who);
+      else:
+        return self.redirect("/overview/");
+    
     template_values = {
       'session':    session,
       'permanent':  permanent,
@@ -1375,6 +1381,9 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
   
   stats['ordered']['countries'] = sorted(stats['countries'],  lambda x, y: (stats['countries'][y]['duration'])-(stats['countries'][x]['duration']))
   stats['ordered']['cities']    = sorted(stats['cities'],     lambda x, y: (stats['cities'][y]['duration'])-(stats['cities'][x]['duration']))
+
+  if (statyear and not stats['years'].has_key(statyear)):
+    return False;
 
   # colours
   if type != "front":
