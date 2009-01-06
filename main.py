@@ -1109,6 +1109,9 @@ def prettify_trips(trip_list):
   # parse dates to datetime objects
   now = datetime.now()
   
+  previous_trip_start  = False 
+  previous_trip_finish = False
+  
   for trip in trip_list:
     trip["startdate"]  = datetime.strptime(trip["start"],  "%Y-%m-%d")
     trip["finishdate"] = datetime.strptime(trip["finish"], "%Y-%m-%d")
@@ -1121,6 +1124,14 @@ def prettify_trips(trip_list):
         trip["status"] = "Past"
     else:
       trip["status"] = "Future"
+
+    if (previous_trip_finish and trip["startdate"] < previous_trip_finish):
+      logging.info("Current trip starts before previous trip finished - change origin")
+      trip["origin"] = previous_trip_city
+
+    previous_trip_city = trip["city"]
+    previous_trip_start = trip["startdate"]
+    previous_trip_finish = trip["finishdate"]
       
   return trip_list
   
@@ -1293,7 +1304,14 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
     
     # get distances
     dest_point = Point(longitude=trip['city']['longitude'], latitude=trip['city']['latitude'])
-    dist = distance.distance(home_point, dest_point).km
+    if (trip.has_key('origin')):
+      logging.info("Using previous location for trip distance");
+      origin_point = Point(longitude=trip['origin']['longitude'], latitude=trip['origin']['latitude'])
+    else:   
+      origin_point = home_point
+
+    dist = distance.distance(origin_point, dest_point).km
+    logging.info("Distance for trip to %s is %s" % (trip['city']['name'], dist))
     stats['cities'][city]['dist_to'] = dist
     stats['cities'][city]['dist_from'] = dist
     
