@@ -44,16 +44,6 @@
         code = $(this).attr('id');
         $("ul.cities li."+code).css({ backgroundColor:"#fff" });
       });
-      $("li").click(function() {
-//         $(this).css({ backgroundColor:"#fff" })
-//         $(this).children('div.city_details').toggle();
-      });
-
-      // if they're clickable, they should look clickable
-//       $("ul#countries li").css({ cursor:"hand" });
-//       $("ul#countries li").css({ cursor:"pointer" });
-
-
     })
     
     function showall() {
@@ -70,7 +60,7 @@
     function drawChart() {
       var data = new google.visualization.DataTable();
       data.addColumn('string', '', 'Country');
-      data.addColumn('number', 'Population (mil)', 'a');
+      data.addColumn('number', 'Duration (days)', 'a');
       data.addRows({{ stats.countries|length }});
     
     {% for country in stats.countries %}
@@ -95,12 +85,6 @@
       {% if not trips %}
       <p>There are no trips in Dopplr to show.</p>
       {% else %}
-
-      <!-- TODO turn into a list (!!) -->
-
-<!-- 
-      <div class="label">1.</div>
- -->
       
       <div id="countries-visited" class="twoasymcol-left">Countries visited.
         <div class="map">
@@ -133,30 +117,10 @@
               <div style="position:absolute; top:-1px; right:0px; " class="switch">{{ stats.years[year].trips }} trips</div>
             <div class="switch" style="position:absolute; top:13px; left:40px; background:#ccc; width: {{ stats.years[year].duration_scaled }}px; height:12px; text-align:right; font-size:10px; line-height:12px; padding-right:2px;"></div>
               <div style="position:absolute; top:12px; right:0px; " class="switch">{{ stats.years[year].duration }} days</div>
-<!-- 
-            <div style="position:absolute; top:0px; left:40px; background:#{{ stats.rgb }}; width: {{ stats.years[year].trips_scaled }}px; height:12px; text-align:right; font-size:10px; line-height:12px;">{{ stats.years[year].trips }} trips&nbsp;</div>
-            <div class="switch" style="position:absolute; top:13px; left:40px; background:#ccc; width: {{ stats.years[year].duration_scaled }}px; height:12px; text-align:right; font-size:10px; line-height:12px; padding-right:2px;">{{ stats.years[year].duration }} days&nbsp;</div>
- -->
-<!-- 
-            <br><br><div class="switch">{{ stats.years[year].distance }} km&nbsp;</div>
- -->
-   
-  
-  <!--            {{ stats.years[year].trips }} {{ stats.years[year].trips_blocks_l|length }} {{ stats.years[year].trips_blocks_l|length * stats.trips_per_block }} {{ stats.years[year].trips_blocks_r }} -->
-  <!--            {% for i in stats.years[year].trips_blocks_l %}
-              <div style="width:{{ stats.block_width-3 }}px; border:1px solid #{{ stats.rgb }}; height:14px; margin-right:1px; float:left;"></div>
-              {% endfor %}{% if stats.years[year].trips_blocks_r > 2 %}
-              <div style="width:{{ stats.years[year].trips_blocks_r-3 }}px; border:1px solid #{{ stats.rgb }}; height:14px; float:left;"></div>
-              {% endif %} 
-            </div> -->
           </div>
         {% endfor %}
       {% endif %}
       </div>
-
-<!-- 
-      <div class="label right">2.</div>
- -->
 
       <br id="equalise" clear="both" style="display:none;">
 
@@ -181,68 +145,7 @@
       {% endfor %}
       </table><br></div>
 
-<!-- 
-      <div class="label right">3.</div>
- -->
-
-<!-- 
         <div class="br"></div>
-
-      <div class="label">2.</div>
-      
-      <div class="threecol">Trips by year.<br><br>{# TODO two <br>s? How declassee... #}
-
-      {% for year in stats.ordered.years %}
-        <div class="trips_by_year" style="position:relative; height:17px;{#{% if stats.ordered.types|length < loop.index %} display:none;{% endif %}#}">
-          <div style="position:absolute; top:0px; left:0px; height:16px; line-height:16px;">{{ year }}</div>
-          <div style="position:absolute; top:0px; left:40px; background:#fff;">
- -->
-<!--            {{ stats.years[year].trips }} {{ stats.years[year].trips_blocks_l|length }} {{ stats.years[year].trips_blocks_l|length * stats.trips_per_block }} {{ stats.years[year].trips_blocks_r }} -->
-<!-- 
-            {% for i in stats.years[year].trips_blocks_l %}
-            <div style="width:{{ stats.block_width-3 }}px; border:1px solid #{{ stats.rgb }}; height:14px; margin-right:1px; float:left;"></div>
-            {% endfor %}{% if stats.years[year].trips_blocks_r > 2 %}
-            <div style="width:{{ stats.years[year].trips_blocks_r-3 }}px; border:1px solid #{{ stats.rgb }}; height:14px; float:left;"></div>
-            {% endif %}
-          </div>
-        </div>
-      {% endfor %}
-
- -->
-<!--
-    <p class="switch">
-    {{ stats.top_year_trips }} trips in busiest year, with
-    {{ stats.trips_per_block }} trips per block. Each block is
-    {{ stats.block_width }} pixels wide.</p> -->
-<!-- 
-
-      </div>
-
-      <div class="label">3.</div>
-      
-      <div class="threecol">Trips by type.<br><br>{# TODO two <br>s? How declassee... #}
-
-      <table cellpadding="0" cellspacing="0" border="0">
-      {% for type in stats.ordered.types %}
-        <tr>
-          <td><img src="/images/{{ type }}.gif" width="25" height="25" alt=""></td>
-          <td><div style="background:#{{ stats.rgb }}; display:block; width:{{ stats.types[type].scaled }}px; height:20px; margin-bottom:5px; color:#fff;"></div></td>
-        </tr>
-      {% endfor %}
-      </table></div>
-
-      <div class="label">4.</div>
-      
-      <div class="threecol">Days on trips, {{ stats.ordered.years_by_trip[0] }}.<br>
-        <img src="http://chart.apis.google.com/chart?cht=p&chs=100x100&chco={{ stats.rgb_start }},{{ stats.rgb }}&chd=t:{{ stats.home.days }},{{ stats.away.days }}" width="100" height="100">
-      </div>
- -->
-
-        <div class="br"></div>
-
-<!-- 
-      <div class="label">4.</div>
- -->
       
       <div class="twosymcol-left">Countries visited.<br>
       
@@ -262,10 +165,6 @@
 
       </div>
 
-<!-- 
-      <div class="label">5.</div>
- -->
-      
       <div class="twosymcol-right">Cities visited.<br>
       
         <ul id="cities" class="cities dotted small" style="margin-bottom:0px;">
