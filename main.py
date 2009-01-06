@@ -1389,7 +1389,7 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
       top_type = stats['ordered']['types'][0]
       top_trip = int(stats['types'][top_type]['trips'])
       for type in stats['types'].keys():
-        stats['types'][type]['scaled'] = 200*int(stats['types'][type]['trips'])/top_trip
+        stats['types'][type]['scaled'] = 240*int(stats['types'][type]['trips'])/top_trip
         stats['types'][type]['journeys'] = int((stats['types'][type]['trips']*2))
         
     # scale years
@@ -1419,8 +1419,8 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
       stats['years'][year]['home']['days']     = (366-stats['years'][top_year_by_days]['duration'])/3.66
   
       # raw scaling
-      stats['years'][year]['duration_scaled']  = int(220*stats['years'][year]['duration']/top_year_days)
-      stats['years'][year]['trips_scaled']     = int(220*stats['years'][year]['trips']/top_year_trips)
+      stats['years'][year]['duration_scaled']  = int(240*stats['years'][year]['duration']/top_year_days)
+      stats['years'][year]['trips_scaled']     = int(240*stats['years'][year]['trips']/top_year_trips)
   
       # block scaling
       stats['years'][year]['trips_blocks']     = float(stats['years'][year]['trips'])/stats['trips_per_block']

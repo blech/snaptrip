@@ -425,15 +425,22 @@ div.twoasymcol-left {
 
 div.twoasymcol-right {
   float:right;
-  width: 290px;
+  width: 340px;
   margin: 0px;
   padding: 0px;
   margin-bottom: 16px;
 }
 
-div.twosymcol {
+div.twosymcol-left {
   float:left;
-  width: 375px;
+  width: 390px;
+  margin: 0px 20px 0px 0px;
+  padding: 0px;
+}
+
+div.twosymcol-right {
+  float:left;
+  width: 390px;
   margin: 0px;
   padding: 0px;
 }
@@ -499,6 +506,11 @@ ul.small div.city_details {
   margin-left:23px;
   font-size:11px;
   display:none;
+}
+
+ul.small span.details {
+  font-size:11px;
+  margin-top: 1px;
 }
 
 ul.small span.city {
