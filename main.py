@@ -1382,7 +1382,12 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
   stats['ordered']['countries'] = sorted(stats['countries'],  lambda x, y: (stats['countries'][y]['duration'])-(stats['countries'][x]['duration']))
   stats['ordered']['cities']    = sorted(stats['cities'],     lambda x, y: (stats['cities'][y]['duration'])-(stats['cities'][x]['duration']))
 
-  if (statyear and not stats['years'].has_key(statyear)):
+  logging.info("checking for statyear in list of ordered years")
+  logging.info(statyear)
+  logging.info(stats['ordered']['years'])
+
+  if (statyear and not int(statyear) in stats['ordered']['years']):
+    logging.info("no entries for statyear?")
     return False;
 
   # colours
