@@ -1418,7 +1418,8 @@ def build_stats(trip_list, type, statyear=False):
 
   stats['ordered']['years_by_trip'] = sorted(stats['years'],  lambda x, y: (stats['years'][y]['trips'])-(stats['years'][x]['trips']))
   stats['ordered']['years_by_days'] = sorted(stats['years'],  lambda x, y: (stats['years'][y]['duration'])-(stats['years'][x]['duration']))
-  stats['ordered']['years_by_dist'] = sorted(stats['years'],  lambda x, y: (stats['years'][y]['distance'])-(stats['years'][x]['distance']))
+  if not statyear:
+    stats['ordered']['years_by_dist'] = sorted(stats['years'],  lambda x, y: (stats['years'][y]['distance'])-(stats['years'][x]['distance']))
   
   stats['ordered']['countries'] = sorted(stats['countries'],  lambda x, y: (stats['countries'][y]['duration'])-(stats['countries'][x]['duration']))
   stats['ordered']['cities']    = sorted(stats['cities'],     lambda x, y: (stats['cities'][y]['duration'])-(stats['cities'][x]['duration']))
@@ -1465,8 +1466,9 @@ def build_stats(trip_list, type, statyear=False):
     top_year_by_days = stats['ordered']['years_by_days'][0]
     top_year_days    = stats['years'][top_year_by_days]['duration']
 
-    top_year_by_dist = stats['ordered']['years_by_dist'][0]
-    top_year_dist    = stats['years'][top_year_by_dist]['distance']
+    if not statyear:
+      top_year_by_dist = stats['ordered']['years_by_dist'][0]
+      top_year_dist    = stats['years'][top_year_by_dist]['distance']
 
   # scale years (for front page too)
   top_year_by_trip = stats['ordered']['years_by_trip'][0]
@@ -1493,7 +1495,8 @@ def build_stats(trip_list, type, statyear=False):
       # raw scaling
       stats['years'][year]['duration_scaled']  = int(240*stats['years'][year]['duration']/top_year_days)
       stats['years'][year]['trips_scaled']     = int(240*stats['years'][year]['trips']/top_year_trips)
-      stats['years'][year]['dist_scaled']      = int(240*stats['years'][year]['distance']/top_year_dist)
+      if not statyear:
+        stats['years'][year]['dist_scaled']      = int(240*stats['years'][year]['distance']/top_year_dist)
   
       # block scaling
       stats['years'][year]['trips_blocks']     = float(stats['years'][year]['trips'])/stats['trips_per_block']
