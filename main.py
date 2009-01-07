@@ -1495,7 +1495,7 @@ def build_stats(trip_list, type, statyear=False):
       # raw scaling
       stats['years'][year]['duration_scaled']  = int(240*stats['years'][year]['duration']/top_year_days)
       stats['years'][year]['trips_scaled']     = int(240*stats['years'][year]['trips']/top_year_trips)
-      if not statyear:
+      if not statyear and type == 'detail':
         stats['years'][year]['dist_scaled']      = int(240*stats['years'][year]['distance']/top_year_dist)
   
       # block scaling
