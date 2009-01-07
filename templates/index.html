@@ -167,7 +167,7 @@
 
         <h3>More?</h3>
       
-      <p>You can see more information about {% if traveller.name == session.name %}your{% else %}{{ traveller.name }}their{% endif %} trips on {% if traveller.name == session.name %}your{% else %}{{ traveller.name }}their{% endif %} <a href="/overview/{{ traveller.nick }}">overview</a> pages.</p>
+      <p>You can see more information about {% if traveller.name == session.name %}your{% else %}{{ traveller.name }}'s{% endif %} trips on {% if traveller.name == session.name %}your{% else %}their{% endif %} <a href="/overview/{{ traveller.nick }}">overview</a> pages.</p>
 
     {% else %}
       <p>According to Dopplr, nowhere.</p>

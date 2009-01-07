@@ -26,7 +26,7 @@
         $("ul#countries li#"+code).css({ backgroundColor:"#fff" });
       });
       $("li").click(function() {
-        $(this).css({ backgroundColor:"#fff" })
+        // $(this).css({ backgroundColor:"#fff" })
         $(this).children('div.city_details').toggle();
       });
 
@@ -73,6 +73,24 @@
       $('div.google-visualization-intensitymap-legend').hide();
     }
   </script>
+  
+  <style type="text/css">
+    div.year_odd div.bar {
+      background:#{{ stats.rgb }};
+    }
+    div.year_even div.bar-inv {
+      background:#{{ stats.rgb }};
+    }
+    div.year_even div.bar {
+      background:#ccc;
+    }
+    div.year_odd div.bar-inv {
+      background:#ccc;
+    }
+
+  </style>
+
+  
 </head>
 <body>
   {% include "includes/header.html" %}
@@ -111,12 +129,15 @@
       {% else %}
 
         {% for year in stats.ordered.years %}
-          <div class="trips_by_year" style="position:relative; height:30px;">
+        
+          <div class="trips_by_year {{ loop.cycle('year_odd', 'year_even') }}" style="position:relative; height:45px;">
             <div style="position:absolute; top:0px; left:0px; height:16px; line-height:16px;"><a href="/overview/{% if traveller.name != session.name %}{{ traveller.nick }}/{% endif %}year/{{ year }}">{{ year }}</a></div>
-            <div style="position:absolute; top:0px; left:40px; background:#{{ stats.rgb }}; width: {{ stats.years[year].trips_scaled }}px; height:12px;"></div>
-              <div style="position:absolute; top:-1px; right:0px; " class="switch">{{ stats.years[year].trips }} trips</div>
-            <div class="switch" style="position:absolute; top:13px; left:40px; background:#ccc; width: {{ stats.years[year].duration_scaled }}px; height:12px; text-align:right; font-size:10px; line-height:12px; padding-right:2px;"></div>
+            <div class="bar" style="position:absolute; top:0px; left:40px; width: {{ stats.years[year].trips_scaled }}px; height:12px;"></div>
+              <div style="position:absolute; top:0px; right:0px; " class="switch">{{ stats.years[year].trips }} trips</div>
+            <div class="bar-inv" style="position:absolute; top:13px; left:40px; width: {{ stats.years[year].duration_scaled }}px; height:12px;"></div>
               <div style="position:absolute; top:12px; right:0px; " class="switch">{{ stats.years[year].duration }} days</div>
+            <div class="bar" style="position:absolute; top:26px; left:40px; width: {{ stats.years[year].dist_scaled }}px; height:12px;"></div>
+              <div style="position:absolute; top:25px; right:0px; " class="switch">{{ stats.years[year].distance }} km</div>
           </div>
         {% endfor %}
       {% endif %}
@@ -143,7 +164,7 @@
           <td class="switch" width="70px" align="right">{{ stats.types[type].journeys }} journeys</td>
         </tr>
       {% endfor %}
-      </table><br></div>
+      </table></div>
 
         <div class="br"></div>
       

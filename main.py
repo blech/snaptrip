@@ -63,9 +63,9 @@ class IndexPage(webapp.RequestHandler):
       return error_page(self, session, traveller_info['error'])
 
     # TODO ajax/memcache
-    stats           = build_stats(trips_info['trip'], traveller_info, 'front')
+    stats           = build_stats(trips_info['trip'], 'front')
     if hel:
-      stats           = build_stats(trips_info['trip'], traveller_info, 'helvetica')
+      stats           = build_stats(trips_info['trip'], 'helvetica')
     
     template_values = {
       'session':    session,
@@ -114,9 +114,9 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
     if traveller_info.has_key('error'):
       return error_page(self, session, traveller_info['error'])
 
-    trips_info['trip'] = link_trips(trips_info['trip'])
+    trips_info['trip'] = get_trip_distances(trips_info['trip'], traveller_info)
 
-    stats      = build_stats(trips_info['trip'], traveller_info, 'detail', year)
+    stats      = build_stats(trips_info['trip'], 'detail', year)
     if not stats:
       if who:
         return self.redirect("/overview/%s" % who);
@@ -1131,11 +1131,11 @@ def prettify_trips(trip_list):
       
   return trip_list
 
-def link_trips(trip_list):
+def get_trip_distances(trip_list, traveller_info):
   logging.info("in link_trips")
-  # parse dates and join trips 
   previous = False 
   
+  # parse dates and join trips 
   for trip in trip_list:
     if previous:
       if trip["startdate"] < previous["finishdate"]:
@@ -1162,6 +1162,36 @@ def link_trips(trip_list):
 
     previous = trip
   
+  home_city = traveller_info['home_city']
+  home_point = Point(longitude=home_city['longitude'], latitude=home_city['latitude'])
+
+  # now loop through again, building up distances
+  for trip in trip_list:
+    # get distances - out
+    dest_point = Point(longitude=trip['city']['longitude'], latitude=trip['city']['latitude'])
+    if (trip.has_key('origin')):
+      logging.info("Using non-home location for outgoing trip distance");
+      origin_point = Point(longitude=trip['origin']['longitude'], latitude=trip['origin']['latitude'])
+    else:   
+      origin_point = home_point
+
+    trip['distance'] = {'out': int(distance.distance(origin_point, dest_point).km)}
+    if (trip.has_key('origin')):
+      logging.info("Distance for trip from previous %s to city %s is %s" % (trip['origin']['name'], trip['city']['name'], trip['distance']['out']))
+
+    # get distances - back
+    if (trip.has_key('return')):
+      logging.info("Using non-home location for return trip distance");
+      return_point = Point(longitude=trip['return']['longitude'], latitude=trip['return']['latitude'])
+    else:   
+      return_point = home_point
+
+    trip['distance']['return'] = int(distance.distance(dest_point, return_point).km)
+    if (trip.has_key('return')):
+      logging.info("Distance for trip from city %s to next %s is %s" % (trip['city']['name'], trip['return']['name'], trip['distance']['return']))
+    
+    logging.info(trip['distance']);
+    
   logging.info("done")
   
   return trip_list
@@ -1231,7 +1261,7 @@ def links_for_trip(trips_list, trip_id):
 
   return links
   
-def build_stats(trip_list, traveller_info, type, statyear=False):
+def build_stats(trip_list, type, statyear=False):
   # TODO break this apart and/or do similar things in subroutines
   # TODO build more year metadata
   # TODO don't do as much work for front page
@@ -1251,10 +1281,6 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
   if not trip_list:
     return stats
            
-  # home_country = traveller_info['home_city']['country']
-  home_city = traveller_info['home_city']
-  home_point = Point(longitude=home_city['longitude'], latitude=home_city['latitude'])
-  
   for trip in trip_list:
     # skip if not a past trip
     if trip['status'] != "Past":
@@ -1333,20 +1359,6 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
     if type != "front":
       stats['cities'][city]['trip_list'].append(trip)
     
-    # get distances
-    dest_point = Point(longitude=trip['city']['longitude'], latitude=trip['city']['latitude'])
-    if (trip.has_key('origin')):
-      logging.info("Using previous location for trip distance");
-      origin_point = Point(longitude=trip['origin']['longitude'], latitude=trip['origin']['latitude'])
-    else:   
-      origin_point = home_point
-
-    dist = distance.distance(origin_point, dest_point).km
-    if (trip.has_key('origin')):
-      logging.info("Distance for trip from previous %s to %s is %s" % (trip['origin']['name'], trip['city']['name'], dist))
-    stats['cities'][city]['dist_to'] = dist
-    stats['cities'][city]['dist_from'] = dist
-    
     # build year data
     year = trip['startdate'].year
 
@@ -1357,7 +1369,8 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
     if year == trip['finishdate'].year:
       stats['years'][year]['duration'] += duration.days
       stats['years'][year]['trips'] += 1
-      stats['years'][year]['distance'] += dist*2
+      if type == "detail":
+        stats['years'][year]['distance'] += (trip['distance']['out']+trip['distance']['return'])
     else:
       if trip['finishdate'].year - year == 1:
         # spans a single year boundary, and is therefore Sane
@@ -1369,8 +1382,8 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
         
         stats['years'][year]['duration'] += (year_end-trip['startdate']).days
         stats['years'][year]['trips']    += 1
-
-        stats['years'][year]['distance'] += dist
+        if type == "detail":
+          stats['years'][year]['distance'] += trip['distance']['out']
 
         # redefine year from year-start to year-end  
         year = trip['finishdate'].year
@@ -1382,7 +1395,8 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
         # for now we don't count trips in both years. change?
         # we do count trip days and distance in the end year
         stats['years'][year]['duration'] += (trip['finishdate']-year_start).days
-        stats['years'][year]['distance'] += dist
+        if type == "detail":
+          stats['years'][year]['distance'] += trip['distance']['return']
 
     if type != "front":
       # do we care about finish months?
@@ -1404,6 +1418,7 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
 
   stats['ordered']['years_by_trip'] = sorted(stats['years'],  lambda x, y: (stats['years'][y]['trips'])-(stats['years'][x]['trips']))
   stats['ordered']['years_by_days'] = sorted(stats['years'],  lambda x, y: (stats['years'][y]['duration'])-(stats['years'][x]['duration']))
+  stats['ordered']['years_by_dist'] = sorted(stats['years'],  lambda x, y: (stats['years'][y]['distance'])-(stats['years'][x]['distance']))
   
   stats['ordered']['countries'] = sorted(stats['countries'],  lambda x, y: (stats['countries'][y]['duration'])-(stats['countries'][x]['duration']))
   stats['ordered']['cities']    = sorted(stats['cities'],     lambda x, y: (stats['cities'][y]['duration'])-(stats['cities'][x]['duration']))
@@ -1450,6 +1465,9 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
     top_year_by_days = stats['ordered']['years_by_days'][0]
     top_year_days    = stats['years'][top_year_by_days]['duration']
 
+    top_year_by_dist = stats['ordered']['years_by_dist'][0]
+    top_year_dist    = stats['years'][top_year_by_dist]['distance']
+
   # scale years (for front page too)
   top_year_by_trip = stats['ordered']['years_by_trip'][0]
   top_year_trips   = stats['years'][top_year_by_trip]['trips']
@@ -1475,6 +1493,7 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
       # raw scaling
       stats['years'][year]['duration_scaled']  = int(240*stats['years'][year]['duration']/top_year_days)
       stats['years'][year]['trips_scaled']     = int(240*stats['years'][year]['trips']/top_year_trips)
+      stats['years'][year]['dist_scaled']      = int(240*stats['years'][year]['distance']/top_year_dist)
   
       # block scaling
       stats['years'][year]['trips_blocks']     = float(stats['years'][year]['trips'])/stats['trips_per_block']
