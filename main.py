@@ -5,7 +5,7 @@ import sys
 import math
 import logging
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from operator import itemgetter
 from random import random
 
@@ -114,8 +114,9 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
     if traveller_info.has_key('error'):
       return error_page(self, session, traveller_info['error'])
 
-    stats           = build_stats(trips_info['trip'], traveller_info, 'detail', year)
-    
+    trips_info['trip'] = link_trips(trips_info['trip'])
+
+    stats      = build_stats(trips_info['trip'], traveller_info, 'detail', year)
     if not stats:
       if who:
         return self.redirect("/overview/%s" % who);
@@ -1115,9 +1116,6 @@ def prettify_trips(trip_list):
   # parse dates to datetime objects
   now = datetime.now()
   
-  previous_trip_start  = False 
-  previous_trip_finish = False
-  
   for trip in trip_list:
     trip["startdate"]  = datetime.strptime(trip["start"],  "%Y-%m-%d")
     trip["finishdate"] = datetime.strptime(trip["finish"], "%Y-%m-%d")
@@ -1130,15 +1128,42 @@ def prettify_trips(trip_list):
         trip["status"] = "Past"
     else:
       trip["status"] = "Future"
-
-    if (previous_trip_finish and trip["startdate"] < previous_trip_finish):
-      logging.info("Current trip starts before previous trip finished - change origin")
-      trip["origin"] = previous_trip_city
-
-    previous_trip_city = trip["city"]
-    previous_trip_start = trip["startdate"]
-    previous_trip_finish = trip["finishdate"]
       
+  return trip_list
+
+def link_trips(trip_list):
+  logging.info("in link_trips")
+  # parse dates and join trips 
+  previous = False 
+  
+  for trip in trip_list:
+    if previous:
+      if trip["startdate"] < previous["finishdate"]:
+        logging.info("Current trip starts before previous trip finished - change origin for %s to %s" % (previous["city"]["name"], trip["city"]["name"]))
+        trip["origin"] = previous["city"]
+        trip["overlap"] = True # for concurrent trips - try to fix day counts
+  
+      if trip["finishdate"] < previous["finishdate"]:
+        logging.info("Current trip finishes before previous trip finished - change return for %s to %s" % (previous["city"]["name"], trip["city"]["name"]))
+        trip["return"] = previous["city"]
+        
+      if trip["startdate"] == previous["finishdate"]:
+        logging.info("Current trip follows on same day as previous trip - link %s to %s" % (previous["city"]["name"], trip["city"]["name"]))
+        trip["origin"] = previous["city"]
+        previous["return"] = trip["city"]
+        # trip["join"] = previous["id"]
+
+      # try with startdate - 1 day to see if we can join with a previous place
+      day_before = trip["startdate"] - timedelta(days=1)
+      if day_before == previous["finishdate"]:
+        logging.info("Current trip follows immediately from previous trip - link %s to %s" % (previous["city"]["name"], trip["city"]["name"]))
+        trip["origin"] = previous["city"]
+        previous["return"] = trip["city"]
+
+    previous = trip
+  
+  logging.info("done")
+  
   return trip_list
   
 def get_potential_trips(dopplr, photos):
@@ -1242,8 +1267,8 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
     if statyear and trip['startdate'].year != int(statyear):
       stats['years'][trip['startdate'].year] = { 'duration': 0, 'trips': 0, 'away':{}, 'home':{}, } 
       continue
-    else:
-      logging.info("  + count this trip")
+    # else:
+    #   logging.info("  + count this trip")
 
     stats['trips'] += 1
 
@@ -1317,7 +1342,8 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
       origin_point = home_point
 
     dist = distance.distance(origin_point, dest_point).km
-    logging.info("Distance for trip to %s is %s" % (trip['city']['name'], dist))
+    if (trip.has_key('origin')):
+      logging.info("Distance for trip from previous %s to %s is %s" % (trip['origin']['name'], trip['city']['name'], dist))
     stats['cities'][city]['dist_to'] = dist
     stats['cities'][city]['dist_from'] = dist
     
@@ -1382,12 +1408,8 @@ def build_stats(trip_list, traveller_info, type, statyear=False):
   stats['ordered']['countries'] = sorted(stats['countries'],  lambda x, y: (stats['countries'][y]['duration'])-(stats['countries'][x]['duration']))
   stats['ordered']['cities']    = sorted(stats['cities'],     lambda x, y: (stats['cities'][y]['duration'])-(stats['cities'][x]['duration']))
 
-  logging.info("checking for statyear in list of ordered years")
-  logging.info(statyear)
-  logging.info(stats['ordered']['years'])
-
   if (statyear and not int(statyear) in stats['ordered']['years']):
-    logging.info("no entries for statyear?")
+    logging.info("no entries for year '%'" % statyear)
     return False;
 
   # colours
