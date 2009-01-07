@@ -132,9 +132,9 @@
           <div class="trips_by_year {{ loop.cycle('year_odd', 'year_even') }}" style="position:relative; height:45px;">
             <div style="position:absolute; top:0px; left:0px; height:16px; line-height:16px;"><a href="/overview/{% if traveller.name != session.name %}{{ traveller.nick }}/{% endif %}year/{{ year }}">{{ year }}</a></div>
             <div class="bar" style="position:absolute; top:0px; left:40px; width: {{ stats.years[year].trips_scaled }}px; height:12px;"></div>
-              <div style="position:absolute; top:0px; right:0px; " class="switch">{{ stats.years[year].trips }} trips</div>
+              <div style="position:absolute; top:0px; right:0px; " class="switch">{{ stats.years[year].trips }} trip{% if stats.years[year].trips != 1 %}s{% endif %}</div>
             <div class="bar-inv" style="position:absolute; top:13px; left:40px; width: {{ stats.years[year].duration_scaled }}px; height:12px;"></div>
-              <div style="position:absolute; top:12px; right:0px; " class="switch">{{ stats.years[year].duration }} days</div>
+              <div style="position:absolute; top:12px; right:0px; " class="switch">{{ stats.years[year].duration }} day{% if stats.years[year].duration != 1 %}s{% endif %}</div>
             <div class="bar" style="position:absolute; top:26px; left:40px; width: {{ stats.years[year].dist_scaled }}px; height:12px;"></div>
               <div style="position:absolute; top:25px; right:0px; " class="switch">{{ stats.years[year].distance }} km</div>
           </div>
