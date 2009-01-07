@@ -114,10 +114,9 @@
       <div id="when" class="twoasymcol-right">When.<br><br>{# TODO two <br>s? How declassee... #} 
 
       {% if statyear %}
-        <a href="/overview/{% if traveller.name != session.name %}{{ traveller.nick }}{% endif %}" class="switch">All</a> |
-        {% for year in stats.ordered.years %}
+        In {{ statyear }}, {{ stats.years[statyear].trips }} trips over {{ stats.years[statyear].duration }} days, including {{ stats.years[statyear].distance }} kilometres of travel.<br><br>
 
-        {% endfor %}
+        <a href="/overview/{% if traveller.name != session.name %}{{ traveller.nick }}{% endif %}" class="switch">All</a> |
 
         {% for year in stats.ordered.years %}
           {% if year == statyear %}
