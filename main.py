@@ -50,11 +50,10 @@ class IndexPage(webapp.RequestHandler):
       hel = False
     
     # TODO deboilerplate
-    trips_info      = get_trips_info(permanent, who)
-    if not trips_info:
-      return error_page(self, session, "Your past trips could not be loaded.")
-    if trips_info.has_key('error'):
-      return error_page(self, session, trips_info['error'])
+    try:
+      trips_info      = get_trips_info(permanent, who)
+    except Exception, error:
+      return error_page(self, session, error)
 
     traveller_info  = get_traveller_info(permanent, who)
     if not traveller_info:
@@ -102,11 +101,10 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
       who = ""
     
     # TODO deboilerplate
-    trips_info      = get_trips_info(permanent, who)
-    if not trips_info:
-      return error_page(self, session, "Your past trips could not be loaded.")
-    if trips_info.has_key('error'):
-      return error_page(self, session, trips_info['error'])
+    try:
+      trips_info      = get_trips_info(permanent, who)
+    except Exception, error:
+      return error_page(self, session, error)
 
     traveller_info  = get_traveller_info(permanent, who)
     if not traveller_info:
@@ -165,9 +163,10 @@ class TripPage(webapp.RequestHandler):
 
     logging.info("who: '"+who+"'")
 
-    trips_info = get_trips_info(permanent, who)
-    if trips_info.has_key('error'):
-      return error_page(self, session, trips_info['error'])
+    # try:
+    #   trips_info = get_trips_info(permanent, who)
+    # except Exception, error:
+    #   return error_page(self, session, error)
 
     links = links_for_trip(trips_info, trip_id)
         
@@ -190,21 +189,25 @@ class TripPage(webapp.RequestHandler):
           template_values['prevpage'] = int(page)-1
           template_values['nextpage'] = int(page)+1
   
-          if type == 'date':  
-            template_values['photos'] = get_flickr_photos_by_date(flickr, nsid, trip_info, page)
-            template_values['method'] = "date"
-          elif type == 'tag':
-            template_values['photos'] = get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page)
-            template_values['method'] = "tag"
-          else:
-            photos = get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page)
-            if photos and photos.has_key('total') and photos['total']:
-              template_values['photos'] = photos
-              template_values['method'] = "tag"
-            else:
+          try:
+            if type == 'date':  
               template_values['photos'] = get_flickr_photos_by_date(flickr, nsid, trip_info, page)
               template_values['method'] = "date"
-
+            elif type == 'tag':
+              template_values['photos'] = get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page)
+              template_values['method'] = "tag"
+            else:
+              photos = get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page)
+              if photos and photos.has_key('total') and photos['total']:
+                template_values['photos'] = photos
+                template_values['method'] = "tag"
+              else:
+                template_values['photos'] = get_flickr_photos_by_date(flickr, nsid, trip_info, page)
+                template_values['method'] = "date"
+          except Exception(error):
+            logging.error(error)
+            raise Exception(error)
+            
         else:
           return error_page(self, session, "Could not get info about the user data from Flickr.")     
 
@@ -666,15 +669,20 @@ def get_traveller_info(token, who=""):
                  url = url,
                  headers = {'Authorization': 'AuthSub token="'+token+'"'},
                )
-  except:
-    return {'error': "Couldn't download traveller info from Dopplr."}
+  except Exception, error:
+    logging.error(error)
+    if who:
+      raise Exception("Could not get traveller information for '%s'." % who)
+    else:
+      raise Exception("Could not get your traveller information.")
 
   traveller_info = {}
   try:
     traveller_info = simplejson.loads(response.content)
     traveller_info = traveller_info['traveller']
-  except ValueError:
-    return {'error': "Didn't get a JSON response from Dopplr's traveller_info API"}
+  except ValueError(error):
+    logging.error(error)
+    raise Exception("Didn't get a JSON response from Dopplr's traveller_info API.")
 
   if not memcache.add(key, traveller_info, 3600):
     logging.warning("memcache add for traveller_info failed")
@@ -696,25 +704,30 @@ def get_trips_info(token, who=""):
     url += "?traveller="+who
 
   try:
+    logging.info("fetching "+url)
     response = urlfetch.fetch(
                  url = url,
                  headers = {'Authorization': 'AuthSub token="'+token+'"'},
                )
-  except:
-    return {'error': "Couldn't download info about trips from Dopplr."}
+  except Exception, error:
+    logging.error(error)
+    raise Exception, "Couldn't download info about trips from Dopplr."
 
   trips_info = {}
   try:
     trips_info = simplejson.loads(response.content)
-  except ValueError:
-    return {'error': "Didn't get a JSON response from Dopplr's trips_info API."}
+  except ValueError(error):
+    logging.error(error)
+    raise Exception("Didn't get a JSON response from Dopplr's trips_info API.")
 
   ## postprocessing. do stats here too?
   if trips_info and trips_info.has_key('trip'):
     trips_info['trip'] = prettify_trips(trips_info['trip'])
   else:
-    # TODO raise
-    return {'error': "Could not get information about past trips (user permission?)."}
+    if who:
+      raise Exception("Could not get information about past trips for '%s'." % who)
+    else:
+      raise Exception("Could not get information about your past trips.")
 
   if not memcache.add(key, trips_info, 3600):
     logging.warning("memcache add for trips_info failed")
@@ -736,18 +749,19 @@ def get_trip_info_direct(token, trip_id):
                  url = url,
                  headers = {'Authorization': 'AuthSub token="'+token+'"'},
                )
-  except:
-    return {'error': "Couldn't download trip info from Dopplr."}
+  except Exception(error):
+    logging.error(error)
+    raise Exception("Couldn't fetch trip info for trip %s" % trip_id)
 
   trip_info = {}
   try:
     trip_info = simplejson.loads(response.content)
-  except ValueError:
-    return {'error': "Didn't get a JSON response from Dopplr's trip_info API"}
+  except ValueError(error):
+    raise Exception("Didn't get a JSON response for trip %s" % trip_id)
     
   if trip_info.get('error'):
     # not good. show to user?
-    return {'error': trip_info['error']}
+    raise Exception(trip_info.get('error'))
 
   logging.info("got trip, postprocessing")
   ## postprocessing - time consuming? seperate routine?
@@ -883,7 +897,7 @@ def get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page):
              )
     photos = simplejson.loads(photos)
   except:
-    return {'error': 'Could not get photos from Flickr using machine tag search.'}
+    raise Exception('Could not get photos from Flickr using machine tag search.')
 
   photos = photos['photos']
   photos = get_flickr_geototal(photos)
@@ -923,8 +937,8 @@ def get_flickr_photos_by_date(flickr, nsid, trip_info, page):
              )
     photos = simplejson.loads(photos)
   except:
-    return {'error': 'Could not get photos from Flickr using date taken search.'}
-
+    raise Exception('Could not get photos from Flickr using date taken search.')
+    
   photos = photos['photos']
   photos = get_flickr_geototal(photos)
   photos = get_flickr_tagtotal(photos, trip_info["id"])
