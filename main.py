@@ -41,7 +41,9 @@ class IndexPage(webapp.RequestHandler):
     except KeyError, e:
       return self.redirect("/login/")
 
-    stats           = {}
+    stats = {}
+    if not who:
+      who = session['nick']
     
     # easter egg - TODO ternary?
     if (self.request.get('hel')):
@@ -99,6 +101,9 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
 
     if who == "year":
       who = ""
+
+    if not who:
+      who = session['nick']
     
     # TODO deboilerplate
     try:
@@ -670,7 +675,7 @@ def get_traveller_info(token, who=""):
                  headers = {'Authorization': 'AuthSub token="'+token+'"'},
                )
   except Exception, error:
-    logging.error(error)
+    logging.error("Error fetching %s: %s" % (url, error))
     if who:
       raise Exception("Could not get traveller information for '%s'." % who)
     else:
@@ -681,7 +686,7 @@ def get_traveller_info(token, who=""):
     traveller_info = simplejson.loads(response.content)
     traveller_info = traveller_info['traveller']
   except ValueError(error):
-    logging.error(error)
+    logging.error("Error fetching %s: %s" % (url, error))
     raise Exception("Didn't get a JSON response from Dopplr's traveller_info API.")
 
   if not memcache.add(key, traveller_info, 3600):
@@ -704,26 +709,26 @@ def get_trips_info(token, who=""):
     url += "?traveller="+who
 
   try:
-    logging.info("fetching "+url)
     response = urlfetch.fetch(
                  url = url,
                  headers = {'Authorization': 'AuthSub token="'+token+'"'},
                )
   except Exception, error:
-    logging.error(error)
+    logging.error("Error fetching %s: %s" % (url, error))
     raise Exception, "Couldn't download info about trips from Dopplr."
 
   trips_info = {}
   try:
     trips_info = simplejson.loads(response.content)
   except ValueError(error):
-    logging.error(error)
+    logging.error("Error fetching %s: %s" % (url, error))
     raise Exception("Didn't get a JSON response from Dopplr's trips_info API.")
 
   ## postprocessing. do stats here too?
   if trips_info and trips_info.has_key('trip'):
     trips_info['trip'] = prettify_trips(trips_info['trip'])
   else:
+    logging.error("Error fetching %s: %s" % (url, error))
     if who:
       raise Exception("Could not get information about past trips for '%s'." % who)
     else:
@@ -750,7 +755,7 @@ def get_trip_info_direct(token, trip_id):
                  headers = {'Authorization': 'AuthSub token="'+token+'"'},
                )
   except Exception(error):
-    logging.error(error)
+    logging.error("Error fetching %s: %s" % (url, error))
     raise Exception("Couldn't fetch trip info for trip %s" % trip_id)
 
   trip_info = {}
