@@ -143,6 +143,45 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
     
     self.response.out.write(template.render(template_values))
 
+class StatsExport(webapp.RequestHandler):
+  def get(self, who="", year=None):
+    session = get_session()
+
+    # session objects don't support has_key. bah.
+    try:
+      permanent = session['dopplr']
+      token     = session['flickr']
+    except KeyError, e:
+      return self.redirect("/login/")
+
+    try:
+      trips_info      = get_trips_info(permanent, who)
+    except Exception, error:
+      return error_page(self, session, error)
+
+    traveller_info  = get_traveller_info(permanent, who)
+    if not traveller_info:
+      return error_page(self, session, "Your past trips could not be loaded.")
+    if traveller_info.has_key('error'):
+      return error_page(self, session, traveller_info['error'])
+
+    trips_info['trip'] = get_trip_distances(trips_info['trip'], traveller_info)
+
+    template_values = {
+      'trips':      trips_info['trip'],
+      'traveller':  traveller_info, 
+      #'stats':      stats,
+      'memcache':   memcache.get_stats(),
+    }
+
+    if (year):
+      template_values['statyear'] = int(year)
+
+    template = env.get_template('overview.csv')
+    
+    self.response.out.write(template.render(template_values))
+    self.response.headers["Content-Type"] = "text/plain"
+
 class TripPage(webapp.RequestHandler):
   def get(self, trip_id, type="", page="1"):
     session = get_session()
@@ -168,10 +207,11 @@ class TripPage(webapp.RequestHandler):
 
     logging.info("who: '"+who+"'")
 
-    # try:
-    #   trips_info = get_trips_info(permanent, who)
-    # except Exception, error:
-    #   return error_page(self, session, error)
+    # get trips info for paging data
+    try:
+      trips_info = get_trips_info(permanent, who)
+    except Exception, error:
+      return error_page(self, session, error)
 
     links = links_for_trip(trips_info, trip_id)
         
@@ -1153,9 +1193,17 @@ def prettify_trips(trip_list):
 def get_trip_distances(trip_list, traveller_info):
   logging.info("in link_trips")
   previous = False 
+
+  home_city = traveller_info['home_city']
+  home_point = Point(longitude=home_city['longitude'], latitude=home_city['latitude'])
   
   # parse dates and join trips 
   for trip in trip_list:
+
+    # assume all trips start and end at home; destination is always trip.city
+    trip["origin"] = home_city
+    trip["return"] = home_city
+
     if previous:
       if trip["startdate"] < previous["finishdate"]:
         logging.info("Current trip starts before previous trip finished - change origin for %s to %s" % (previous["city"]["name"], trip["city"]["name"]))
@@ -1285,6 +1333,9 @@ def build_stats(trip_list, type, statyear=False):
   # TODO build more year metadata
   # TODO don't do as much work for front page
   # TODO cache?
+  
+  # type can be 'front', 'helvetica', 'detail'
+  # for now, the first two are basically equivalent
 
   stats = {'countries': {},
            'cities':    {},
@@ -1343,7 +1394,7 @@ def build_stats(trip_list, type, statyear=False):
     stats['countries'][country]['duration'] += duration.days
     stats['countries'][country]['trips']    += 1
 
-    if type != "front":
+    if type == "detail":
       if trip.has_key('return_transport_type'): # TODO remove
         if not trip['return_transport_type'] in stats['types']:
           stats['types'][trip['return_transport_type']] = {'trips':0, 'journeys':0, 'distance':0 }
@@ -1419,7 +1470,7 @@ def build_stats(trip_list, type, statyear=False):
         if type == "detail":
           stats['years'][year]['distance'] += trip['distance']['return']
 
-    if type != "front":
+    if type == "detail":
       # do we care about finish months?
       month = trip['startdate'].month
       if not stats['months'].has_key(month):
@@ -1450,7 +1501,7 @@ def build_stats(trip_list, type, statyear=False):
     return False;
 
   # colours
-  if type != "front":
+  if type == "detail":
     rgb = stats['countries'][stats['ordered']['countries'][0]]['rgb']
     raw = colors.hex('#'+rgb)
     saturated = raw.saturate(1);
@@ -1496,7 +1547,7 @@ def build_stats(trip_list, type, statyear=False):
   top_year_by_trip = stats['ordered']['years_by_trip'][0]
   top_year_trips   = stats['years'][top_year_by_trip]['trips']
 
-  if type != "front":
+  if type == "detail":
     # width per trip scaling for years
     trips_per_block = 1
     while 90*trips_per_block/top_year_trips < 10:
@@ -1584,6 +1635,8 @@ application = webapp.WSGIApplication(
                    ('/overview/(year)/(\d*)', StatsPage),
                    ('/overview/(\w*)', StatsPage),
                    ('/overview/(\w*)/year/(\d*)', StatsPage),
+
+                   ('/overview/dopplr.csv', StatsExport),
 
                    ('/sets/', SetsPage),
                    ('/sets/page/(\d+)', SetsPage),
