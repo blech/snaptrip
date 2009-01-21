@@ -1,0 +1,4 @@
+Origin Name	Origin Country	Origin Region	Origin Colour	Destination Name	Destination Country	Destination Region	Destionation Colour	Distance	Transport Mode	Date	Outgoing/Return
+{% for trip in trips %}{{ trip.origin.name }}	{{ trip.origin.country }}	{{ trip.origin.region }}	{{ trip.origin.rgb }}	{{ trip.city.name }}	{{ trip.city.country }}	{{ trip.city.region }}	{{ trip.city.rgb }} 	{{ trip.distance.out }}	{{ trip.outgoing_transport_type }}	{{ trip.startdate }}	Outgoing
+{{ trip.city.name }}	{{ trip.city.country }}	{{ trip.city.region }}	{{ trip.city.rgb }}	{{ trip.return.name }}	{{ trip.return.country }}	{{ trip.return.region }}	{{ trip.return.rgb }} 	{{ trip.distance.return }}	{{ trip.return_transport_type }}	{{ trip.finishdate }}	Return
+{% endfor %}
