@@ -159,7 +159,7 @@
       {% for type in stats.ordered.types %}
         <tr>
           <td><img src="/images/{{ type }}.png" width="15" height="15" style="margin:0px 5px 5px 0px;" alt="Trips by {{ type }}"></td>
-          <td><div style="background:#{{ stats.rgb }}; display:block; width:{{ stats.types[type].scaled }}px; height:15px; margin-bottom:5px; color:#fff;"></div></td>
+          <td><div style="background:#{{ stats.rgb }}; display:block; width:{{ stats.types[type].scaled }}px; height:15px; margin-bottom:5px; color:#fff;" title="{{ stats.types[type].distance }} km"></div></td>
           <td class="switch" width="70px" align="right">{{ stats.types[type].journeys }} journeys</td>
         </tr>
       {% endfor %}

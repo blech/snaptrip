@@ -1346,13 +1346,15 @@ def build_stats(trip_list, type, statyear=False):
     if type != "front":
       if trip.has_key('return_transport_type'): # TODO remove
         if not trip['return_transport_type'] in stats['types']:
-          stats['types'][trip['return_transport_type']] = {'trips':0, 'journeys':0, }
+          stats['types'][trip['return_transport_type']] = {'trips':0, 'journeys':0, 'distance':0 }
         stats['types'][trip['return_transport_type']]['trips'] += 0.5
+        stats['types'][trip['return_transport_type']]['distance'] += trip['distance']['return']
         
-      if trip.has_key('return_transport_type'): # TODO remove
+      if trip.has_key('outgoing_transport_type'): # TODO remove
         if not trip['outgoing_transport_type'] in stats['types']:
-          stats['types'][trip['outgoing_transport_type']] = {'trips':0, 'journeys':0, }
+          stats['types'][trip['outgoing_transport_type']] = {'trips':0, 'journeys':0, 'distance':0 }
         stats['types'][trip['outgoing_transport_type']]['trips'] += 0.5
+        stats['types'][trip['outgoing_transport_type']]['distance'] += trip['distance']['out']
  
         # if (country == home_country):
         #   stats['home']['trips'] += 1;
@@ -1477,9 +1479,9 @@ def build_stats(trip_list, type, statyear=False):
     if len(stats['types'].keys()):  # TODO remove
       top_type = stats['ordered']['types'][0]
       top_trip = int(stats['types'][top_type]['trips'])
-      for type in stats['types'].keys():
-        stats['types'][type]['scaled'] = 240*int(stats['types'][type]['trips'])/top_trip
-        stats['types'][type]['journeys'] = int((stats['types'][type]['trips']*2))
+      for transport_type in stats['types'].keys():
+        stats['types'][transport_type]['scaled'] = 240*int(stats['types'][transport_type]['trips'])/top_trip
+        stats['types'][transport_type]['journeys'] = int((stats['types'][transport_type]['trips']*2))
         
     # scale years
     top_year_by_days = stats['ordered']['years_by_days'][0]
@@ -1488,6 +1490,7 @@ def build_stats(trip_list, type, statyear=False):
     if not statyear:
       top_year_by_dist = stats['ordered']['years_by_dist'][0]
       top_year_dist    = stats['years'][top_year_by_dist]['distance']
+      logging.info("top year distance is %s" % top_year_dist)
 
   # scale years (for front page too)
   top_year_by_trip = stats['ordered']['years_by_trip'][0]
@@ -1503,6 +1506,7 @@ def build_stats(trip_list, type, statyear=False):
     stats['trips_per_block'] = trips_per_block
     stats['block_width']     = 90*trips_per_block/top_year_trips
   
+    logging.info("type is %s" % type)
     for year in stats['years']:
       if year == top_year_by_days:
         # TODO do this in template (the data's there...)
@@ -1516,6 +1520,8 @@ def build_stats(trip_list, type, statyear=False):
       stats['years'][year]['trips_scaled']     = int(240*stats['years'][year]['trips']/top_year_trips)
       if not statyear and type == 'detail':
         stats['years'][year]['dist_scaled']      = int(240*stats['years'][year]['distance']/top_year_dist)
+        logging.info("scaled distance width for year %s is %s" % (year, stats['years'][year]['dist_scaled']))
+
   
       # block scaling
       stats['years'][year]['trips_blocks']     = float(stats['years'][year]['trips'])/stats['trips_per_block']
