@@ -16,7 +16,7 @@ import simplejson
 
 from geopy import Point, distance
 from jinja2 import FileSystemLoader, Environment
-from utilities import sessions
+from utilities.sessions import Session
 
 from google.appengine.api import mail
 from google.appengine.api import memcache
@@ -1624,13 +1624,7 @@ def get_flickr(keys, token='', disablecache=False):
   return  
 
 def get_session():
-  session = {}
-  try:
-    session = sessions.Session(session_expire_time=10368000,)
-  except Exception, error:
-    logging.info("Error fetching session: %s" % error)
-
-  return session
+  return Session(session_expire_time=10368000)
 
 # ==
 
