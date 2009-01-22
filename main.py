@@ -32,11 +32,7 @@ env = Environment(extensions=['jinja2.ext.loopcontrols'],
 
 class IndexPage(webapp.RequestHandler):
   def get(self, who=""):
-    try:
-      session = get_session()
-    except Exception, error:
-      logging.error("Error getting session: %s" % error)
-      return error_page(self, "Could not get session. Please try reloading.") 
+    session = get_session()
 
     # session objects don't support has_key. bah.
     try:
@@ -92,11 +88,7 @@ class IndexPage(webapp.RequestHandler):
 
 class StatsPage(webapp.RequestHandler): # TODO DRY
   def get(self, who="", year=None):
-    try:
-      session = get_session()
-    except Exception, error:
-      logging.error("Error getting session: %s" % error)
-      return error_page(self, "Could not get session. Please try reloading.") 
+    session = get_session()
 
     # session objects don't support has_key. bah.
     try:
@@ -153,11 +145,7 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
 
 class StatsExport(webapp.RequestHandler):
   def get(self, who="", year=None):
-    try:
-      session = get_session()
-    except Exception, error:
-      logging.error("Error getting session: %s" % error)
-      return error_page(self, "Could not get session. Please try reloading.") 
+    session = get_session()
 
     # session objects don't support has_key. bah.
     try:
@@ -197,11 +185,7 @@ class StatsExport(webapp.RequestHandler):
 
 class TripPage(webapp.RequestHandler):
   def get(self, trip_id, type="", page="1"):
-    try:
-      session = get_session()
-    except Exception, error:
-      logging.error("Error getting session: %s" % error)
-      return error_page(self, "Could not get session. Please try reloading.") 
+    session = get_session()
 
     try:
       permanent = session['dopplr']
@@ -281,11 +265,7 @@ class TripPage(webapp.RequestHandler):
 class SetsPage(webapp.RequestHandler):
   def get(self, page="1"):
     logging.debug("really in Add page")
-    try:
-      session = get_session()
-    except Exception, error:
-      logging.error("Error getting session: %s" % error)
-      return error_page(self, "Could not get session. Please try reloading.") 
+    session = get_session()
 
     page = int(page)
 
@@ -328,11 +308,7 @@ class SetsPage(webapp.RequestHandler):
 class SetPage(webapp.RequestHandler):
   def get(self, set_id):
     logging.debug("Set page")
-    try:
-      session = get_session()
-    except Exception, error:
-      logging.error("Error getting session: %s" % error)
-      return error_page(self, "Could not get session. Please try reloading.") 
+    session = get_session()
 
     # session objects don't support has_key. bah.
     # TODO DRY (decorator?)
@@ -410,11 +386,7 @@ class SetPage(webapp.RequestHandler):
 
 class LoginPage(webapp.RequestHandler):
   def get(self):
-    try:
-      session = get_session()
-    except Exception, error:
-      logging.error("Error getting session: %s" % error)
-      return error_page(self, "Could not get session. Please try reloading.") 
+    session = get_session()
 
     callback_url = "http://"+self.request.host+"/login/" 
   
@@ -493,11 +465,7 @@ class LoginPage(webapp.RequestHandler):
 
 class FormPage(webapp.RequestHandler):
   def get(self):
-    try:
-      session = get_session()
-    except Exception, error:
-      logging.error("Error getting session: %s" % error)
-      return error_page(self, "Could not get session. Please try reloading.") 
+    session = get_session()
 
     template_values = {
       'session':    session,
@@ -507,11 +475,7 @@ class FormPage(webapp.RequestHandler):
     self.response.out.write(template.render(path, template_values))
 
   def post(self):
-    try:
-      session = get_session()
-    except Exception, error:
-      logging.error("Error getting session: %s" % error)
-      return error_page(self, "Could not get session. Please try reloading.") 
+    session = get_session()
     name = self.request.get("name")
     text = self.request.get("text")
 
@@ -695,12 +659,7 @@ class GeoTagJSON(webapp.RequestHandler):
 class SetJSON(webapp.RequestHandler):
   def get(self):
     logging.info("in SetJSON")
-
-    try:
-      session = get_session()
-    except Exception, error:
-      logging.error("Error getting session: %s" % error)
-      return error_page(self, "Could not get session. Please try reloading.") 
+    session = get_session()
     
     try:
       token  = session['flickr']
@@ -1665,7 +1624,13 @@ def get_flickr(keys, token='', disablecache=False):
   return  
 
 def get_session():
-  return sessions.Session(session_expire_time=10368000,)
+  session = {}
+  try:
+    session = sessions.Session(session_expire_time=10368000,)
+  except Exception, error:
+    logging.info("Error fetching session: %s" % error)
+
+  return session
 
 # ==
 
