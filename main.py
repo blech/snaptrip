@@ -250,7 +250,7 @@ class TripPage(webapp.RequestHandler):
               else:
                 template_values['photos'] = get_flickr_photos_by_date(flickr, nsid, trip_info, page)
                 template_values['method'] = "date"
-          except Exception(error):
+          except Exception, error:
             logging.error(error)
             raise Exception(error)
             
@@ -403,16 +403,16 @@ class LoginPage(webapp.RequestHandler):
 
     # get blog
     try:
-      cb   = int(random()*10000)
-      atom = urlfetch.fetch("http://blech.vox.com/library/posts/tags/snaptrip/atom-full.xml?cb=%s", cb)
+      atom = urlfetch.fetch("http://snaptrip.blogspot.com/feeds/posts/default")
       feed = feedparser.parse(atom.content)
       # trim to just two
       feed['entries'] = feed['entries'][0:2]
       for entry in feed['entries']:
         entry['published_date'] = datetime( *entry.published_parsed[:-3] )
-        entry['link']           = re.sub('\?.*$', '', entry['link'])
+        # entry['link']           = re.sub('\?.*$', '', entry['link'])
 
-    except:
+    except Exception, error:
+      logging.error("Problem with news feed: %s" % error)
       feed = ""
 
     if token:
@@ -795,7 +795,7 @@ def get_trip_info_direct(token, trip_id):
                  url = url,
                  headers = {'Authorization': 'AuthSub token="'+token+'"'},
                )
-  except Exception(error):
+  except Exception, error:
     logging.error("Error fetching %s: %s" % (url, error))
     raise Exception("Couldn't fetch trip info for trip %s" % trip_id)
 
