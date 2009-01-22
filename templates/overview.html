@@ -219,7 +219,10 @@
 
       {% endif %}
 
-      <p><a href="/{% if traveller.name != session.name %}where/{{ traveller.nick }}{% endif %}">&larr; Return to the listing of all trips</a>.</p>
+      <div class="wide_nav">
+        <span class="left"><a href="/{% if traveller.name != session.name %}where/{{ traveller.nick }}{% endif %}">&larr; Return to the listing of all trips</a>.</span>
+        <span class="right"><a href="/overview/dopplr.csv">Download all trip data (CSV).</a></span>
+      </div>
 
     </div>
   </div>

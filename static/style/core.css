@@ -532,6 +532,19 @@ ul.hidden {
   display: none;
 }
 
+div.wide_nav {
+  width: 800px;
+  background: #ccc;
+}
+
+div.wide_nav span.left {
+  float:left; /* TODO span.left and span.right don't need explicit container? */
+}
+
+div.wide_nav span.right {
+  float:right;
+}
+
 /* sets */
 
 /*

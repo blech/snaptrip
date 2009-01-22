@@ -179,8 +179,9 @@ class StatsExport(webapp.RequestHandler):
 
     template = env.get_template('overview.csv')
     
+    self.response.headers["Content-Type"] = "text/csv"
+    self.response.headers["Content-Disposition"] = "attachment; filename=dopplr.csv"
     self.response.out.write(template.render(template_values))
-    self.response.headers["Content-Type"] = "text/plain"
 
 class TripPage(webapp.RequestHandler):
   def get(self, trip_id, type="", page="1"):
