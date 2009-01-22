@@ -32,7 +32,11 @@ env = Environment(extensions=['jinja2.ext.loopcontrols'],
 
 class IndexPage(webapp.RequestHandler):
   def get(self, who=""):
-    session = get_session()
+    try:
+      session = get_session()
+    except:
+      logging.info("Error getting session")
+      return error_page(self, "Could not get session. Please try reloading.") 
 
     # session objects don't support has_key. bah.
     try:
@@ -55,13 +59,13 @@ class IndexPage(webapp.RequestHandler):
     try:
       trips_info      = get_trips_info(permanent, who)
     except Exception, error:
-      return error_page(self, session, error)
+      return error_page(self, error)
 
     traveller_info  = get_traveller_info(permanent, who)
     if not traveller_info:
-      return error_page(self, session, "Your past trips could not be loaded.")
+      return error_page(self, "Your past trips could not be loaded.")
     if traveller_info.has_key('error'):
-      return error_page(self, session, traveller_info['error'])
+      return error_page(self, traveller_info['error'])
 
     # TODO ajax/memcache
     stats           = build_stats(trips_info['trip'], 'front')
@@ -88,7 +92,11 @@ class IndexPage(webapp.RequestHandler):
 
 class StatsPage(webapp.RequestHandler): # TODO DRY
   def get(self, who="", year=None):
-    session = get_session()
+    try:
+      session = get_session()
+    except:
+      logging.info("Error getting session")
+      return error_page(self, "Could not get session. Please try reloading.") 
 
     # session objects don't support has_key. bah.
     try:
@@ -109,13 +117,13 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
     try:
       trips_info      = get_trips_info(permanent, who)
     except Exception, error:
-      return error_page(self, session, error)
+      return error_page(self, error)
 
     traveller_info  = get_traveller_info(permanent, who)
     if not traveller_info:
-      return error_page(self, session, "Your past trips could not be loaded.")
+      return error_page(self, "Your past trips could not be loaded.")
     if traveller_info.has_key('error'):
-      return error_page(self, session, traveller_info['error'])
+      return error_page(self, traveller_info['error'])
 
     trips_info['trip'] = get_trip_distances(trips_info['trip'], traveller_info)
 
@@ -145,7 +153,11 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
 
 class StatsExport(webapp.RequestHandler):
   def get(self, who="", year=None):
-    session = get_session()
+    try:
+      session = get_session()
+    except:
+      logging.info("Error getting session")
+      return error_page(self, "Could not get session. Please try reloading.") 
 
     # session objects don't support has_key. bah.
     try:
@@ -157,13 +169,13 @@ class StatsExport(webapp.RequestHandler):
     try:
       trips_info      = get_trips_info(permanent, who)
     except Exception, error:
-      return error_page(self, session, error)
+      return error_page(self, error)
 
     traveller_info  = get_traveller_info(permanent, who)
     if not traveller_info:
-      return error_page(self, session, "Your past trips could not be loaded.")
+      return error_page(self, "Your past trips could not be loaded.")
     if traveller_info.has_key('error'):
-      return error_page(self, session, traveller_info['error'])
+      return error_page(self, traveller_info['error'])
 
     trips_info['trip'] = get_trip_distances(trips_info['trip'], traveller_info)
 
@@ -185,7 +197,11 @@ class StatsExport(webapp.RequestHandler):
 
 class TripPage(webapp.RequestHandler):
   def get(self, trip_id, type="", page="1"):
-    session = get_session()
+    try:
+      session = get_session()
+    except:
+      logging.info("Error getting session")
+      return error_page(self, "Could not get session. Please try reloading.") 
 
     try:
       permanent = session['dopplr']
@@ -199,7 +215,7 @@ class TripPage(webapp.RequestHandler):
 
     trip_info = get_trip_info(permanent, trip_id)
     if trip_info.has_key('error'):
-      return error_page(self, session, trip_info['error'])
+      return error_page(self, trip_info['error'])
 
     who = ""
     if session["nick"] != trip_info["nick"]:
@@ -212,7 +228,7 @@ class TripPage(webapp.RequestHandler):
     try:
       trips_info = get_trips_info(permanent, who)
     except Exception, error:
-      return error_page(self, session, error)
+      return error_page(self, error)
 
     links = links_for_trip(trips_info, trip_id)
         
@@ -255,7 +271,7 @@ class TripPage(webapp.RequestHandler):
             raise Exception(error)
             
         else:
-          return error_page(self, session, "Could not get info about the user data from Flickr.")     
+          return error_page(self, "Could not get info about the user data from Flickr.")     
 
     template_values['memcache'] = memcache.get_stats(),
 
@@ -265,7 +281,11 @@ class TripPage(webapp.RequestHandler):
 class SetsPage(webapp.RequestHandler):
   def get(self, page="1"):
     logging.debug("really in Add page")
-    session = get_session()
+    try:
+      session = get_session()
+    except:
+      logging.info("Error getting session")
+      return error_page(self, "Could not get session. Please try reloading.") 
 
     page = int(page)
 
@@ -294,12 +314,12 @@ class SetsPage(webapp.RequestHandler):
       if sets and sets.has_key('photosets'):
         sets = get_paged_setlist(sets, page)
       else:
-        return error_page(self, session, "Could not get info about sets from Flickr.")     
+        return error_page(self, "Could not get info about sets from Flickr.")     
       
       sets = get_sets_details(flickr, sets)
       template_values['sets'] = sets['photosets']
     else:
-      return error_page(self, session, "Could not get info about the sets from Flickr.")     
+      return error_page(self, "Could not get info about the sets from Flickr.")     
  
     # jinja2
     template = env.get_template('sets.html')
@@ -308,7 +328,11 @@ class SetsPage(webapp.RequestHandler):
 class SetPage(webapp.RequestHandler):
   def get(self, set_id):
     logging.debug("Set page")
-    session = get_session()
+    try:
+      session = get_session()
+    except:
+      logging.info("Error getting session")
+      return error_page(self, "Could not get session. Please try reloading.") 
 
     # session objects don't support has_key. bah.
     # TODO DRY (decorator?)
@@ -333,7 +357,7 @@ class SetPage(webapp.RequestHandler):
       sets = get_flickr_setlist(flickr, nsid)
       
       if not sets or not sets.has_key('photosets'):
-        return error_page(self, session, "Could not get info about sets from Flickr.")     
+        return error_page(self, "Could not get info about sets from Flickr.")     
       
       for set in sets['photosets']['photoset']:
         if set['id'] == set_id:
@@ -344,7 +368,7 @@ class SetPage(webapp.RequestHandler):
       photoset = get_set_details(flickr, set_id, True)
 
       if not photoset or not photoset.has_key('photoset'):
-        return error_page(self, session, "Could not get info about the set from Flickr.")     
+        return error_page(self, "Could not get info about the set from Flickr.")     
 
       # add metadata
       photoset['photoset'] = get_flickr_date_range(photoset['photoset'], True)
@@ -378,7 +402,7 @@ class SetPage(webapp.RequestHandler):
       template_values['nsid'] = nsid
 
     else:
-      return error_page(self, session, "Could not get info about the set from Flickr.")     
+      return error_page(self, "Could not get info about the set from Flickr.")     
  
     # jinja2
     template = env.get_template('set.html')
@@ -386,7 +410,11 @@ class SetPage(webapp.RequestHandler):
 
 class LoginPage(webapp.RequestHandler):
   def get(self):
-    session = get_session()
+    try:
+      session = get_session()
+    except:
+      logging.info("Error getting session")
+      return error_page(self, "Could not get session. Please try reloading.") 
 
     callback_url = "http://"+self.request.host+"/login/" 
   
@@ -427,7 +455,7 @@ class LoginPage(webapp.RequestHandler):
         # use this to store the traveller info
         dopplr_info = get_traveller_info(permanent)
         if dopplr_info.has_key('error'):
-          return error_page(self, session, dopplr_info['error'])
+          return error_page(self, dopplr_info['error'])
 
         session['dopplr'] = permanent
         session['name'] = dopplr_info['name']        
@@ -439,7 +467,7 @@ class LoginPage(webapp.RequestHandler):
       try:
         permanent = flickr.get_token(frob)
       except:
-        return error_page(self, session, "The authentication token was out of date. Please try again.")
+        return error_page(self, "The authentication token was out of date. Please try again.")
       if permanent:
         session['flickr'] = permanent
         got_token = True
@@ -465,7 +493,11 @@ class LoginPage(webapp.RequestHandler):
 
 class FormPage(webapp.RequestHandler):
   def get(self):
-    session = get_session()
+    try:
+      session = get_session()
+    except:
+      logging.info("Error getting session")
+      return error_page(self, "Could not get session. Please try reloading.") 
 
     template_values = {
       'session':    session,
@@ -475,7 +507,11 @@ class FormPage(webapp.RequestHandler):
     self.response.out.write(template.render(path, template_values))
 
   def post(self):
-    session = get_session()
+    try:
+      session = get_session()
+    except:
+      logging.info("Error getting session")
+      return error_page(self, "Could not get session. Please try reloading.") 
     name = self.request.get("name")
     text = self.request.get("text")
 
@@ -660,7 +696,11 @@ class SetJSON(webapp.RequestHandler):
   def get(self):
     logging.info("in SetJSON")
 
-    session = get_session()
+    try:
+      session = get_session()
+    except:
+      logging.info("Error getting session")
+      return error_page(self, "Could not get session. Please try reloading.") 
     
     try:
       token  = session['flickr']
@@ -1164,8 +1204,9 @@ def get_flickr_trip_ids(dopplr, photos):
 
 # == utilities
 
-def error_page(self, session, error):
+def error_page(self, error):
   path = os.path.join(os.path.dirname(__file__), 'templates/error.html')
+  session = {}
   self.response.out.write(template.render(path, {'error':error, 'session':session, }))
 
 def get_numbers():
