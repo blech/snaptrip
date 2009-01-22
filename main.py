@@ -35,7 +35,7 @@ class IndexPage(webapp.RequestHandler):
     try:
       session = get_session()
     except:
-      logging.info("Error getting session")
+      logging.error("Error getting session")
       return error_page(self, "Could not get session. Please try reloading.") 
 
     # session objects don't support has_key. bah.
@@ -95,7 +95,7 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
     try:
       session = get_session()
     except:
-      logging.info("Error getting session")
+      logging.error("Error getting session")
       return error_page(self, "Could not get session. Please try reloading.") 
 
     # session objects don't support has_key. bah.
@@ -156,7 +156,7 @@ class StatsExport(webapp.RequestHandler):
     try:
       session = get_session()
     except:
-      logging.info("Error getting session")
+      logging.error("Error getting session")
       return error_page(self, "Could not get session. Please try reloading.") 
 
     # session objects don't support has_key. bah.
@@ -200,7 +200,7 @@ class TripPage(webapp.RequestHandler):
     try:
       session = get_session()
     except:
-      logging.info("Error getting session")
+      logging.error("Error getting session")
       return error_page(self, "Could not get session. Please try reloading.") 
 
     try:
@@ -284,7 +284,7 @@ class SetsPage(webapp.RequestHandler):
     try:
       session = get_session()
     except:
-      logging.info("Error getting session")
+      logging.error("Error getting session")
       return error_page(self, "Could not get session. Please try reloading.") 
 
     page = int(page)
@@ -331,7 +331,7 @@ class SetPage(webapp.RequestHandler):
     try:
       session = get_session()
     except:
-      logging.info("Error getting session")
+      logging.error("Error getting session")
       return error_page(self, "Could not get session. Please try reloading.") 
 
     # session objects don't support has_key. bah.
@@ -413,7 +413,7 @@ class LoginPage(webapp.RequestHandler):
     try:
       session = get_session()
     except:
-      logging.info("Error getting session")
+      logging.error("Error getting session")
       return error_page(self, "Could not get session. Please try reloading.") 
 
     callback_url = "http://"+self.request.host+"/login/" 
@@ -496,7 +496,7 @@ class FormPage(webapp.RequestHandler):
     try:
       session = get_session()
     except:
-      logging.info("Error getting session")
+      logging.error("Error getting session")
       return error_page(self, "Could not get session. Please try reloading.") 
 
     template_values = {
@@ -510,7 +510,7 @@ class FormPage(webapp.RequestHandler):
     try:
       session = get_session()
     except:
-      logging.info("Error getting session")
+      logging.error("Error getting session")
       return error_page(self, "Could not get session. Please try reloading.") 
     name = self.request.get("name")
     text = self.request.get("text")
@@ -699,7 +699,7 @@ class SetJSON(webapp.RequestHandler):
     try:
       session = get_session()
     except:
-      logging.info("Error getting session")
+      logging.error("Error getting session")
       return error_page(self, "Could not get session. Please try reloading.") 
     
     try:
