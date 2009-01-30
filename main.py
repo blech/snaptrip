@@ -46,22 +46,15 @@ class IndexPage(webapp.RequestHandler):
       who = session['nick']
     
     # easter egg - TODO ternary?
+    hel = False
     if (self.request.get('hel')):
       hel = True
-    else:
-      hel = False
     
     # TODO deboilerplate
     try:
-      trips_info      = get_trips_info(permanent, who)
+      (trips_info, traveller_info) = get_dopplr_info(permanent, who)
     except Exception, error:
       return error_page(self, error)
-
-    traveller_info  = get_traveller_info(permanent, who)
-    if not traveller_info:
-      return error_page(self, "Your past trips could not be loaded.")
-    if traveller_info.has_key('error'):
-      return error_page(self, traveller_info['error'])
 
     # TODO ajax/memcache
     stats           = build_stats(trips_info['trip'], 'front')
@@ -107,15 +100,9 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
     
     # TODO deboilerplate
     try:
-      trips_info      = get_trips_info(permanent, who)
+      (trips_info, traveller_info) = get_dopplr_info(permanent, who)
     except Exception, error:
       return error_page(self, error)
-
-    traveller_info  = get_traveller_info(permanent, who)
-    if not traveller_info:
-      return error_page(self, "Your past trips could not be loaded.")
-    if traveller_info.has_key('error'):
-      return error_page(self, traveller_info['error'])
 
     trips_info['trip'] = get_trip_distances(trips_info['trip'], traveller_info)
 
@@ -154,16 +141,11 @@ class StatsExport(webapp.RequestHandler):
     except KeyError, e:
       return self.redirect("/login/")
 
+    # TODO deboilerplate
     try:
-      trips_info      = get_trips_info(permanent, who)
+      (trips_info, traveller_info) = get_dopplr_info(permanent, who)
     except Exception, error:
       return error_page(self, error)
-
-    traveller_info  = get_traveller_info(permanent, who)
-    if not traveller_info:
-      return error_page(self, "Your past trips could not be loaded.")
-    if traveller_info.has_key('error'):
-      return error_page(self, traveller_info['error'])
 
     trips_info['trip'] = get_trip_distances(trips_info['trip'], traveller_info)
 
@@ -197,11 +179,17 @@ class TripPage(webapp.RequestHandler):
     if not trip_id or trip_id == "undefined":
       return self.redirect("/")
 
-    trip_info = get_trip_info(permanent, trip_id)
-    if trip_info.has_key('error'):
-      return error_page(self, trip_info['error'])
+    # guess were fetching for current user, to use cached trip_list trick
+    who = session["nick"]
 
-    who = ""
+    try:
+      trip_info = get_trip_info(permanent, trip_id, who)
+      if trip_info.has_key('error'):
+        logging.error("Problem getting trip info for trip %s: %s" % (trip_id, trip_info['error']))
+        return error_page(self, trip_info['error'])
+    except Exception, error:
+      return error_page(self, error)
+
     if session["nick"] != trip_info["nick"]:
       who = trip_info["nick"]
       # TODO traveller info (sigh)
@@ -251,11 +239,10 @@ class TripPage(webapp.RequestHandler):
                 template_values['photos'] = get_flickr_photos_by_date(flickr, nsid, trip_info, page)
                 template_values['method'] = "date"
           except Exception, error:
-            logging.error(error)
-            raise Exception(error)
+            return error_page(self, error)
             
         else:
-          return error_page(self, "Could not get info about the user data from Flickr.")     
+          return error_page(self, "Could not identify user at Flickr.")
 
     template_values['memcache'] = memcache.get_stats(),
 
@@ -425,10 +412,15 @@ class LoginPage(webapp.RequestHandler):
         permanent = match.group(1)
  
         # use this to store the traveller info
-        dopplr_info = get_traveller_info(permanent)
-        if dopplr_info.has_key('error'):
-          return error_page(self, dopplr_info['error'])
-
+        try:
+          dopplr_info = get_traveller_info(permanent)
+          if dopplr_info.has_key('error'):
+            logging.error("Problem with traveller info when logging in: %s" % dopplr_info['error'])
+            return error_page(self, dopplr_info['error'])
+        except Exception, error:        
+          logging.error("Problem with traveller info when logging in: %s" % error)
+          return error_page(self, "There was a problem logging in to Dopplr.")
+        
         session['dopplr'] = permanent
         session['name'] = dopplr_info['name']        
         session['nick'] = dopplr_info['nick']        
@@ -485,6 +477,7 @@ class FormPage(webapp.RequestHandler):
     email = ''
     try:
       traveller = get_traveller_info(session['dopplr'])
+      # TODO raisecatch
       email = traveller['email']
     except KeyError, e:
       email = ''
@@ -696,6 +689,20 @@ class SetJSON(webapp.RequestHandler):
 
 # == Dopplr
 
+def get_dopplr_info(permanent, who=""):
+  trips_info      = get_trips_info(permanent, who)
+  traveller_info  = get_traveller_info(permanent, who)
+
+  if trips_info.has_key('error'):
+    logging.error("Error in trips info for %s: %s" % (who, trips_info['error']))
+    raise Exception("Error in trips information.")
+      
+  if traveller_info.has_key('error'):
+    logging.error("Error in traveller info for %s: %s" % (who, traveller_info['error']))
+    raise Exception("Error in traveller information.")
+      
+  return (trips_info, traveller_info);
+
 def get_traveller_info(token, who=""):
   key = "dopplr="+token+":info=traveller"
   if who:
@@ -744,6 +751,7 @@ def get_trips_info(token, who=""):
     logging.info("memcache hit for trips_info for '"+key+"'")
     return trips_info
 
+  logging.info("no memcache hit, getting trips direct (%s)" % key)
   url = "https://www.dopplr.com/api/trips_info.js"
   if who:
     url += "?traveller="+who
@@ -839,7 +847,7 @@ def get_trip_info_direct(token, trip_id):
   logging.info(trip_info['trip'])
   return trip_info['trip']
 
-def get_trip_info(token, trip_id):
+def get_trip_info(token, trip_id, who):
   key = "dopplr="+token+":info=trip:tripid="+trip_id
 
   logging.info("looking for trip_id "+str(trip_id))
@@ -850,7 +858,7 @@ def get_trip_info(token, trip_id):
     logging.info("memcache hit for key '"+key+"'")
     return trip_info
 
-  trip_list = get_trips_info(token)
+  trip_list = get_trips_info(token, who)
   trips = {}
   logging.info(trip_list)
 
@@ -886,20 +894,20 @@ def get_flickr_nsid(flickr, token):
   if nsid is not None:
     return nsid
 
-  # check token (and get nsid)
+  # check token (to get nsid)
   try:
     auth = flickr.auth_checkToken(
               format='json',
               nojsoncallback="1",
            )
   except:
-    logging.info("Could not fetch auth token")
+    logging.error("Could not fetch auth token from Flickr")
     return None
 
   try:
     auth = simplejson.loads(auth)
   except:
-    logging.info("Could not parse  '"+auth+"'")
+    logging.warning("Could not parse  '"+auth+"'")
     return None
 
   if auth.get("auth"):
@@ -1166,6 +1174,7 @@ def get_flickr_trip_ids(dopplr, photos):
 def error_page(self, error):
   path = os.path.join(os.path.dirname(__file__), 'templates/error.html')
   session = {}
+  logging.error("Writing error page with message '%s'" % error)
   self.response.out.write(template.render(path, {'error':error, 'session':session, }))
 
 def get_numbers():
