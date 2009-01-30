@@ -44,12 +44,12 @@ class IndexPage(webapp.RequestHandler):
     stats = {}
     if not who:
       who = session['nick']
-    
+
     # easter egg - TODO ternary?
     hel = False
     if (self.request.get('hel')):
       hel = True
-    
+
     # TODO deboilerplate
     try:
       (trips_info, traveller_info) = get_dopplr_info(permanent, who)
@@ -60,7 +60,7 @@ class IndexPage(webapp.RequestHandler):
     stats           = build_stats(trips_info['trip'], 'front')
     if hel:
       stats           = build_stats(trips_info['trip'], 'helvetica')
-    
+
     template_values = {
       'session':    session,
       'permanent':  permanent,
@@ -70,13 +70,13 @@ class IndexPage(webapp.RequestHandler):
       'numbers':    get_numbers(),
       'memcache':   memcache.get_stats(),
     }
-    
+
     template = env.get_template('index.html')
     if hel:
       template = env.get_template('helvetica.html')
       if self.request.get('compact'):
         template_values['compact'] = True
-    
+
     self.response.out.write(template.render(template_values))
 
 class StatsPage(webapp.RequestHandler): # TODO DRY
@@ -97,7 +97,7 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
 
     if not who:
       who = session['nick']
-    
+
     # TODO deboilerplate
     try:
       (trips_info, traveller_info) = get_dopplr_info(permanent, who)
@@ -112,7 +112,7 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
         return self.redirect("/overview/%s" % who);
       else:
         return self.redirect("/overview/");
-    
+
     template_values = {
       'session':    session,
       'permanent':  permanent,
@@ -127,7 +127,7 @@ class StatsPage(webapp.RequestHandler): # TODO DRY
       template_values['statyear'] = int(year)
 
     template = env.get_template('overview.html')
-    
+
     self.response.out.write(template.render(template_values))
 
 class StatsExport(webapp.RequestHandler):
@@ -151,7 +151,7 @@ class StatsExport(webapp.RequestHandler):
 
     template_values = {
       'trips':      trips_info['trip'],
-      'traveller':  traveller_info, 
+      'traveller':  traveller_info,
       #'stats':      stats,
       'memcache':   memcache.get_stats(),
     }
@@ -160,7 +160,7 @@ class StatsExport(webapp.RequestHandler):
       template_values['statyear'] = int(year)
 
     template = env.get_template('overview.csv')
-    
+
     self.response.headers["Content-Type"] = "text/csv"
     self.response.headers["Content-Disposition"] = "attachment; filename=dopplr.csv"
     self.response.out.write(template.render(template_values))
@@ -203,7 +203,7 @@ class TripPage(webapp.RequestHandler):
       return error_page(self, error)
 
     links = links_for_trip(trips_info, trip_id)
-        
+
     # initialise template data before we call Flickr
     template_values = {
       'session':    session,
@@ -211,20 +211,20 @@ class TripPage(webapp.RequestHandler):
       'links':      links,
       'keys':       get_keys(self.request.host),
     }
-  
+
     if session["nick"] == trip_info["nick"]:
       if token and not trip_info["status"] == "Future":
         # get keys
         keys = get_keys(self.request.host)
-        flickr = get_flickr(keys, token)      
+        flickr = get_flickr(keys, token)
 
         nsid = get_flickr_nsid(flickr, token)
         if nsid:
           template_values['prevpage'] = int(page)-1
           template_values['nextpage'] = int(page)+1
-  
+
           try:
-            if type == 'date':  
+            if type == 'date':
               template_values['photos'] = get_flickr_photos_by_date(flickr, nsid, trip_info, page)
               template_values['method'] = "date"
             elif type == 'tag':
@@ -240,14 +240,14 @@ class TripPage(webapp.RequestHandler):
                 template_values['method'] = "date"
           except Exception, error:
             return error_page(self, error)
-            
+
         else:
           return error_page(self, "Could not identify user at Flickr.")
 
     template_values['memcache'] = memcache.get_stats(),
 
     path = os.path.join(os.path.dirname(__file__), 'templates/trip.html')
-    self.response.out.write(template.render(path, template_values))    
+    self.response.out.write(template.render(path, template_values))
 
 class SetsPage(webapp.RequestHandler):
   def get(self, page="1"):
@@ -281,13 +281,13 @@ class SetsPage(webapp.RequestHandler):
       if sets and sets.has_key('photosets'):
         sets = get_paged_setlist(sets, page)
       else:
-        return error_page(self, "Could not get info about sets from Flickr.")     
-      
+        return error_page(self, "Could not get info about sets from Flickr.")
+
       sets = get_sets_details(flickr, sets)
       template_values['sets'] = sets['photosets']
     else:
-      return error_page(self, "Could not get info about the sets from Flickr.")     
- 
+      return error_page(self, "Could not get info about the sets from Flickr.")
+
     # jinja2
     template = env.get_template('sets.html')
     self.response.out.write(template.render(template_values))
@@ -318,10 +318,10 @@ class SetPage(webapp.RequestHandler):
     if nsid:
       logging.debug("getting set list")
       sets = get_flickr_setlist(flickr, nsid)
-      
+
       if not sets or not sets.has_key('photosets'):
-        return error_page(self, "Could not get info about sets from Flickr.")     
-      
+        return error_page(self, "Could not get info about sets from Flickr.")
+
       for set in sets['photosets']['photoset']:
         if set['id'] == set_id:
           template_values['metadata'] = set
@@ -331,7 +331,7 @@ class SetPage(webapp.RequestHandler):
       photoset = get_set_details(flickr, set_id, True)
 
       if not photoset or not photoset.has_key('photoset'):
-        return error_page(self, "Could not get info about the set from Flickr.")     
+        return error_page(self, "Could not get info about the set from Flickr.")
 
       # add metadata
       photoset['photoset'] = get_flickr_date_range(photoset['photoset'], True)
@@ -365,8 +365,8 @@ class SetPage(webapp.RequestHandler):
       template_values['nsid'] = nsid
 
     else:
-      return error_page(self, "Could not get info about the set from Flickr.")     
- 
+      return error_page(self, "Could not get info about the set from Flickr.")
+
     # jinja2
     template = env.get_template('set.html')
     self.response.out.write(template.render(template_values))
@@ -375,15 +375,15 @@ class LoginPage(webapp.RequestHandler):
   def get(self):
     session = get_session()
 
-    callback_url = "http://"+self.request.host+"/login/" 
-  
+    callback_url = "http://"+self.request.host+"/login/"
+
     dopplr_url = "https://www.dopplr.com/api/AuthSubRequest?scope=http://www.dopplr.com&next="+callback_url+"&session=1"
     dopplr_token = self.request.get('token')
 
     keys = get_keys(self.request.host)
-    flickr = get_flickr(keys)      
+    flickr = get_flickr(keys)
     flickr_url = flickr.web_login_url('write')
-    
+
     got_token = False
     token = self.request.get('token') # from Dopplr
     frob  = self.request.get('frob')  # from Flickr
@@ -410,23 +410,23 @@ class LoginPage(webapp.RequestHandler):
       match = re.search('Token=(.*)\n', response.content)
       if (match):
         permanent = match.group(1)
- 
+
         # use this to store the traveller info
         try:
           dopplr_info = get_traveller_info(permanent)
           if dopplr_info.has_key('error'):
             logging.error("Problem with traveller info when logging in: %s" % dopplr_info['error'])
             return error_page(self, dopplr_info['error'])
-        except Exception, error:        
+        except Exception, error:
           logging.error("Problem with traveller info when logging in: %s" % error)
           return error_page(self, "There was a problem logging in to Dopplr.")
-        
+
         session['dopplr'] = permanent
-        session['name'] = dopplr_info['name']        
-        session['nick'] = dopplr_info['nick']        
+        session['name'] = dopplr_info['name']
+        session['nick'] = dopplr_info['nick']
         got_token = True
         # self.redirect("/")
-    
+
     if frob:
       try:
         permanent = flickr.get_token(frob)
@@ -451,7 +451,7 @@ class LoginPage(webapp.RequestHandler):
       'keys':       keys,
       'feed':       feed,
     }
-    
+
     path = os.path.join(os.path.dirname(__file__), 'templates/login.html')
     self.response.out.write(template.render(path, template_values))
 
@@ -481,22 +481,22 @@ class FormPage(webapp.RequestHandler):
       email = traveller['email']
     except KeyError, e:
       email = ''
-      
+
     if name and text:
-      sent = True;  
+      sent = True;
       # send
       message = mail.EmailMessage(subject='snaptrip feedback (via form)',)
       message.sender = "misonp@googlemail.com"
-    
+
       message.to = "Paul Mison <misonp@googlemail.com>"
       if email:
         message.cc = name+" <"+email+">"
-        
+
       message.body = "The following is feedback about snaptrip.\n\n"+text;
       message.send()
     else:
       error = "You must enter a name and some feedback."
-  
+
     template_values = {
       'name':       name,
       'text':       text,
@@ -507,7 +507,7 @@ class FormPage(webapp.RequestHandler):
 
     path = os.path.join(os.path.dirname(__file__), 'templates/form.html')
     self.response.out.write(template.render(path, template_values))
-    
+
 # == AJAX
 
 class MoreJSON(webapp.RequestHandler):
@@ -540,7 +540,7 @@ class MoreJSON(webapp.RequestHandler):
                  extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
   #                privacy_filter="1",
                )
-  
+
       self.response.out.write(json)
 
     if self.request.get("startdate", ""):
@@ -561,7 +561,7 @@ class MoreJSON(webapp.RequestHandler):
                  extras='geo, tags' # license, date_upload, date_taken, o_dims, views, media',
   #                privacy_filter="1",
                )
-  
+
       self.response.out.write(json)
 
 class TagJSON(webapp.RequestHandler):
@@ -599,7 +599,7 @@ class TagJSON(webapp.RequestHandler):
           logging.info("Key deletion failed; either network error or key missing");
     except:
       json = {'error': 'There was a problem contacting Flickr.'} # TODO 'message' not 'error' key
-              
+
     logging.info("got json "+repr(json));
 
     self.response.out.write(json)
@@ -635,7 +635,7 @@ class GeoTagJSON(webapp.RequestHandler):
                  accuracy=9,   # 'city'
                 )
       test = simplejson.loads(json) # check it's valid JSON
-      
+
       # remove memcache
       if (self.request.get("nsid")):
         key = repr(flickr)+":nsid="+self.request.get("nsid")+":tripid="+self.request.get("trip_id")+":page="+self.request.get("page")+":type="+self.request.get("method")
@@ -653,7 +653,7 @@ class SetJSON(webapp.RequestHandler):
   def get(self):
     logging.info("in SetJSON")
     session = get_session()
-    
+
     try:
       token  = session['flickr']
       dopplr = session['dopplr']
@@ -696,22 +696,22 @@ def get_dopplr_info(permanent, who=""):
   if trips_info.has_key('error'):
     logging.error("Error in trips info for %s: %s" % (who, trips_info['error']))
     raise Exception("Error in trips information.")
-      
+
   if traveller_info.has_key('error'):
     logging.error("Error in traveller info for %s: %s" % (who, traveller_info['error']))
     raise Exception("Error in traveller information.")
-      
+
   return (trips_info, traveller_info);
 
 def get_traveller_info(token, who=""):
   key = "dopplr="+token+":info=traveller"
   if who:
     key += ":who="+who
-  
+
   traveller_info = memcache.get(key)
   if traveller_info:
     return traveller_info
-  
+
   url = "https://www.dopplr.com/api/traveller_info.js"
   if who:
     url += "?traveller="+who
@@ -811,7 +811,7 @@ def get_trip_info_direct(token, trip_id):
     trip_info = simplejson.loads(response.content)
   except ValueError(error):
     raise Exception("Didn't get a JSON response for trip %s" % trip_id)
-    
+
   if trip_info.get('error'):
     # not good. show to user?
     raise Exception(trip_info.get('error'))
@@ -826,7 +826,7 @@ def get_trip_info_direct(token, trip_id):
   # get date info
   start  = datetime.strptime(trip_info["trip"]["start"],  "%Y-%m-%d")
   trip_info["trip"]["startdate"]  = start
-  
+
   finish = datetime.strptime(trip_info["trip"]["finish"], "%Y-%m-%d")
   trip_info["trip"]["finishdate"] = finish
 
@@ -842,7 +842,7 @@ def get_trip_info_direct(token, trip_id):
 
   if not memcache.add(key, trip_info['trip'], 3600):
     logging.warning("memcache add for trip_info failed")
-    
+
   logging.info("returning trip info")
   logging.info(trip_info['trip'])
   return trip_info['trip']
@@ -869,7 +869,7 @@ def get_trip_info(token, trip_id, who):
     match = re.search('trip/(.*?)/', trip["url"])
     if (match):
       trip["nick"] = match.group(1)
-    
+
     if trip:
       trips[key] = trip
 
@@ -930,12 +930,12 @@ def get_flickr_photos_by_machinetag(flickr, nsid, trip_info, page):
   if photos:
     logging.info("memcache hit")
     return photos
-    
+
   logging.debug("Attempting photo search by tag (no cache)")
 
   machine_tag = "dopplr:trip="+str(trip_info["id"])
   logging.info("Got trip ID to search on: "+machine_tag);
- 
+
   try:
     photos = flickr.photos_search(
                format='json',
@@ -967,7 +967,7 @@ def get_flickr_photos_by_date(flickr, nsid, trip_info, page):
   photos = memcache.get(key)
   if photos:
     return photos
-    
+
   logging.debug("Attempting photo search by date (no cache)")
 
   # TODO right thing with times (which is...?)
@@ -991,7 +991,7 @@ def get_flickr_photos_by_date(flickr, nsid, trip_info, page):
     photos = simplejson.loads(photos)
   except:
     raise Exception('Could not get photos from Flickr using date taken search.')
-    
+
   photos = photos['photos']
   photos = get_flickr_geototal(photos)
   photos = get_flickr_tagtotal(photos, trip_info["id"])
@@ -1007,7 +1007,7 @@ def get_flickr_setlist(flickr, nsid):
   if sets:
     logging.info("memcache hit for setlist")
     return sets
-    
+
   logging.info("Getting set list from Flickr")
   try:
     sets = flickr.photosets_getList(
@@ -1024,7 +1024,7 @@ def get_flickr_setlist(flickr, nsid):
   except:
     logging.error("Error getting list of sets from Flickr")
 
-  return {'message': 'Could not get list of sets from Flickr.'}  
+  return {'message': 'Could not get list of sets from Flickr.'}
 
 def get_paged_setlist(sets, page):
   logging.info("getting page %s of setlist" % page);
@@ -1035,7 +1035,7 @@ def get_paged_setlist(sets, page):
   sets['photosets']['pages'] = int(math.ceil(float(setcount)/setsperpage))
   sets['photosets']['page']  = page
   sets['photosets']['perpage'] = setsperpage
-  
+
   if setcount > setsperpage:
     start = setsperpage*(page-1)
     end   = setsperpage*page
@@ -1052,7 +1052,7 @@ def get_sets_details(flickr, sets):
       if details['photoset'].has_key('trip_id'):
         set['trip_id'] = details['photoset']['trip_id']
         set['trip_info'] = details['photoset']['trip_info']
-  
+
   return sets
 
 def get_set_details(flickr, set_id, ask_flickr=False):
@@ -1112,7 +1112,7 @@ def get_flickr_tagtotal(photos, trip_id):
 def get_flickr_date_range(photos, dates=False):
   start_date = None
   finish_date = None
-  
+
   for photo in photos['photo']:
     datetaken = datetime.strptime(photo['datetaken'], "%Y-%m-%d %H:%M:%S")
     if not start_date or datetaken < start_date:
@@ -1155,7 +1155,7 @@ def get_flickr_trip_ids(dopplr, photos):
         trip_ids[trip_id] = 1
       else:
         trip_ids[trip_id] += 1
-    
+
   for trip_id in trip_ids:
     if trip_ids[trip_id] == photos['total']:
       photos['trip_id'] = trip_id
@@ -1164,7 +1164,7 @@ def get_flickr_trip_ids(dopplr, photos):
                               'name': trip_info['city']['name'],
                             }
       break # only take the first
-  
+
   photos['trip_ids'] = trip_ids
 
   return photos
@@ -1184,7 +1184,7 @@ def get_numbers():
 def prettify_trips(trip_list):
   # parse dates to datetime objects
   now = datetime.now()
-  
+
   for trip in trip_list:
     trip["startdate"]  = datetime.strptime(trip["start"],  "%Y-%m-%d")
     trip["finishdate"] = datetime.strptime(trip["finish"], "%Y-%m-%d")
@@ -1197,17 +1197,17 @@ def prettify_trips(trip_list):
         trip["status"] = "Past"
     else:
       trip["status"] = "Future"
-      
+
   return trip_list
 
 def get_trip_distances(trip_list, traveller_info):
   logging.info("in link_trips")
-  previous = False 
+  previous = False
 
   home_city = traveller_info['home_city']
   home_point = Point(longitude=home_city['longitude'], latitude=home_city['latitude'])
-  
-  # parse dates and join trips 
+
+  # parse dates and join trips
   for trip in trip_list:
 
     # assume all trips start and end at home; destination is always trip.city
@@ -1219,11 +1219,11 @@ def get_trip_distances(trip_list, traveller_info):
         logging.info("Current trip starts before previous trip finished - change origin for %s to %s" % (previous["city"]["name"], trip["city"]["name"]))
         trip["origin"] = previous["city"]
         trip["overlap"] = True # for concurrent trips - try to fix day counts
-  
+
       if trip["finishdate"] < previous["finishdate"]:
         logging.info("Current trip finishes before previous trip finished - change return for %s to %s" % (previous["city"]["name"], trip["city"]["name"]))
         trip["return"] = previous["city"]
-        
+
       if trip["startdate"] == previous["finishdate"]:
         logging.info("Current trip follows on same day as previous trip - link %s to %s" % (previous["city"]["name"], trip["city"]["name"]))
         trip["origin"] = previous["city"]
@@ -1238,7 +1238,7 @@ def get_trip_distances(trip_list, traveller_info):
         previous["return"] = trip["city"]
 
     previous = trip
-  
+
   home_city = traveller_info['home_city']
   home_point = Point(longitude=home_city['longitude'], latitude=home_city['latitude'])
 
@@ -1249,7 +1249,7 @@ def get_trip_distances(trip_list, traveller_info):
     if (trip.has_key('origin')):
       logging.info("Using non-home location for outgoing trip distance");
       origin_point = Point(longitude=trip['origin']['longitude'], latitude=trip['origin']['latitude'])
-    else:   
+    else:
       origin_point = home_point
 
     trip['distance'] = {'out': int(distance.distance(origin_point, dest_point).km)}
@@ -1260,19 +1260,19 @@ def get_trip_distances(trip_list, traveller_info):
     if (trip.has_key('return')):
       logging.info("Using non-home location for return trip distance");
       return_point = Point(longitude=trip['return']['longitude'], latitude=trip['return']['latitude'])
-    else:   
+    else:
       return_point = home_point
 
     trip['distance']['return'] = int(distance.distance(dest_point, return_point).km)
     if (trip.has_key('return')):
       logging.info("Distance for trip from city %s to next %s is %s" % (trip['city']['name'], trip['return']['name'], trip['distance']['return']))
-    
+
     logging.info(trip['distance']);
-    
+
   logging.info("done")
-  
+
   return trip_list
-  
+
 def get_potential_trips(dopplr, photos):
   trips_info = get_trips_info(dopplr)
 
@@ -1298,10 +1298,10 @@ def links_for_trip(trips_list, trip_id):
   cities = []
   status = []
   for trip in trips_list['trip']:
-    ids.append(trip['id'])    
+    ids.append(trip['id'])
     cities.append(trip['city']['name'])
     status.append(trip['status'])
-    
+
     if int(trip['id']) == int(trip_id):
       trip_index = index
       trip_city  = trip['city']['name']
@@ -1337,13 +1337,13 @@ def links_for_trip(trips_list, trip_id):
   links['city_ids'] = city_ids
 
   return links
-  
+
 def build_stats(trip_list, type, statyear=False):
   # TODO break this apart and/or do similar things in subroutines
   # TODO build more year metadata
   # TODO don't do as much work for front page
   # TODO cache?
-  
+
   # type can be 'front', 'helvetica', 'detail'
   # for now, the first two are basically equivalent
 
@@ -1360,7 +1360,7 @@ def build_stats(trip_list, type, statyear=False):
 
   if not trip_list:
     return stats
-           
+
   for trip in trip_list:
     # skip if not a past trip
     if trip['status'] != "Past":
@@ -1371,7 +1371,7 @@ def build_stats(trip_list, type, statyear=False):
       continue
 
     if statyear and trip['startdate'].year != int(statyear):
-      stats['years'][trip['startdate'].year] = { 'duration': 0, 'trips': 0, 'away':{}, 'home':{}, } 
+      stats['years'][trip['startdate'].year] = { 'duration': 0, 'trips': 0, 'away':{}, 'home':{}, }
       continue
     # else:
     #   logging.info("  + count this trip")
@@ -1381,7 +1381,7 @@ def build_stats(trip_list, type, statyear=False):
     # how long (simple version...) # TODO never double count date
     duration = trip['finishdate'] - trip['startdate']
     trip['duration'] = duration.days
-    
+
     # build country data
     country = trip['city']['country']
     display = country
@@ -1393,12 +1393,12 @@ def build_stats(trip_list, type, statyear=False):
     if not country.find("Hong Kong"):
       display = "Hong Kong"
       inline  = "Hong Kong"
-    
+
     # stuff info into the data structure
     if not country in stats['countries']:
-      stats['countries'][country] = { 'duration': 0, 'trips': 0, 
+      stats['countries'][country] = { 'duration': 0, 'trips': 0,
                                       'display':display, 'inline':inline,
-                                      'code':trip['city']['country_code'], 
+                                      'code':trip['city']['country_code'],
                                       'rgb':md5.new(country).hexdigest()[0:6]}
 
     stats['countries'][country]['duration'] += duration.days
@@ -1410,28 +1410,28 @@ def build_stats(trip_list, type, statyear=False):
           stats['types'][trip['return_transport_type']] = {'trips':0, 'journeys':0, 'distance':0 }
         stats['types'][trip['return_transport_type']]['trips'] += 0.5
         stats['types'][trip['return_transport_type']]['distance'] += trip['distance']['return']
-        
+
       if trip.has_key('outgoing_transport_type'): # TODO remove
         if not trip['outgoing_transport_type'] in stats['types']:
           stats['types'][trip['outgoing_transport_type']] = {'trips':0, 'journeys':0, 'distance':0 }
         stats['types'][trip['outgoing_transport_type']]['trips'] += 0.5
         stats['types'][trip['outgoing_transport_type']]['distance'] += trip['distance']['out']
- 
+
         # if (country == home_country):
         #   stats['home']['trips'] += 1;
         #   stats['home']['duration'] += duration.days
         # else:
         #   stats['away']['trips'] += 1;
         #   stats['away']['duration'] += duration.days
-  
+
     # build city data
     city = trip['city']['name']
     rgb  = trip['city']['rgb']
 
     if not city in stats['cities']:
       stats['cities'][city] = { 'duration': 0, 'trips': 0, 'dist_to':0, 'dist_from':0,
-                                'rgb':rgb, 'country':country, 
-                                'id':trip['city']['woeid'], 
+                                'rgb':rgb, 'country':country,
+                                'id':trip['city']['woeid'],
                                 'trip_list': [], 'code':trip['city']['country_code']
                               }
 
@@ -1440,13 +1440,13 @@ def build_stats(trip_list, type, statyear=False):
 
     if type != "front":
       stats['cities'][city]['trip_list'].append(trip)
-    
+
     # build year data
     year = trip['startdate'].year
 
     # initialise data structure's
     if not year in stats['years']:
-      stats['years'][year] = { 'duration': 0, 'trips': 0, 'away':{}, 
+      stats['years'][year] = { 'duration': 0, 'trips': 0, 'away':{},
                                'home':{}, 'distance': 0, }
     if year == trip['finishdate'].year:
       stats['years'][year]['duration'] += duration.days
@@ -1461,17 +1461,17 @@ def build_stats(trip_list, type, statyear=False):
         # living there now. Onwards...
 
         year_end = datetime(year, 12, 31)
-        
+
         stats['years'][year]['duration'] += (year_end-trip['startdate']).days
         stats['years'][year]['trips']    += 1
         if type == "detail":
           stats['years'][year]['distance'] += trip['distance']['out']
 
-        # redefine year from year-start to year-end  
+        # redefine year from year-start to year-end
         year = trip['finishdate'].year
         year_start = datetime(year, 1, 1)
         if not year in stats['years']:
-          stats['years'][year] = { 'duration': 0, 'trips': 0, 'away':{}, 
+          stats['years'][year] = { 'duration': 0, 'trips': 0, 'away':{},
                                    'home':{}, 'distance': 0, }
 
         # for now we don't count trips in both years. change?
@@ -1491,7 +1491,7 @@ def build_stats(trip_list, type, statyear=False):
 
     # do we want to supply full-blown cross-cut stats? maybe later...
     # END TRIP LOOP
-    
+
   # reorder final stats
   stats['ordered']['years'] = sorted(stats['years'])
   stats['ordered']['years'].reverse()
@@ -1502,7 +1502,7 @@ def build_stats(trip_list, type, statyear=False):
   stats['ordered']['years_by_days'] = sorted(stats['years'],  lambda x, y: (stats['years'][y]['duration'])-(stats['years'][x]['duration']))
   if not statyear:
     stats['ordered']['years_by_dist'] = sorted(stats['years'],  lambda x, y: (stats['years'][y]['distance'])-(stats['years'][x]['distance']))
-  
+
   stats['ordered']['countries'] = sorted(stats['countries'],  lambda x, y: (stats['countries'][y]['duration'])-(stats['countries'][x]['duration']))
   stats['ordered']['cities']    = sorted(stats['cities'],     lambda x, y: (stats['cities'][y]['duration'])-(stats['cities'][x]['duration']))
 
@@ -1517,25 +1517,25 @@ def build_stats(trip_list, type, statyear=False):
     saturated = raw.saturate(1);
     lightened = saturated.lighten(0.5);
     desaturated = lightened.desaturate(0.8);
-  
+
     stats['rgb']        = hex_from(lightened)
     stats['rgb_start']  = hex_from(desaturated)
-  
+
     # scale country stats for map (including colours)
     top_country  = stats['ordered']['countries'][0]
     top_duration = stats['countries'][top_country]['duration']
     r = stats['rgb'][0:2]; g = stats['rgb'][2:4]; b = stats['rgb'][4:6]
     for country in stats['countries'].keys():
       scaled = 100*stats['countries'][country]['duration']/top_duration
-  
+
       satscale = (float(100-scaled)/100)*0.8
       satcolor = lightened.desaturate(satscale)
   #     ligscale = (float(100-scaled)/100)*0.9
   #     ligcolor = saturated.lighten(ligscale)
-  
+
       stats['countries'][country]['scaled'] = scaled
       stats['countries'][country]['rgb_scaled'] = hex_from(satcolor)
-    
+
     # scale transport types
     if len(stats['types'].keys()):  # TODO remove
       top_type = stats['ordered']['types'][0]
@@ -1543,7 +1543,7 @@ def build_stats(trip_list, type, statyear=False):
       for transport_type in stats['types'].keys():
         stats['types'][transport_type]['scaled'] = 240*int(stats['types'][transport_type]['trips'])/top_trip
         stats['types'][transport_type]['journeys'] = int((stats['types'][transport_type]['trips']*2))
-        
+
     # scale years
     top_year_by_days = stats['ordered']['years_by_days'][0]
     top_year_days    = stats['years'][top_year_by_days]['duration']
@@ -1562,11 +1562,11 @@ def build_stats(trip_list, type, statyear=False):
     trips_per_block = 1
     while 90*trips_per_block/top_year_trips < 10:
       trips_per_block += 1
-    
+
     stats['top_year_trips']  = top_year_trips
     stats['trips_per_block'] = trips_per_block
     stats['block_width']     = 90*trips_per_block/top_year_trips
-  
+
     logging.info("type is %s" % type)
     for year in stats['years']:
       if year == top_year_by_days:
@@ -1575,7 +1575,7 @@ def build_stats(trip_list, type, statyear=False):
         stats['home']['days'] = (366-stats['years'][top_year_by_days]['duration'])/3.66
       stats['years'][year]['away']['days']     = (stats['years'][top_year_by_days]['duration'])/3.66
       stats['years'][year]['home']['days']     = (366-stats['years'][top_year_by_days]['duration'])/3.66
-  
+
       # raw scaling
       stats['years'][year]['duration_scaled']  = int(240*stats['years'][year]['duration']/top_year_days)
       stats['years'][year]['trips_scaled']     = int(240*stats['years'][year]['trips']/top_year_trips)
@@ -1583,7 +1583,7 @@ def build_stats(trip_list, type, statyear=False):
         stats['years'][year]['dist_scaled']      = int(240*stats['years'][year]['distance']/top_year_dist)
         logging.info("scaled distance width for year %s is %s" % (year, stats['years'][year]['dist_scaled']))
 
-  
+
       # block scaling
       stats['years'][year]['trips_blocks']     = float(stats['years'][year]['trips'])/stats['trips_per_block']
       stats['years'][year]['trips_blocks_l']   = [True] * (stats['years'][year]['trips']/stats['trips_per_block'])
@@ -1611,26 +1611,26 @@ def get_keys(host):
       'flickr_key': "d0f74bf817f518ae4ce7892ac7fce7de",
       'flickr_sec': "312fb375d41fcb09",
     }
-  else:    
+  else:
     keys = {
       'gmap':       "ABQIAAAAAuD6u2ORBgn25rPuxX1qxxQ4d34u_oYfzC9kAIhtljFln5QgnBSLj4qbVLSLA2cKssBO11cTRrUoXg",
       'flickr_key': "6e990ae1ba4697e88afa5d626b138fd2",
       'flickr_sec': "172d6389fecab4bd",
     }
-    
+
   return keys
 
 def get_flickr(keys, token='', disablecache=False):
   if disablecache:
-    flickr = flickrapi.FlickrAPI(keys['flickr_key'], keys['flickr_sec'], 
+    flickr = flickrapi.FlickrAPI(keys['flickr_key'], keys['flickr_sec'],
                                  token=token, store_token=False)
     return flickr
   else:
-    flickr = flickrapi.FlickrAPI(keys['flickr_key'], keys['flickr_sec'], 
+    flickr = flickrapi.FlickrAPI(keys['flickr_key'], keys['flickr_sec'],
                                  token=token, store_token=False, cache=True)
     flickr.cache = flickrapi.SimpleCache(timeout=300, max_entries=200)
     return flickr
-  return  
+  return
 
 def get_session():
   return sessions.Session(session_expire_time=10368000,)
