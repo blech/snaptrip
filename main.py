@@ -163,6 +163,8 @@ class StatsExport(webapp.RequestHandler):
 
     self.response.headers["Content-Type"] = "text/csv"
     self.response.headers["Content-Disposition"] = "attachment; filename=dopplr.csv"
+    self.response.headers["Content-Type"] = "text/plain"
+    self.response.headers["Content-Disposition"] = "attachment; filename=dopplr.csv"
     self.response.out.write(template.render(template_values))
 
 class TripPage(webapp.RequestHandler):
@@ -239,8 +241,9 @@ class TripPage(webapp.RequestHandler):
                 template_values['photos'] = get_flickr_photos_by_date(flickr, nsid, trip_info, page)
                 template_values['method'] = "date"
           except Exception, error:
+            logging.error(error)
             return error_page(self, error)
-
+            # raise Exception(error)
         else:
           return error_page(self, "Could not identify user at Flickr.")
 
