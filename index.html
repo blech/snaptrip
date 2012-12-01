@@ -26,6 +26,7 @@ text {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 18px;
   font-weight: bold;
+  text-anchor: middle;
 }
 
 </style>
@@ -68,8 +69,7 @@ svg.append("circle")
 
 var title = svg.append("text")
     .attr("x", width / 2)
-    .attr("y", height * 3 / 5)
-    .style("text-anchor", "middle");
+    .attr("y", height * 3 / 5);
 
 d3.json("readme-world-110m.json", function(error, world) {
   var countries = topojson.object(world, world.objects.countries).geometries,
@@ -96,8 +96,8 @@ d3.json("readme-world-110m.json", function(error, world) {
         .delay(250)
         .duration(1250)
         .tween("rotate", function() {
-          var bounds = centroid(countries[i]),
-              rotate = d3.interpolate(projection.rotate(), [-bounds[0], -bounds[1]]);
+          var point = centroid(countries[i]),
+              rotate = d3.interpolate(projection.rotate(), [-point[0], -point[1]]);
           return function(t) {
             projection.rotate(rotate(t));
             country.attr("d", path);
