@@ -31,14 +31,11 @@ text {
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
-<script src="http://d3js.org/d3.geo.projection.v0.min.js"></script>
 <script src="http://d3js.org/topojson.v0.min.js"></script>
 <script>
 
 var width = 960,
     height = 500;
-
-var color = d3.scale.category20c();
 
 var centroid = d3.geo.path()
     .projection(function(d) { return d; })
