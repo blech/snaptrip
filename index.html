@@ -38,10 +38,6 @@ text {
 var width = 960,
     height = 500;
 
-var centroid = d3.geo.path()
-    .projection(function(d) { return d; })
-    .centroid;
-
 var projection = d3.geo.orthographic()
     .scale(248)
     .clipAngle(90);
@@ -96,7 +92,7 @@ d3.json("readme-world-110m.json", function(error, world) {
         .delay(250)
         .duration(1250)
         .tween("rotate", function() {
-          var point = centroid(countries[i]),
+          var point = d3.geo.centroid(countries[i]),
               rotate = d3.interpolate(projection.rotate(), [-point[0], -point[1]]);
           return function(t) {
             projection.rotate(rotate(t));
