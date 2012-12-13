@@ -50,12 +50,14 @@ function ready(error, world, names) {
       i = -1,
       n = countries.length;
 
+  countries.forEach(function(d) { d.name = names.filter(function(n) { return d.id == n.id; })[0].name; });
+  countries.sort(function(a, b) { return a.name.localeCompare(b.name); });
+
   (function transition() {
     d3.transition()
         .duration(1250)
         .each("start", function() {
-          var id = countries[i = (i + 1) % n].id;
-          title.text(names.filter(function(d) { return d.id == id; })[0].name);
+          title.text(countries[i = (i + 1) % n].name);
         })
         .tween("rotate", function() {
           var p = d3.geo.centroid(countries[i]),
