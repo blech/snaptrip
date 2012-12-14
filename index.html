@@ -68,7 +68,7 @@ function ready(error, world, names) {
             c.fillStyle = "#bbb", c.beginPath(), path(land), c.fill();
             c.fillStyle = "#f00", c.beginPath(), path(countries[i]), c.fill();
             c.strokeStyle = "#fff", c.lineWidth = .5, c.beginPath(), path(borders), c.stroke();
-            c.lineWidth = 2, c.strokeStyle = "#000", c.beginPath(), path(globe), c.stroke();
+            c.strokeStyle = "#000", c.lineWidth = 2, c.beginPath(), path(globe), c.stroke();
           };
         })
       .transition()
