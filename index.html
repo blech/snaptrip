@@ -50,8 +50,13 @@ function ready(error, world, names) {
       i = -1,
       n = countries.length;
 
-  countries.forEach(function(d) { d.name = names.filter(function(n) { return d.id == n.id; })[0].name; });
-  countries.sort(function(a, b) { return a.name.localeCompare(b.name); });
+  countries = countries.filter(function(d) {
+    return names.some(function(n) {
+      if (d.id == n.id) return d.name = n.name;
+    });
+  }).sort(function(a, b) {
+    return a.name.localeCompare(b.name);
+  });
 
   (function transition() {
     d3.transition()
