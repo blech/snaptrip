@@ -15,7 +15,7 @@ h1 {
 <h1></h1>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="http://d3js.org/queue.v1.min.js"></script>
-<script src="http://d3js.org/topojson.v0.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
 <script>
 
 var width = 960,
@@ -44,9 +44,9 @@ queue()
 
 function ready(error, world, names) {
   var globe = {type: "Sphere"},
-      land = topojson.object(world, world.objects.land),
-      countries = topojson.object(world, world.objects.countries).geometries,
-      borders = topojson.mesh(world, world.objects.countries, function(a, b) { return a.id !== b.id; }),
+      land = topojson.feature(world, world.objects.land),
+      countries = topojson.feature(world, world.objects.countries).features,
+      borders = topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }),
       i = -1,
       n = countries.length;
 
