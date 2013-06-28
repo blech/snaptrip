@@ -13,9 +13,9 @@ h1 {
 
 </style>
 <h1></h1>
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<script src="http://d3js.org/queue.v1.min.js"></script>
-<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="http://d3js.org/d3.v3.js"></script>
+<script src="http://d3js.org/queue.v1.js"></script>
+<script src="http://d3js.org/topojson.v1.js"></script>
 <script>
 
 var width = 960,
@@ -38,11 +38,11 @@ var path = d3.geo.path()
 var title = d3.select("h1");
 
 queue()
-    .defer(d3.json, "/d/4090846/world-110m.json")
-    .defer(d3.tsv, "/d/4090846/world-country-names.tsv")
+    .defer(d3.json, "/world-110m.json")
+    .defer(d3.json, "/trip_data.json")
     .await(ready);
 
-function ready(error, world, names) {
+function ready(error, world, trips) {
   var globe = {type: "Sphere"},
       land = topojson.feature(world, world.objects.land),
       countries = topojson.feature(world, world.objects.countries).features,
@@ -51,18 +51,18 @@ function ready(error, world, names) {
       n = countries.length;
 
   countries = countries.filter(function(d) {
-    return names.some(function(n) {
-      if (d.id == n.id) return d.name = n.name;
-    });
+//     return names.some(function(n) {
+//       if (d.id == n.id) return d.name = n.name;
+//     });
   }).sort(function(a, b) {
-    return a.name.localeCompare(b.name);
+//     return a.name.localeCompare(b.name);
   });
 
   (function transition() {
     d3.transition()
         .duration(1250)
         .each("start", function() {
-          title.text(countries[i = (i + 1) % n].name);
+//           title.text(countries[i = (i + 1) % n].name);
         })
         .tween("rotate", function() {
           var p = d3.geo.centroid(countries[i]),
