@@ -41,7 +41,7 @@ var title = d3.select("h1");
 queue()
     .defer(d3.json, "/d/4090846/world-110m.json")
     .defer(d3.tsv, "/d/4090846/world-country-names.tsv")
-    .defer(d3.json, "https://gist.github.com/blech/5879060/raw/6a773eb76e24e645d30976464ef913c4eaae8ebd/trip_data.json")
+    .defer(d3.json, "d/5879060/trip_data.json")
     .await(ready);
 
 function ready(error, world, trips) {
