@@ -48,32 +48,26 @@ function ready(error, world, trips) {
       countries = topojson.feature(world, world.objects.countries).features,
       borders = topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }),
       i = -1,
-      n = countries.length;
-
-  countries = countries.filter(function(d) {
-//     return names.some(function(n) {
-//       if (d.id == n.id) return d.name = n.name;
-//     });
-  }).sort(function(a, b) {
-//     return a.name.localeCompare(b.name);
-  });
+      n = trips.trips.length;
 
   (function transition() {
     d3.transition()
         .duration(1250)
         .each("start", function() {
-//           title.text(countries[i = (i + 1) % n].name);
+           title.text(trips.trips[i = (i + 1) % n].city.name); // 
         })
         .tween("rotate", function() {
-          var p = d3.geo.centroid(countries[i]),
+          var p = [trips.trips[i].city.longitude, trips.trips[i].city.latitude],
               r = d3.interpolate(projection.rotate(), [-p[0], -p[1]]);
           return function(t) {
             projection.rotate(r(t));
             c.clearRect(0, 0, width, height);
-            c.fillStyle = "#bbb", c.beginPath(), path(land), c.fill();
-            c.fillStyle = "#f00", c.beginPath(), path(countries[i]), c.fill();
+            c.fillStyle = "#ddd", c.beginPath(), path(land), c.fill();
+            // c.fillStyle = "#f00", c.beginPath(), path(countries[i]), c.fill();
             c.strokeStyle = "#fff", c.lineWidth = .5, c.beginPath(), path(borders), c.stroke();
             c.strokeStyle = "#000", c.lineWidth = 2, c.beginPath(), path(globe), c.stroke();
+            
+            
           };
         })
       .transition()
