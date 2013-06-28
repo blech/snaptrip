@@ -1,1 +1,1 @@
-See [discussion on Hacker News](http://news.ycombinator.com/item?id=4858817). Built with [D3](http://d3js.org) and [TopoJSON](https://github.com/mbostock/topojson).
+Tweaking [mbostock's world tour](http://bl.ocks.org/mbostock/4183330) to show a list of the cities I've visited, taken from my [trips on Dopplr](http://www.dopplr.com/).
