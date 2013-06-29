@@ -44,7 +44,7 @@ queue()
     .defer(d3.json, "/d/5879060/trip_data.json")
     .await(ready);
 
-function ready(error, world, countries, trips) {
+function ready(error, world, names, trips) {
   var globe = {type: "Sphere"},
       land = topojson.feature(world, world.objects.land),
       countries = topojson.feature(world, world.objects.countries).features,
