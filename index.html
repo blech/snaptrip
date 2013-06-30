@@ -71,7 +71,8 @@ function ready(error, world, trips) {
             // c.fillStyle = "#f00", c.beginPath(), path(countries[i]), c.fill();
             c.strokeStyle = "#fff", c.lineWidth = .5, c.beginPath(), path(borders), c.stroke();
             c.strokeStyle = "#000", c.lineWidth = 2, c.beginPath(), path(globe), c.stroke();
-            c.fillStyle = "#"+trips.trips[i].city.rgb, c.beginPath(), c.arc(480, 250, 5, 0, 2 * Math.PI, true), c.fill();
+            d = projection(p);
+            c.fillStyle = "#"+trips.trips[i].city.rgb, c.beginPath(), c.arc(d[0], d[1], 5, 0, 2 * Math.PI, true), c.fill();
           };
         })
       .transition()
