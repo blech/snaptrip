@@ -26,7 +26,8 @@ var width = 960,
 
 var projection = d3.geo.orthographic()
     .scale(248)
-    .clipAngle(90);
+    .clipAngle(90)
+    .rotate(['0.1', '-51.5']);
 
 var canvas = d3.select("body").append("canvas")
     .attr("width", width)
