@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+<head>
+<title>Dopplr Tour. husk.org</title>
 <style>
 
 h1 {
@@ -39,12 +41,13 @@ var path = d3.geo.path()
 var title = d3.select("h1");
 
 queue()
-    .defer(d3.json, "/d/4090846/world-110m.json")
-    .defer(d3.tsv, "/d/4090846/world-country-names.tsv")
+    .defer(d3.json, "/d/5879060/world-110m.json")
+    // .defer(d3.tsv, "/d/4090846/world-country-names.tsv")
     .defer(d3.json, "/d/5879060/trip_data.json")
     .await(ready);
 
-function ready(error, world, names, trips) {
+// function ready(error, world, names, trips) {
+function ready(error, world, trips) {
   var globe = {type: "Sphere"},
       land = topojson.feature(world, world.objects.land),
       countries = topojson.feature(world, world.objects.countries).features,
@@ -68,8 +71,7 @@ function ready(error, world, names, trips) {
             // c.fillStyle = "#f00", c.beginPath(), path(countries[i]), c.fill();
             c.strokeStyle = "#fff", c.lineWidth = .5, c.beginPath(), path(borders), c.stroke();
             c.strokeStyle = "#000", c.lineWidth = 2, c.beginPath(), path(globe), c.stroke();
-            
-            
+            c.fillStyle = "#"+trips.trips[i].city.rgb, c.beginPath(), c.arc(480, 250, 5, 0, 2 * Math.PI, true), c.fill();
           };
         })
       .transition()
@@ -78,3 +80,6 @@ function ready(error, world, names, trips) {
 }
 
 </script>
+</head>
+<body></body>
+</html>
