@@ -1,0 +1,3 @@
+[submodule "geopy"]
+	path = geopy
+	url = git@github.com:geopy/geopy.git
