@@ -14,8 +14,24 @@ h1 {
   width: 960px;
 }
 
+h2 {
+  position: absolute;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 100;
+  text-align: right;
+  width: 720px;
+}
+h2#start {
+  top: 450px;
+}
+h2#finish {
+  top: 470px;
+}
+
 </style>
 <h1></h1>
+<h2 id="start"></h2> <h2 id="finish"></h2>
 <script src="http://d3js.org/d3.v3.js"></script>
 <script src="http://d3js.org/queue.v1.js"></script>
 <script src="http://d3js.org/topojson.v1.js"></script>
@@ -40,6 +56,8 @@ var path = d3.geo.path()
     .context(c);
 
 var title = d3.select("h1");
+var tripstart = d3.select("h2#start");
+var tripfinish = d3.select("h2#finish");
 
 queue()
     .defer(d3.json, "/d/5879060/world-110m.json")
@@ -61,6 +79,8 @@ function ready(error, world, trips) {
         .duration(1250)
         .each("start", function() {
            title.text(trips.trips[i = (i + 1) % n].city.name);
+           tripstart.text(trips.trips[i].start);
+           tripfinish.text(trips.trips[i].finish);
         })
         .tween("rotate", function() {
           var p = [trips.trips[i].city.longitude, trips.trips[i].city.latitude],
