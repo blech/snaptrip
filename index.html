@@ -6,7 +6,7 @@
 
 h1 {
   position: absolute;
-  top: 280px;
+  top: 260px;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 24px;
   font-weight: 100;
@@ -78,6 +78,7 @@ function ready(error, world, trips) {
             e = d3.rgb('#'+trips.trips[i].city.rgb);
             g = 'rgba('+e.r+','+e.g+','+e.b+',.5)';
             c.fillStyle = g, c.beginPath(), c.arc(d[0], d[1], 8, 0, 2 * Math.PI, true), c.fill();
+            title.style('top', parseInt(d[1]+10)+"px"), title.style('left', parseInt(d[0]-470)+"px");
           };
         })
       .transition()
