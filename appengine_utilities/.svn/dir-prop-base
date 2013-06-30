@@ -1,0 +1,12 @@
+K 10
+svn:ignore
+V 90
+__init__.pyc
+sessions.pyc
+rotmodel.pyc
+settings_default.pyc
+event.pyc
+flash.pyc
+cache.pyc
+
+END
