@@ -59,7 +59,7 @@ function ready(error, world, trips) {
     d3.transition()
         .duration(1250)
         .each("start", function() {
-           title.text(trips.trips[i = (i + 1) % n].city.name); // 
+           title.text(trips.trips[i = (i + 1) % n].city.name);
         })
         .tween("rotate", function() {
           var p = [trips.trips[i].city.longitude, trips.trips[i].city.latitude],
@@ -71,8 +71,12 @@ function ready(error, world, trips) {
             // c.fillStyle = "#f00", c.beginPath(), path(countries[i]), c.fill();
             c.strokeStyle = "#fff", c.lineWidth = .5, c.beginPath(), path(borders), c.stroke();
             c.strokeStyle = "#000", c.lineWidth = 2, c.beginPath(), path(globe), c.stroke();
+
+            // add Dopplr trip onfo
             d = projection(p);
-            c.fillStyle = "#"+trips.trips[i].city.rgb, c.beginPath(), c.arc(d[0], d[1], 5, 0, 2 * Math.PI, true), c.fill();
+            e = d3.rgb('#'+trips.trips[i].city.rgb);
+            g = 'rgba('+e.r+','+e.g+','+e.b+',.5)';
+            c.fillStyle = g, c.beginPath(), c.arc(d[0], d[1], 8, 0, 2 * Math.PI, true), c.fill();
           };
         })
       .transition()
