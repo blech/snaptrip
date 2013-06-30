@@ -12,11 +12,11 @@ from random import random
 import colors     # from nodebox
 import feedparser
 import flickrapi
-import simplejson
+import json as simplejson
 
 from geopy import Point, distance
 from jinja2 import FileSystemLoader, Environment
-from utilities import sessions
+from appengine_utilities import sessions
 
 from google.appengine.api import mail
 from google.appengine.api import memcache
