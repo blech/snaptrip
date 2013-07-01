@@ -1,0 +1,1 @@
+Tweaking [mbostock's world tour](http://bl.ocks.org/mbostock/4183330) to show a list of the cities I've visited, taken from my [trips on Dopplr](http://www.dopplr.com/).

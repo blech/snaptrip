@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+<title>Dopplr Tour. husk.org</title>
+<style>
+
+h1 {
+  position: absolute;
+  top: 260px;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 24px;
+  font-weight: 100;
+  text-align: center;
+  width: 960px;
+}
+
+h2 {
+  position: absolute;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 100;
+  text-align: right;
+  width: 720px;
+}
+h2#start {
+  top: 440px;
+}
+h2#finish {
+  top: 460px;
+}
+
+</style>
+<h1></h1>
+<h2 id="start"></h2> <h2 id="finish"></h2>
+<script src="http://d3js.org/d3.v3.js"></script>
+<script src="http://d3js.org/queue.v1.js"></script>
+<script src="http://d3js.org/topojson.v1.js"></script>
+<script>
+
+var width = 960,
+    height = 500;
+
+var projection = d3.geo.orthographic()
+    .scale(248)
+    .clipAngle(90)
+    .rotate(['0.1', '-51.5']);
+
+var canvas = d3.select("body").append("canvas")
+    .attr("width", width)
+    .attr("height", height);
+
+var c = canvas.node().getContext("2d");
+
+var path = d3.geo.path()
+    .projection(projection)
+    .context(c);
+
+var title = d3.select("h1");
+var tripstart = d3.select("h2#start");
+var tripfinish = d3.select("h2#finish");
+
+queue()
+    .defer(d3.json, "/d/5879060/world-110m.json")
+    // .defer(d3.tsv, "/d/4090846/world-country-names.tsv")
+    .defer(d3.json, "/d/5879060/trip_data.json")
+    .await(ready);
+
+// function ready(error, world, names, trips) {
+function ready(error, world, trips) {
+  var globe = {type: "Sphere"},
+      land = topojson.feature(world, world.objects.land),
+      countries = topojson.feature(world, world.objects.countries).features,
+      borders = topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }),
+      i = -1,
+      n = trips.trips.length;
+
+  (function transition() {
+    d3.transition()
+        .duration(1250)
+        .each("start", function() {
+           title.text(trips.trips[i = (i + 1) % n].city.name);
+           tripstart.text(trips.trips[i].start);
+           tripfinish.text(trips.trips[i].finish);
+        })
+        .tween("rotate", function() {
+          var p = [trips.trips[i].city.longitude, trips.trips[i].city.latitude],
+              r = d3.interpolate(projection.rotate(), [-p[0], -p[1]]);
+          return function(t) {
+            projection.rotate(r(t));
+            c.clearRect(0, 0, width, height);
+            c.fillStyle = "#ddd", c.beginPath(), path(land), c.fill();
+            // c.fillStyle = "#f00", c.beginPath(), path(countries[i]), c.fill();
+            c.strokeStyle = "#fff", c.lineWidth = .5, c.beginPath(), path(borders), c.stroke();
+            c.strokeStyle = "#000", c.lineWidth = 2, c.beginPath(), path(globe), c.stroke();
+
+            // add Dopplr trip onfo
+            d = projection(p);
+            e = d3.rgb('#'+trips.trips[i].city.rgb);
+            g = 'rgba('+e.r+','+e.g+','+e.b+',.5)';
+            c.fillStyle = g, c.beginPath(), c.arc(d[0], d[1], 8, 0, 2 * Math.PI, true), c.fill();
+            title.style('top', parseInt(d[1]+10)+"px"), title.style('left', parseInt(d[0]-470)+"px");
+          };
+        })
+      .transition()
+        .each("end", transition);
+  })();
+}
+
+</script>
+</head>
+<body></body>
+</html>
