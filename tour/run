@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo 'python -m SimpleHTTPServer 2048 &'
+echo 'open -a "Google Chrome" http://0.0.0.0:2048/index.html'
