@@ -409,6 +409,7 @@ class LoginPage(webapp.RequestHandler):
       response = urlfetch.fetch(
                    url = "https://www.dopplr.com/api/AuthSubSessionToken",
                    headers = {'Authorization': 'AuthSub token="'+token+'"'},
+                   validate_certificate = False,
                  )
       match = re.search('Token=(.*)\n', response.content)
       if (match):
@@ -723,6 +724,7 @@ def get_traveller_info(token, who=""):
     response = urlfetch.fetch(
                  url = url,
                  headers = {'Authorization': 'AuthSub token="'+token+'"'},
+                 validate_certificate = False,
                )
   except Exception, error:
     logging.error("Error fetching %s: %s" % (url, error))
@@ -730,6 +732,9 @@ def get_traveller_info(token, who=""):
       raise Exception("Could not get traveller information for '%s'." % who)
     else:
       raise Exception("Could not get your traveller information.")
+
+  logging.info('traveller_info.json')
+  logging.info(response.content)
 
   traveller_info = {}
   try:
@@ -763,10 +768,14 @@ def get_trips_info(token, who=""):
     response = urlfetch.fetch(
                  url = url,
                  headers = {'Authorization': 'AuthSub token="'+token+'"'},
+                 validate_certificate = False,
                )
   except Exception, error:
     logging.error("Error fetching %s: %s" % (url, error))
     raise Exception, "Couldn't download info about trips from Dopplr."
+
+  logging.info('trips_info.json')
+  logging.info(response.content)
 
   trips_info = {}
   try:
@@ -804,12 +813,17 @@ def get_trip_info_direct(token, trip_id):
     response = urlfetch.fetch(
                  url = url,
                  headers = {'Authorization': 'AuthSub token="'+token+'"'},
+                 validate_certificate = False,
                )
   except Exception, error:
     logging.error("Error fetching %s: %s" % (url, error))
     raise Exception("Couldn't fetch trip info for trip %s" % trip_id)
 
   trip_info = {}
+
+  logging.info('trip_info_%s.json' % trip_id, 'w')
+  logging.info(response.content)
+
   try:
     trip_info = simplejson.loads(response.content)
   except ValueError(error):
@@ -1204,7 +1218,7 @@ def prettify_trips(trip_list):
   return trip_list
 
 def get_trip_distances(trip_list, traveller_info):
-  logging.info("in link_trips")
+  logging.info("in get_trip_distances (was link_trips)")
   previous = False
 
   home_city = traveller_info['home_city']
